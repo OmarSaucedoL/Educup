@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Cup extends Model
+{
+    protected $table = 'CUP';
+    protected $primaryKey = 'ID';
+    public $timestamps = false;
+
+    protected $fillable = [
+        'ANIO',
+        'SEMESTRE',
+        'NOTA_MINIMA',
+        'CUPOS',
+        'FECHA_INICIO',
+        'FECHA_FIN',
+        'USUARIO_ID'
+    ];
+
+    protected $casts = [
+        'FECHA_INICIO' => 'date',
+        'FECHA_FIN' => 'date',
+        'NOTA_MINIMA' => 'decimal:2'
+    ];
+
+    public function usuario(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'USUARIO_ID', 'ID');
+    }
+
+    public function clases(): HasMany
+    {
+        return $this->hasMany(Clase::class, 'CUP_ID', 'ID');
+    }
+}
