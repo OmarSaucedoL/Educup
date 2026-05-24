@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
                 'CARNET' => 1234567,
                 'NOMBRE' => 'Admin',
                 'APELLIDO' => 'General',
+                'CORREO' => 'admin@cup.edu',
                 'ESTADO' => 'ACTIVO',
                 'FECHA_CREACION' => now(),
                 'ROL_ID' => $rolAdmin->ID

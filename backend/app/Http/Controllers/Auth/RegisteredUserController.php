@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,14 +31,28 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:'.\App\Models\Usuario::class.',CORREO',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+        // Separar el nombre completo para que encaje en NOMBRE y APELLIDO
+        $nameParts = explode(' ', $request->name, 2);
+        $nombre = $nameParts[0];
+        $apellido = $nameParts[1] ?? '';
+
+        // Asignar un rol por defecto (ej. ESTUDIANTE)
+        $rol = \App\Models\Rol::firstOrCreate(['NOMBRE' => 'ESTUDIANTE']);
+
+        $user = \App\Models\Usuario::create([
+            'USERNAME' => explode('@', $request->email)[0], // Generar un username basado en el correo
+            'CONTRASENIA' => Hash::make($request->password),
+            'CARNET' => rand(1000000, 9999999), // Carnet temporal generado al azar
+            'NOMBRE' => $nombre,
+            'APELLIDO' => $apellido,
+            'CORREO' => $request->email,
+            'ESTADO' => 'ACTIVO',
+            'ROL_ID' => $rol->ID,
+            'FECHA_CREACION' => now(),
         ]);
 
         event(new Registered($user));

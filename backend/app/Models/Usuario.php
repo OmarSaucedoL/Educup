@@ -7,11 +7,43 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
+    use Notifiable;
+
     protected $table = 'USUARIO';
     protected $primaryKey = 'ID';
+
+    protected $appends = ['name', 'email'];
+
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->NOMBRE . ' ' . $this->APELLIDO,
+        );
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->CORREO,
+        );
+    }
+
+    public function getAuthPasswordName()
+    {
+        return 'CONTRASENIA';
+    }
+
+    public function getRememberTokenName()
+    {
+        return 'REMEMBER_TOKEN';
+    }
+    
     public $timestamps = false;
 
     protected $fillable = [
@@ -20,6 +52,7 @@ class Usuario extends Model
         'CARNET',
         'NOMBRE',
         'APELLIDO',
+        'CORREO',
         'ESTADO',
         'FECHA_CREACION',
         'ROL_ID'
