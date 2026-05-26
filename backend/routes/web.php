@@ -15,3 +15,7 @@ Route::middleware(['auth'])->group(function () {
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+require __DIR__.'/usuarios_routes.php';
+require __DIR__.'/academico routes/cup_routes.php';
+require __DIR__.'/academico routes/docentes_routes.php';
+require __DIR__.'/academico routes/materias_routes.php';
