@@ -49,10 +49,9 @@ class Estudiante extends Model
                     ->withPivot('OPCION');
     }
 
-    public function clases(): BelongsToMany
+    public function estudianteCups(): HasMany
     {
-        return $this->belongsToMany(Clase::class, 'ESTUDIANTE_CLASE', 'ESTUDIANTE_ID', 'CLASE_ID')
-                    ->withPivot('NOTA1', 'NOTA2', 'NOTA3', 'NOTA_PROM');
+        return $this->hasMany(EstudianteCup::class, 'ESTUDIANTE_ID', 'ID');
     }
 
     public function resultados(): HasMany

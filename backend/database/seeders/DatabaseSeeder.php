@@ -94,13 +94,24 @@ class DatabaseSeeder extends Seeder
         ];
         DB::table('AULA')->insert($aulas);
 
-        // 8. Insertar CARRERAS con cupos para validar tu algoritmo de asignación de segunda opción
+        // 8. Insertar CARRERAS (sin cupos estáticos)
         $carreras = [
-            ['NOMBRE' => 'INGENIERÍA INFORMÁTICA', 'CUPOS' => 5], // Cupos bajos a propósito para testear
-            ['NOMBRE' => 'INGENIERÍA EN SISTEMAS', 'CUPOS' => 60],
-            ['NOMBRE' => 'INGENIERÍA EN REDES Y TELECOMUNICACIONES', 'CUPOS' => 45],
+            ['NOMBRE' => 'INGENIERÍA INFORMÁTICA'],
+            ['NOMBRE' => 'INGENIERÍA EN SISTEMAS'],
+            ['NOMBRE' => 'INGENIERÍA EN REDES Y TELECOMUNICACIONES'],
         ];
         DB::table('CARRERA')->insert($carreras);
+
+        $idInformatica = DB::table('CARRERA')->where('NOMBRE', 'INGENIERÍA INFORMÁTICA')->value('ID');
+        $idSistemas = DB::table('CARRERA')->where('NOMBRE', 'INGENIERÍA EN SISTEMAS')->value('ID');
+        $idRedes = DB::table('CARRERA')->where('NOMBRE', 'INGENIERÍA EN REDES Y TELECOMUNICACIONES')->value('ID');
+
+        // 8.1. Insertar vacantes dinámicas en CARRERA_CUP
+        DB::table('CARRERA_CUP')->insert([
+            ['CARRERA_ID' => $idInformatica, 'CUP_ID' => $cupId, 'CUPOS' => 5], // Cupos bajos a propósito
+            ['CARRERA_ID' => $idSistemas, 'CUP_ID' => $cupId, 'CUPOS' => 60],
+            ['CARRERA_ID' => $idRedes, 'CUP_ID' => $cupId, 'CUPOS' => 45],
+        ]);
 
         // 9. Insertar datos geográficos y de procedencia base (CIUDAD y COLEGIO)
         DB::table('CIUDAD')->insert([
@@ -112,6 +123,34 @@ class DatabaseSeeder extends Seeder
             ['NOMBRE' => 'COLEGIO NACIONAL GABRIEL RENÉ MORENO'],
             ['NOMBRE' => 'COLEGIO BAUTISTA BOLIVIANO'],
             ['NOMBRE' => 'COLEGIO MARISTA'],
+        ]);
+
+        $idCiudad = DB::table('CIUDAD')->first()->ID;
+        $idColegio = DB::table('COLEGIO')->first()->ID;
+
+        // 10. Insertar Estudiante de prueba en ESTUDIANTE y su histórico en ESTUDIANTE_CUP
+        $estudianteId = DB::table('ESTUDIANTE')->insertGetId([
+            'CARNET' => 9999999,
+            'NOMBRE' => 'Juan',
+            'APELLIDO' => 'Pérez',
+            'FECHA_NAC' => '2005-01-01',
+            'DIRECCION' => 'Av. Estudiantil 123',
+            'TELEFONO' => '70012345',
+            'CORREO' => 'juan.perez@test.edu',
+            'TITULO_BACHILLER' => true,
+            'SEXO' => 'M',
+            'ESTADO' => 'ACTIVO',
+            'COLEGIO_ID' => $idColegio,
+            'CIUDAD_ID' => $idCiudad
+        ], 'ID');
+
+        DB::table('ESTUDIANTE_CUP')->insert([
+            'ESTUDIANTE_ID' => $estudianteId,
+            'CUP_ID' => $cupId,
+            'FECHA' => now(),
+            'ESTADO' => 'APROBADO',
+            'NOTA_FINAL' => 85.50,
+            'CARRERA' => 'INGENIERÍA EN SISTEMAS'
         ]);
     }
 }

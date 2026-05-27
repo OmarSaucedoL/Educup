@@ -12,9 +12,13 @@ class Carrera extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'NOMBRE',
-        'CUPOS'
+        'NOMBRE'
     ];
+
+    public function carreraCups()
+    {
+        return $this->hasMany(CarreraCup::class, 'CARRERA_ID', 'ID');
+    }
 
     public function estudiantes(): BelongsToMany
     {

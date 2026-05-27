@@ -23,8 +23,8 @@ class Docente extends Model
         return $this->belongsTo(Usuario::class, 'CODIGO', 'ID');
     }
 
-    public function clases(): HasMany
+    public function docenteCups(): HasMany
     {
-        return $this->hasMany(Clase::class, 'DOCENTE_ID', 'CODIGO');
+        return $this->hasMany(DocenteCup::class, 'DOCENTE_CODIGO', 'CODIGO');
     }
 }

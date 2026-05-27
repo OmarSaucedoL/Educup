@@ -10,8 +10,7 @@ return new class extends Migration
     {
         Schema::create('CARRERA', function (Blueprint $table) {
             $table->id('ID');
-            $table->string('NOMBRE');
-            $table->integer('CUPOS');
+            $table->string('NOMBRE', 150);
         });
     }
 

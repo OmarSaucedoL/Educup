@@ -33,8 +33,18 @@ class Cup extends Model
         return $this->belongsTo(Usuario::class, 'USUARIO_ID', 'ID');
     }
 
-    public function clases(): HasMany
+    public function docenteCups(): HasMany
     {
-        return $this->hasMany(Clase::class, 'CUP_ID', 'ID');
+        return $this->hasMany(DocenteCup::class, 'CUP_ID', 'ID');
+    }
+
+    public function estudianteCups(): HasMany
+    {
+        return $this->hasMany(EstudianteCup::class, 'CUP_ID', 'ID');
+    }
+
+    public function carreraCups(): HasMany
+    {
+        return $this->hasMany(CarreraCup::class, 'CUP_ID', 'ID');
     }
 }

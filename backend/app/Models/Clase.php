@@ -13,16 +13,15 @@ class Clase extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'CUP_ID',
+        'DOCENTE_CUP_ID',
         'MATERIA_ID',
         'GRUPO_ID',
-        'AULA_ID',
-        'DOCENTE_ID'
+        'AULA_ID'
     ];
 
-    public function cup(): BelongsTo
+    public function docenteCup(): BelongsTo
     {
-        return $this->belongsTo(Cup::class, 'CUP_ID', 'ID');
+        return $this->belongsTo(DocenteCup::class, 'DOCENTE_CUP_ID', 'ID');
     }
 
     public function materia(): BelongsTo
@@ -40,14 +39,8 @@ class Clase extends Model
         return $this->belongsTo(Aula::class, 'AULA_ID', 'ID');
     }
 
-    public function docente(): BelongsTo
+    public function calificaciones(): HasMany
     {
-        return $this->belongsTo(Docente::class, 'DOCENTE_ID', 'CODIGO');
-    }
-
-    public function estudiantes(): BelongsToMany
-    {
-        return $this->belongsToMany(Estudiante::class, 'ESTUDIANTE_CLASE', 'CLASE_ID', 'ESTUDIANTE_ID')
-                    ->withPivot('NOTA1', 'NOTA2', 'NOTA3', 'NOTA_PROM');
+        return $this->hasMany(Calificacion::class, 'CLASE_ID', 'ID');
     }
 }
