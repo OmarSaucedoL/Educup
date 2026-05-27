@@ -26,4 +26,9 @@ class CarreraCup extends Model
     {
         return $this->belongsTo(Cup::class, 'CUP_ID', 'ID');
     }
+
+    public function opcionesCarrera(): HasMany
+    {
+        return $this->hasMany(OpcionCarrera::class, 'CARRERA_CUP_ID', 'ID');
+    }
 }

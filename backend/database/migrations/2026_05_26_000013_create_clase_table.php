@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id('ID');
             
             $table->foreignId('DOCENTE_CUP_ID')->constrained('DOCENTE_CUP', 'ID')->onDelete('cascade');
+            $table->foreignId('BLOQUE_HORARIO_ID')->constrained('BLOQUE_HORARIO', 'ID')->onDelete('cascade');
             $table->foreignId('MATERIA_ID')->constrained('MATERIA', 'ID')->onDelete('restrict');
             $table->foreignId('GRUPO_ID')->constrained('GRUPO', 'ID')->onDelete('restrict');
             $table->foreignId('AULA_ID')->constrained('AULA', 'ID')->onDelete('restrict');

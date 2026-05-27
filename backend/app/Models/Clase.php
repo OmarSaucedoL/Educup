@@ -14,6 +14,7 @@ class Clase extends Model
 
     protected $fillable = [
         'DOCENTE_CUP_ID',
+        'BLOQUE_HORARIO_ID',
         'MATERIA_ID',
         'GRUPO_ID',
         'AULA_ID'
@@ -22,6 +23,11 @@ class Clase extends Model
     public function docenteCup(): BelongsTo
     {
         return $this->belongsTo(DocenteCup::class, 'DOCENTE_CUP_ID', 'ID');
+    }
+
+    public function bloqueHorario(): BelongsTo
+    {
+        return $this->belongsTo(BloqueHorario::class, 'BLOQUE_HORARIO_ID', 'ID');
     }
 
     public function materia(): BelongsTo

@@ -39,4 +39,9 @@ class EstudianteCup extends Model
     {
         return $this->hasMany(Calificacion::class, 'ESTUDIANTE_CUP_ID', 'ID');
     }
+
+    public function opcionesCarrera(): HasMany
+    {
+        return $this->hasMany(OpcionCarrera::class, 'ESTUDIANTE_CUP_ID', 'ID');
+    }
 }
