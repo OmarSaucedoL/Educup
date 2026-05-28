@@ -1,0 +1,259 @@
+import { Head, useForm, Link } from '@inertiajs/react';
+import { ArrowLeft, LoaderCircle, UserPlus } from 'lucide-react';
+import { FormEventHandler } from 'react';
+
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+
+interface Colegio { ID: number; NOMBRE: string; }
+interface Ciudad  { ID: number; NOMBRE: string; DEPARTAMENTO: string; }
+
+interface Props {
+    colegios: Colegio[];
+    ciudades: Ciudad[];
+}
+
+interface CrearEstudianteForm {
+    CARNET: string;
+    NOMBRE: string;
+    APELLIDO: string;
+    FECHA_NAC: string;
+    SEXO: string;
+    CORREO: string;
+    TELEFONO: string;
+    DIRECCION: string;
+    TITULO_BACHILLER: string;
+    ESTADO: string;
+    COLEGIO_ID: string;
+    CIUDAD_ID: string;
+}
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Gestión Académica', href: '#' },
+    { title: 'Estudiantes', href: '/estudiantes' },
+    { title: 'Registrar', href: '/estudiantes/crearEstudiante' },
+];
+
+export default function CrearEstudiante({ colegios, ciudades }: Props) {
+    const { data, setData, post, processing, errors } = useForm<CrearEstudianteForm>({
+        CARNET: '',
+        NOMBRE: '',
+        APELLIDO: '',
+        FECHA_NAC: '',
+        SEXO: 'M',
+        CORREO: '',
+        TELEFONO: '',
+        DIRECCION: '',
+        TITULO_BACHILLER: '',
+        ESTADO: 'ACTIVO',
+        COLEGIO_ID: '',
+        CIUDAD_ID: '',
+    });
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        post('/estudiantes');
+    };
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Registrar Estudiante" />
+
+            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+                <div className="max-w-3xl w-full mx-auto mt-4">
+
+                    {/* Header */}
+                    <div className="mb-6 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Button variant="outline" size="icon" asChild>
+                                <Link href="/estudiantes">
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                            <div>
+                                <h1 className="text-2xl font-semibold tracking-tight">Registrar Estudiante</h1>
+                                <p className="text-sm text-muted-foreground">Completa los datos personales y académicos del nuevo estudiante.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Card */}
+                    <div className="border-sidebar-border/70 dark:border-sidebar-border bg-card text-card-foreground rounded-xl border shadow-sm">
+                        <div className="flex flex-col space-y-1.5 p-6 border-b border-sidebar-border/50">
+                            <h3 className="font-semibold leading-none tracking-tight text-lg flex items-center gap-2">
+                                <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Datos del Estudiante
+                            </h3>
+                            <p className="text-xs text-muted-foreground">Los campos marcados con <span className="text-destructive">*</span> son obligatorios.</p>
+                        </div>
+
+                        <div className="p-6">
+                            <form className="flex flex-col gap-6" onSubmit={submit}>
+
+                                {/* Carnet */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="CARNET" className="text-sm font-semibold">Carnet <span className="text-destructive">*</span></Label>
+                                    <Input
+                                        id="CARNET"
+                                        value={data.CARNET}
+                                        onChange={e => setData('CARNET', e.target.value)}
+                                        placeholder="Ej. 12345"
+                                        className="max-w-xs"
+                                    />
+                                    <InputError message={errors.CARNET} />
+                                </div>
+
+                                {/* Nombre + Apellido */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="NOMBRE" className="text-sm font-semibold">Nombre <span className="text-destructive">*</span></Label>
+                                        <Input id="NOMBRE" value={data.NOMBRE} onChange={e => setData('NOMBRE', e.target.value)} placeholder="Juan" />
+                                        <InputError message={errors.NOMBRE} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="APELLIDO" className="text-sm font-semibold">Apellido <span className="text-destructive">*</span></Label>
+                                        <Input id="APELLIDO" value={data.APELLIDO} onChange={e => setData('APELLIDO', e.target.value)} placeholder="Pérez" />
+                                        <InputError message={errors.APELLIDO} />
+                                    </div>
+                                </div>
+
+                                {/* Fecha de nacimiento + Sexo */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="FECHA_NAC" className="text-sm font-semibold">Fecha de Nacimiento <span className="text-destructive">*</span></Label>
+                                        <Input id="FECHA_NAC" type="date" value={data.FECHA_NAC} onChange={e => setData('FECHA_NAC', e.target.value)} className="max-w-xs" />
+                                        <InputError message={errors.FECHA_NAC} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-semibold">Sexo <span className="text-destructive">*</span></Label>
+                                        <div className="flex gap-2 mt-1">
+                                            {(['M', 'F'] as const).map(s => (
+                                                <button
+                                                    key={s}
+                                                    type="button"
+                                                    onClick={() => setData('SEXO', s)}
+                                                    className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
+                                                        data.SEXO === s
+                                                            ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
+                                                            : 'border-sidebar-border hover:bg-muted/50 text-muted-foreground'
+                                                    }`}
+                                                >
+                                                    {s === 'M' ? 'Masculino' : 'Femenino'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <InputError message={errors.SEXO} />
+                                    </div>
+                                </div>
+
+                                {/* Correo */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="CORREO" className="text-sm font-semibold">Correo electrónico <span className="text-destructive">*</span></Label>
+                                    <Input id="CORREO" type="email" value={data.CORREO} onChange={e => setData('CORREO', e.target.value)} placeholder="juan@ejemplo.com" className="max-w-sm" />
+                                    <InputError message={errors.CORREO} />
+                                </div>
+
+                                {/* Teléfono + Dirección */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="TELEFONO" className="text-sm font-semibold">Teléfono <span className="text-destructive">*</span></Label>
+                                        <Input id="TELEFONO" value={data.TELEFONO} onChange={e => setData('TELEFONO', e.target.value)} placeholder="Ej. 75551234" />
+                                        <InputError message={errors.TELEFONO} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="DIRECCION" className="text-sm font-semibold">Dirección <span className="text-destructive">*</span></Label>
+                                        <Input id="DIRECCION" value={data.DIRECCION} onChange={e => setData('DIRECCION', e.target.value)} placeholder="Calle, Colonia..." />
+                                        <InputError message={errors.DIRECCION} />
+                                    </div>
+                                </div>
+
+                                {/* Ciudad + Colegio */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="CIUDAD_ID" className="text-sm font-semibold">Ciudad</Label>
+                                        <select
+                                            id="CIUDAD_ID"
+                                            value={data.CIUDAD_ID}
+                                            onChange={e => setData('CIUDAD_ID', e.target.value)}
+                                            className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        >
+                                            <option value="">— Seleccionar ciudad —</option>
+                                            {ciudades.map(c => (
+                                                <option key={c.ID} value={c.ID}>{c.NOMBRE} ({c.DEPARTAMENTO})</option>
+                                            ))}
+                                        </select>
+                                        <InputError message={errors.CIUDAD_ID} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="COLEGIO_ID" className="text-sm font-semibold">Colegio de procedencia</Label>
+                                        <select
+                                            id="COLEGIO_ID"
+                                            value={data.COLEGIO_ID}
+                                            onChange={e => setData('COLEGIO_ID', e.target.value)}
+                                            className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        >
+                                            <option value="">— Seleccionar colegio —</option>
+                                            {colegios.map(c => (
+                                                <option key={c.ID} value={c.ID}>{c.NOMBRE}</option>
+                                            ))}
+                                        </select>
+                                        <InputError message={errors.COLEGIO_ID} />
+                                    </div>
+                                </div>
+
+                                {/* Título de bachiller */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="TITULO_BACHILLER" className="text-sm font-semibold">Título de Bachiller</Label>
+                                    <Input
+                                        id="TITULO_BACHILLER"
+                                        value={data.TITULO_BACHILLER}
+                                        onChange={e => setData('TITULO_BACHILLER', e.target.value)}
+                                        placeholder="Ej. No. de serie o nombre del título"
+                                        className="max-w-sm"
+                                    />
+                                    <InputError message={errors.TITULO_BACHILLER} />
+                                </div>
+
+                                {/* Estado */}
+                                <div className="grid gap-2 border-t border-sidebar-border/50 pt-6">
+                                    <Label className="text-sm font-semibold">Estado <span className="text-destructive">*</span></Label>
+                                    <div className="flex gap-3 max-w-xs mt-1">
+                                        {(['ACTIVO', 'INACTIVO'] as const).map(s => (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => setData('ESTADO', s)}
+                                                className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
+                                                    data.ESTADO === s
+                                                        ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
+                                                        : 'border-sidebar-border hover:bg-muted/50 text-muted-foreground'
+                                                }`}
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.ESTADO} />
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 text-sm shadow-md"
+                                    disabled={processing}
+                                >
+                                    {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                    Registrar Estudiante
+                                </Button>
+
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </AppLayout>
+    );
+}

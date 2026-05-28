@@ -30,7 +30,6 @@ class Estudiante extends Model
 
     protected $casts = [
         'FECHA_NAC' => 'date',
-        'TITULO_BACHILLER' => 'boolean'
     ];
 
     public function colegio(): BelongsTo
