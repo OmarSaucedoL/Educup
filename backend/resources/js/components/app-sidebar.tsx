@@ -39,6 +39,10 @@ const mainNavItems: NavItem[] = [
                 title: 'Materias',
                 url: '/materias',
             },
+            {
+                title: 'Horarios',
+                url: '/horarios',
+            },
         ],
     },
 ];
