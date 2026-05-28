@@ -20,3 +20,4 @@ require __DIR__.'/academico routes/cup_routes.php';
 require __DIR__.'/academico routes/docentes_routes.php';
 require __DIR__.'/academico routes/materias_routes.php';
 require __DIR__.'/academico routes/horarios_routes.php';
+require __DIR__.'/academico routes/aulas_routes.php';

@@ -12,7 +12,9 @@ class Aula extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'NOMBRE'
+        'NOMBRE',
+        'DESCRIPCION',
+        'ESTADO'
     ];
 
     public function clases(): HasMany
