@@ -6,7 +6,11 @@ use App\Models\Ciudad;
 use App\Models\Colegio;
 use App\Models\Estudiante;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Imports\EstudiantesImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Validation\ValidationException;
 
 class EstudianteController extends Controller
 {
@@ -22,6 +26,38 @@ class EstudianteController extends Controller
             'colegios' => $colegios,
             'ciudades' => $ciudades,
         ]);
+    }
+
+    /**
+     * Handle the Excel import.
+     */
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'archivo_excel' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB max
+            'CUP_ID'        => 'required|exists:CUP,ID',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            Excel::import(new EstudiantesImport($request->CUP_ID), $request->file('archivo_excel'));
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Importación de estudiantes completada con éxito.');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            DB::rollBack();
+            $failures = $e->failures();
+            throw ValidationException::withMessages([
+                'archivo_excel' => 'Error en los datos del Excel. Revisa el formato e inténtalo de nuevo.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'archivo_excel' => $e->getMessage()
+            ]);
+        }
     }
 
     /**

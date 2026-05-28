@@ -11,7 +11,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertTriangle, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, FileSpreadsheet } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Gestión Académica', href: '#' },
@@ -71,11 +71,18 @@ export default function Index({ estudiantes }: { estudiantes: Estudiante[] }) {
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-2xl font-semibold tracking-tight">Gestión de Estudiantes</h1>
-                    <Button asChild>
-                        <Link href="/estudiantes/crearEstudiante">
-                            <Plus className="mr-2 h-4 w-4" /> Agregar Estudiante
-                        </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/50" asChild>
+                            <Link href="/estudiantes/importar">
+                                <FileSpreadsheet className="mr-2 h-4 w-4" /> Importar Excel
+                            </Link>
+                        </Button>
+                        <Button asChild>
+                            <Link href="/estudiantes/crearEstudiante">
+                                <Plus className="mr-2 h-4 w-4" /> Agregar Estudiante
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="border-sidebar-border/70 dark:border-sidebar-border bg-card text-card-foreground relative flex-1 rounded-xl border shadow-sm">
