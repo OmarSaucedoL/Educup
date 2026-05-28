@@ -50,7 +50,7 @@ class EstudianteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'CARNET'           => 'required|string|max:20|unique:ESTUDIANTE,CARNET',
+            'CARNET'           => 'required|integer|unique:ESTUDIANTE,CARNET',
             'NOMBRE'           => 'required|string|max:100',
             'APELLIDO'         => 'required|string|max:100',
             'FECHA_NAC'        => 'required|date',
@@ -58,7 +58,7 @@ class EstudianteController extends Controller
             'CORREO'           => 'required|email|max:150|unique:ESTUDIANTE,CORREO',
             'TELEFONO'         => 'required|string|max:20',
             'DIRECCION'        => 'required|string|max:255',
-            'TITULO_BACHILLER' => 'nullable|string|max:255|unique:ESTUDIANTE,TITULO_BACHILLER',
+            'TITULO_BACHILLER' => 'required|string|max:255|unique:ESTUDIANTE,TITULO_BACHILLER',
             'ESTADO'           => 'required|in:ACTIVO,INACTIVO',
             'COLEGIO_ID'       => 'nullable|exists:COLEGIO,ID',
             'CIUDAD_ID'        => 'nullable|exists:CIUDAD,ID',

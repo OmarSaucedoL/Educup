@@ -98,6 +98,8 @@ export default function CrearEstudiante({ colegios, ciudades }: Props) {
                                     <Label htmlFor="CARNET" className="text-sm font-semibold">Carnet <span className="text-destructive">*</span></Label>
                                     <Input
                                         id="CARNET"
+                                        type="number"
+                                        min="1"
                                         value={data.CARNET}
                                         onChange={e => setData('CARNET', e.target.value)}
                                         placeholder="Ej. 12345"
@@ -206,7 +208,7 @@ export default function CrearEstudiante({ colegios, ciudades }: Props) {
 
                                 {/* Título de bachiller */}
                                 <div className="grid gap-2">
-                                    <Label htmlFor="TITULO_BACHILLER" className="text-sm font-semibold">Título de Bachiller</Label>
+                                    <Label htmlFor="TITULO_BACHILLER" className="text-sm font-semibold">Título de Bachiller <span className="text-destructive">*</span></Label>
                                     <Input
                                         id="TITULO_BACHILLER"
                                         value={data.TITULO_BACHILLER}
