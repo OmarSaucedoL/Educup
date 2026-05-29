@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -36,6 +36,7 @@ export default function Index({ materias }: { materias: any[] }) {
                                 <tr className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium w-24">ID</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Nombre de la Materia</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-right align-middle font-medium w-28">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
@@ -44,11 +45,23 @@ export default function Index({ materias }: { materias: any[] }) {
                                         <tr key={materia.ID_MATERIA} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
                                             <td className="p-4 align-middle font-medium">{materia.ID_MATERIA}</td>
                                             <td className="p-4 align-middle font-medium">{materia.NOMBRE}</td>
+                                            <td className="p-4 align-middle text-right">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 gap-1 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                                                    asChild
+                                                >
+                                                    <Link href={`/materias/${materia.ID_MATERIA}/editar`}>
+                                                        <Pencil className="h-3.5 w-3.5" /> Editar
+                                                    </Link>
+                                                </Button>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={2} className="text-muted-foreground p-4 text-center align-middle">
+                                        <td colSpan={3} className="text-muted-foreground p-4 text-center align-middle">
                                             No hay materias registradas.
                                         </td>
                                     </tr>

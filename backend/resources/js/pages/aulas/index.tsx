@@ -1,17 +1,8 @@
-import { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { AlertTriangle, Plus, Trash2 } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -25,23 +16,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Index({ aulas }: { aulas: any[] }) {
-    const [deleteId, setDeleteId] = useState<number | null>(null);
-
-    const confirmDelete = () => {
-        if (deleteId === null) return;
-        router.delete(`/aulas/${deleteId}`, {
-            onSuccess: () => setDeleteId(null),
-            onError: (errors) => {
-                setDeleteId(null);
-                alert(errors.id || errors.ID_AULA || 'Ocurrió un error al intentar eliminar el aula.');
-            },
-        });
-    };
-
-    const confirmDeleteHandler = () => {
-        // Just a helper to handle click
-    };
-
     const handleToggleStatus = (id: number) => {
         router.patch(`/aulas/${id}/toggle-status`, {}, {
             preserveScroll: true,
@@ -55,33 +29,6 @@ export default function Index({ aulas }: { aulas: any[] }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Aulas" />
-
-            {/* Delete confirmation dialog */}
-            <Dialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <div className="flex items-center gap-3 mb-1">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 shrink-0">
-                                <AlertTriangle className="h-5 w-5 text-destructive" />
-                            </div>
-                            <DialogTitle>Eliminar aula</DialogTitle>
-                        </div>
-                        <DialogDescription className="pt-1">
-                            ¿Estás seguro de que deseas eliminar esta aula? Esta acción no se puede deshacer y{' '}
-                            <span className="font-medium text-foreground">eliminará permanentemente el registro.</span>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setDeleteId(null)}>
-                            Cancelar
-                        </Button>
-                        <Button variant="destructive" onClick={confirmDelete}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Sí, eliminar
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="mb-6 flex items-center justify-between">
@@ -127,12 +74,14 @@ export default function Index({ aulas }: { aulas: any[] }) {
                                             </td>
                                             <td className="p-4 align-middle text-right">
                                                 <Button
-                                                    variant="destructive"
+                                                    variant="outline"
                                                     size="sm"
-                                                    className="h-8 gap-1 text-xs"
-                                                    onClick={() => setDeleteId(aula.ID_AULA)}
+                                                    className="h-8 gap-1 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                                                    asChild
                                                 >
-                                                    <Trash2 className="h-3.5 w-3.5" /> Eliminar
+                                                    <Link href={`/aulas/${aula.ID_AULA}/editar`}>
+                                                        <Pencil className="h-3.5 w-3.5" /> Editar
+                                                    </Link>
                                                 </Button>
                                             </td>
                                         </tr>

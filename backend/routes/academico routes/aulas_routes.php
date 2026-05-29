@@ -17,3 +17,9 @@ Route::delete('/aulas/{id}', [AulaController::class, 'destroy']);
 
 // Alternar estado de una aula
 Route::patch('/aulas/{id}/toggle-status', [AulaController::class, 'toggleStatus']);
+
+// Mostrar formulario para editar una aula (Inertia)
+Route::get('/aulas/{id}/editar', [AulaController::class, 'edit']);
+
+// Actualizar una aula existente
+Route::put('/aulas/{id}', [AulaController::class, 'update']);

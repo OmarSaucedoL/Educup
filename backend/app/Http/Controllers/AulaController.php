@@ -71,4 +71,34 @@ class AulaController extends Controller
 
         return redirect('/aulas')->with('success', 'Estado de aula actualizado.');
     }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit($id)
+    {
+        $aula = Aula::findOrFail($id);
+        
+        return Inertia::render('aulas/editarAula', [
+            'aula' => $aula
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        $aula = Aula::findOrFail($id);
+
+        $validated = $request->validate([
+            'NOMBRE' => 'required|string|max:255',
+            'DESCRIPCION' => 'nullable|string|max:1000',
+            'ESTADO' => 'required|string|in:ACTIVO,INACTIVO',
+        ]);
+
+        $aula->update($validated);
+
+        return redirect('/aulas')->with('success', 'Aula actualizada correctamente.');
+    }
 }

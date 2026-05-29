@@ -5,8 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Traits\LogsActivity;
+
 class BloqueHorario extends Model
 {
+    use LogsActivity;
     protected $table = 'BLOQUE_HORARIO';
     protected $primaryKey = 'ID_BLOQUE_HORARIO';
     public $timestamps = false;

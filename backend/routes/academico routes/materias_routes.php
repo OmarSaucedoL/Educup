@@ -17,3 +17,9 @@ Route::post('/materias', [MateriaController::class, 'store']);
 
 // Modificar una materia existente
 Route::put('/materias/{id}', [MateriaController::class, 'update']);
+
+// Mostrar formulario para editar una materia (Inertia)
+Route::get('/materias/{id}/editar', [MateriaController::class, 'edit']);
+
+// Eliminar una materia existente
+Route::delete('/materias/{id}', [MateriaController::class, 'destroy']);

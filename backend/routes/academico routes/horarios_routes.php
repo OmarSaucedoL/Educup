@@ -12,4 +12,6 @@ Route::post('/horarios', [HorarioController::class, 'store']);
 
 Route::put('/horarios/{id}', [HorarioController::class, 'update']);
 
+Route::get('/horarios/{id}/editar', [HorarioController::class, 'edit']);
+
 Route::delete('/horarios/{id}', [HorarioController::class, 'destroy']);

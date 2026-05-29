@@ -1,17 +1,8 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
-import { AlertTriangle, Plus, Trash2 } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Plus, Pencil } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -25,47 +16,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Index({ bloques }: { bloques: any[] }) {
-    const [deleteId, setDeleteId] = useState<number | null>(null);
-
-    const confirmDelete = () => {
-        if (deleteId === null) return;
-        router.delete(`/horarios/${deleteId}`, {
-            onSuccess: () => setDeleteId(null),
-            onError: () => setDeleteId(null),
-        });
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Horarios" />
-
-            {/* Delete confirmation dialog */}
-            <Dialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <div className="flex items-center gap-3 mb-1">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 shrink-0">
-                                <AlertTriangle className="h-5 w-5 text-destructive" />
-                            </div>
-                            <DialogTitle>Eliminar bloque de horario</DialogTitle>
-                        </div>
-                        <DialogDescription className="pt-1">
-                            ¿Estás seguro de que deseas eliminar este bloque de horario? Esta acción
-                            eliminará permanentemente todos los horarios y clases asociados a este
-                            bloque. <span className="font-medium text-foreground">Esta acción no se puede deshacer.</span>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setDeleteId(null)}>
-                            Cancelar
-                        </Button>
-                        <Button variant="destructive" onClick={confirmDelete}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Sí, eliminar
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="mb-6 flex items-center justify-between">
@@ -117,12 +70,14 @@ export default function Index({ bloques }: { bloques: any[] }) {
                                             </td>
                                             <td className="p-4 align-middle text-right">
                                                 <Button
-                                                    variant="destructive"
+                                                    variant="outline"
                                                     size="sm"
-                                                    className="h-8 gap-1 text-xs"
-                                                    onClick={() => setDeleteId(bloque.ID_BLOQUE_HORARIO)}
+                                                    className="h-8 gap-1 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                                                    asChild
                                                 >
-                                                    <Trash2 className="h-3.5 w-3.5" /> Eliminar
+                                                    <Link href={`/horarios/${bloque.ID_BLOQUE_HORARIO}/editar`}>
+                                                        <Pencil className="h-3.5 w-3.5" /> Editar
+                                                    </Link>
                                                 </Button>
                                             </td>
                                         </tr>

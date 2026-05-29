@@ -64,4 +64,31 @@ class MateriaController extends Controller
 
         return redirect('/materias')->with('success', 'Materia actualizada correctamente.');
     }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        $materia = Materia::findOrFail($id);
+        return inertia('materias/editarMateria', [
+            'materia' => $materia
+        ]);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        try {
+            $materia = Materia::findOrFail($id);
+            $materia->delete();
+            return redirect('/materias')->with('success', 'Materia eliminada correctamente.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'id' => 'No se puede eliminar esta materia porque tiene registros relacionados.'
+            ]);
+        }
+    }
 }
