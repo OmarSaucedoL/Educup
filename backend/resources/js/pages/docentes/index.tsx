@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
+import EditarDocenteModal from './EditarDocenteModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -16,6 +18,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Index({ docentes }: { docentes: any[] }) {
+    const [selectedDocente, setSelectedDocente] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Docentes" />
@@ -40,6 +45,7 @@ export default function Index({ docentes }: { docentes: any[] }) {
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Carnet</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Correo Electrónico</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Estado</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-right align-middle font-medium">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
@@ -66,11 +72,25 @@ export default function Index({ docentes }: { docentes: any[] }) {
                                                     {docente.usuario?.ESTADO === 'ACTIVO' || docente.usuario?.ESTADO === 1 ? 'Activo' : 'Inactivo'}
                                                 </div>
                                             </td>
+                                            <td className="p-4 align-middle text-right">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setSelectedDocente(docente);
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                    className="h-8 gap-1.5 text-xs border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold"
+                                                >
+                                                    <Edit className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                                                    Editar
+                                                </Button>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="text-muted-foreground p-4 text-center align-middle">
+                                        <td colSpan={7} className="text-muted-foreground p-4 text-center align-middle">
                                             No hay docentes registrados.
                                         </td>
                                     </tr>
@@ -80,6 +100,13 @@ export default function Index({ docentes }: { docentes: any[] }) {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Información de Docente - Componente Separado */}
+            <EditarDocenteModal
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                selectedDocente={selectedDocente}
+            />
         </AppLayout>
     );
 }

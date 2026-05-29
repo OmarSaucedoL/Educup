@@ -14,7 +14,14 @@ class DocenteController extends Controller
     public function index()
     {
         // Load the docentes with their underlying user info
-        $docentes = Docente::with('usuario')->get();
+        $docentes = Docente::with([
+            'usuario',
+            'docenteCups.cup',
+            'docenteCups.clases.materia',
+            'docenteCups.clases.grupo',
+            'docenteCups.clases.bloqueHorario.horariosEnBloque.horario',
+            'docenteCups.clases.aula',
+        ])->get();
         return inertia('docentes/index', [
             'docentes' => $docentes
         ]);
