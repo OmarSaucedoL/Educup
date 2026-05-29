@@ -116,6 +116,9 @@ class HorarioController extends Controller
 
             // 1. Hour validations
             $horaInicio = $validated['HORA_INICIO'];
+            if (strlen($horaInicio) === 5) {
+                $horaInicio .= ':00';
+            }
             if ($horaInicio < '07:00:00' || $horaInicio > '20:00:00') {
                 throw new \Exception("La hora de inicio ($horaInicio) debe estar entre las 07:00 y las 20:00.");
             }
@@ -154,7 +157,7 @@ class HorarioController extends Controller
                             'DIA' => strtoupper($dia),
                             'HORA_INI' => $horaActual,
                             'HORA_FIN' => $horaFinPeriodo
-                        ]);
+                        ], 'ID');
                     } else {
                         $horarioId = $horario->ID;
                     }

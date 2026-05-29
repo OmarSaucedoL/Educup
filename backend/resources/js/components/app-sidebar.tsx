@@ -14,21 +14,6 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Modulo Administrativo',
-        url: '#',
-        icon: Shield,
-        items: [
-            {
-                title: 'Usuarios',
-                url: '/usuarios',
-            },
-            {
-                title: 'Bitácora',
-                url: '/bitacora',
-            },
-        ],
-    },
-    {
         title: 'Módulo Academico',
         url: '#',
         icon: GraduationCap,
@@ -56,6 +41,22 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Aulas',
                 url: '/aulas',
+            },
+        ],
+    },
+
+    {
+        title: 'Modulo Administrativo',
+        url: '#',
+        icon: Shield,
+        items: [
+            {
+                title: 'Usuarios',
+                url: '/usuarios',
+            },
+            {
+                title: 'Bitácora',
+                url: '/bitacora',
             },
         ],
     },
