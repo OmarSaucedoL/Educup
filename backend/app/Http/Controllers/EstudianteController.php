@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Ciudad;
 use App\Models\Colegio;
 use App\Models\Estudiante;
+use App\Models\Cup;
+use App\Models\EstudianteCup;
+use App\Models\CarreraCup;
+use App\Models\OpcionCarrera;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -15,17 +19,427 @@ use Illuminate\Validation\ValidationException;
 class EstudianteController extends Controller
 {
     /**
+     * Display a listing of all students with search and pagination.
+     */
+    public function index(Request $request)
+    {
+        $search = $request->input('search');
+
+        $query = Estudiante::with(['colegio', 'ciudad']);
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                if (is_numeric($search)) {
+                    $q->where('CARNET', $search);
+                } else {
+                    $q->where('NOMBRE', 'ILIKE', '%' . $search . '%')
+                      ->orWhere('APELLIDO', 'ILIKE', '%' . $search . '%');
+                }
+            });
+        }
+
+        $estudiantes = $query->orderBy('APELLIDO')
+            ->orderBy('NOMBRE')
+            ->paginate(10)
+            ->withQueryString();
+
+        return Inertia::render('estudiantes/index', [
+            'estudiantes' => $estudiantes,
+            'filters'     => [
+                'search' => $search
+            ]
+        ]);
+    }
+
+    /**
      * Show the form for creating a new student.
      */
     public function create()
     {
         $colegios = Colegio::orderBy('NOMBRE')->get(['ID', 'NOMBRE']);
         $ciudades = Ciudad::orderBy('NOMBRE')->get(['ID', 'NOMBRE', 'DEPARTAMENTO']);
+        
+        $activeCup = Cup::orderBy('ID_CUP', 'desc')->first();
+        $carreras = [];
+        if ($activeCup) {
+            $carreras = CarreraCup::where('ID_CUP', $activeCup->ID_CUP)
+                ->with('carrera')
+                ->get();
+        }
 
-        return Inertia::render('estudiantes/crearEstudiante', [
-            'colegios' => $colegios,
-            'ciudades' => $ciudades,
+        return Inertia::render('estudiantes/editarPostulante', [
+            'postulante'    => null,
+            'colegios'      => $colegios,
+            'ciudades'      => $ciudades,
+            'carreras'      => $carreras,
+            'activeCup'     => $activeCup,
+            'historialCups' => []
         ]);
+    }
+
+    /**
+     * Show the form for editing an existing student.
+     */
+    public function edit($id)
+    {
+        $estudiante = Estudiante::findOrFail($id);
+        $activeCup = Cup::orderBy('ID_CUP', 'desc')->first();
+        
+        $estudianteCup = null;
+        $opciones = [];
+        if ($activeCup) {
+            $estudianteCup = EstudianteCup::where('ID_ESTUDIANTE', $id)
+                ->where('ID_CUP', $activeCup->ID_CUP)
+                ->first();
+                
+            if ($estudianteCup) {
+                $opciones = OpcionCarrera::where('ESTUDIANTE_CUP_ID', $estudianteCup->ID)
+                    ->orderBy('OPCION')
+                    ->get();
+            }
+        }
+        
+        $colegios = Colegio::orderBy('NOMBRE')->get(['ID', 'NOMBRE']);
+        $ciudades = Ciudad::orderBy('NOMBRE')->get(['ID', 'NOMBRE', 'DEPARTAMENTO']);
+        
+        $carreras = [];
+        if ($activeCup) {
+            $carreras = CarreraCup::where('ID_CUP', $activeCup->ID_CUP)
+                ->with('carrera')
+                ->get();
+        }
+        
+        $opcion1 = null;
+        $opcion2 = null;
+        foreach ($opciones as $op) {
+            if ($op->OPCION == 1) {
+                $opcion1 = $op->CARRERA_CUP_ID;
+            } elseif ($op->OPCION == 2) {
+                $opcion2 = $op->CARRERA_CUP_ID;
+            }
+        }
+
+        $historialCups = EstudianteCup::where('ID_ESTUDIANTE', $id)
+            ->with(['cup'])
+            ->orderBy('FECHA', 'desc')
+            ->get();
+
+        return Inertia::render('estudiantes/editarPostulante', [
+            'postulante' => [
+                'ID_ESTUDIANTE'    => $estudiante->ID_ESTUDIANTE,
+                'CARNET'           => $estudiante->CARNET,
+                'NOMBRE'           => $estudiante->NOMBRE,
+                'APELLIDO'         => $estudiante->APELLIDO,
+                'FECHA_NAC'        => $estudiante->FECHA_NAC ? $estudiante->FECHA_NAC->format('Y-m-d') : null,
+                'SEXO'             => $estudiante->SEXO,
+                'DIRECCION'        => $estudiante->DIRECCION,
+                'TELEFONO'         => $estudiante->TELEFONO,
+                'CORREO'           => $estudiante->CORREO,
+                'TITULO_BACHILLER' => $estudiante->TITULO_BACHILLER,
+                'ESTADO'           => $estudiante->ESTADO,
+                'COLEGIO_ID'       => $estudiante->COLEGIO_ID,
+                'CIUDAD_ID'        => $estudiante->CIUDAD_ID,
+                'OPCION_1'         => $opcion1,
+                'OPCION_2'         => $opcion2,
+            ],
+            'colegios'      => $colegios,
+            'ciudades'      => $ciudades,
+            'carreras'      => $carreras,
+            'activeCup'     => $activeCup,
+            'historialCups' => $historialCups,
+        ]);
+    }
+
+    /**
+     * Store a newly created student with cascaded pre-registration and career options.
+     */
+    public function store(Request $request)
+    {
+        $rules = [
+            'CARNET'                    => 'required|integer|unique:ESTUDIANTE,CARNET',
+            'NOMBRE'                    => 'required|string|max:100',
+            'APELLIDO'                  => 'required|string|max:100',
+            'FECHA_NAC'                 => 'required|date',
+            'SEXO'                      => 'required|in:M,F',
+            'CORREO'                    => 'required|email|max:150|unique:ESTUDIANTE,CORREO',
+            'TELEFONO'                  => 'nullable|string|max:20',
+            'DIRECCION'                 => 'nullable|string|max:255',
+            'TITULO_BACHILLER'          => 'required|string|max:255|unique:ESTUDIANTE,TITULO_BACHILLER',
+            'NUEVA_CIUDAD_NOMBRE'       => 'required_if:CIUDAD_ID,NEW|nullable|string|max:100',
+            'NUEVA_CIUDAD_DEPARTAMENTO' => 'required_if:CIUDAD_ID,NEW|nullable|string|max:100',
+            'NUEVO_COLEGIO_NOMBRE'      => 'required_if:COLEGIO_ID,NEW|nullable|string|max:100',
+            'OPCION_1'                  => 'nullable|exists:CARRERA_CUP,ID',
+            'OPCION_2'                  => 'nullable|exists:CARRERA_CUP,ID',
+        ];
+
+        if ($request->input('CIUDAD_ID') === 'NEW') {
+            $rules['CIUDAD_ID'] = 'required';
+        } else {
+            $rules['CIUDAD_ID'] = 'required|integer|exists:CIUDAD,ID';
+        }
+
+        if ($request->input('COLEGIO_ID') === 'NEW') {
+            $rules['COLEGIO_ID'] = 'required';
+        } else {
+            $rules['COLEGIO_ID'] = 'required|integer|exists:COLEGIO,ID';
+        }
+
+        $validated = $request->validate($rules);
+
+        if (!empty($validated['OPCION_1']) && !empty($validated['OPCION_2']) && $validated['OPCION_1'] == $validated['OPCION_2']) {
+            throw ValidationException::withMessages([
+                'OPCION_2' => 'La segunda opción de carrera debe ser diferente a la primera opción.'
+            ]);
+        }
+
+        $activeCup = Cup::orderBy('ID_CUP', 'desc')->first();
+        if (!$activeCup) {
+            throw ValidationException::withMessages([
+                'OPCION_1' => 'No existe una gestión CUP activa en el sistema.'
+            ]);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Procesar nueva Ciudad si se especificó
+            $ciudadId = $validated['CIUDAD_ID'] ?? null;
+            if (!empty($validated['NUEVA_CIUDAD_NOMBRE'])) {
+                $ciudad = Ciudad::firstOrCreate(
+                    ['NOMBRE' => strtoupper(trim($validated['NUEVA_CIUDAD_NOMBRE']))],
+                    ['DEPARTAMENTO' => strtoupper(trim($validated['NUEVA_CIUDAD_DEPARTAMENTO'] ?? 'SANTA CRUZ'))]
+                );
+                $ciudadId = $ciudad->ID;
+            }
+
+            // Procesar nuevo Colegio si se especificó
+            $colegioId = $validated['COLEGIO_ID'] ?? null;
+            if (!empty($validated['NUEVO_COLEGIO_NOMBRE'])) {
+                $colegio = Colegio::firstOrCreate(
+                    ['NOMBRE' => strtoupper(trim($validated['NUEVO_COLEGIO_NOMBRE']))]
+                );
+                $colegioId = $colegio->ID;
+            }
+
+            // 1. Crear registro de Estudiante
+            $estudiante = Estudiante::create([
+                'CARNET'           => $validated['CARNET'],
+                'NOMBRE'           => strtoupper(trim($validated['NOMBRE'])),
+                'APELLIDO'         => strtoupper(trim($validated['APELLIDO'])),
+                'FECHA_NAC'        => $validated['FECHA_NAC'],
+                'SEXO'             => strtoupper(trim($validated['SEXO'])),
+                'DIRECCION'        => isset($validated['DIRECCION']) ? strtoupper(trim($validated['DIRECCION'])) : null,
+                'TELEFONO'         => $validated['TELEFONO'] ?? null,
+                'CORREO'           => strtolower(trim($validated['CORREO'])),
+                'TITULO_BACHILLER' => strtoupper(trim($validated['TITULO_BACHILLER'])),
+                'ESTADO'           => 'ACTIVO',
+                'COLEGIO_ID'       => $colegioId,
+                'CIUDAD_ID'        => $ciudadId,
+            ]);
+
+            // 2. Preinscribir en ESTUDIANTE_CUP
+            $estudianteCup = EstudianteCup::create([
+                'ID_ESTUDIANTE' => $estudiante->ID_ESTUDIANTE,
+                'ID_CUP'        => $activeCup->ID_CUP,
+                'FECHA'         => now(),
+                'ESTADO'        => 'INSCRITO',
+                'NOTA_FINAL'    => 0.00,
+                'CARRERA'       => null,
+            ]);
+
+            // 3. Registrar OPCION_CARRERA
+            if (!empty($validated['OPCION_1'])) {
+                OpcionCarrera::create([
+                    'ESTUDIANTE_CUP_ID' => $estudianteCup->ID,
+                    'CARRERA_CUP_ID'    => $validated['OPCION_1'],
+                    'OPCION'            => 1,
+                ]);
+            }
+
+            if (!empty($validated['OPCION_2'])) {
+                OpcionCarrera::create([
+                    'ESTUDIANTE_CUP_ID' => $estudianteCup->ID,
+                    'CARRERA_CUP_ID'    => $validated['OPCION_2'],
+                    'OPCION'            => 2,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect('/estudiantes')->with('success', 'Estudiante registrado correctamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'CARNET' => 'Error al guardar el estudiante: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Update an existing student and regenerate pre-registration and career options.
+     */
+    public function update(Request $request, $id)
+    {
+        $estudiante = Estudiante::findOrFail($id);
+
+        $rules = [
+            'CARNET'                    => 'required|integer|unique:ESTUDIANTE,CARNET,' . $id . ',ID_ESTUDIANTE',
+            'NOMBRE'                    => 'required|string|max:100',
+            'APELLIDO'                  => 'required|string|max:100',
+            'FECHA_NAC'                 => 'required|date',
+            'SEXO'                      => 'required|in:M,F',
+            'CORREO'                    => 'required|email|max:150|unique:ESTUDIANTE,CORREO,' . $id . ',ID_ESTUDIANTE',
+            'TELEFONO'                  => 'nullable|string|max:20',
+            'DIRECCION'                 => 'nullable|string|max:255',
+            'TITULO_BACHILLER'          => 'required|string|max:255|unique:ESTUDIANTE,TITULO_BACHILLER,' . $id . ',ID_ESTUDIANTE',
+            'ESTADO'                    => 'required|in:ACTIVO,INACTIVO',
+            'NUEVA_CIUDAD_NOMBRE'       => 'required_if:CIUDAD_ID,NEW|nullable|string|max:100',
+            'NUEVA_CIUDAD_DEPARTAMENTO' => 'required_if:CIUDAD_ID,NEW|nullable|string|max:100',
+            'NUEVO_COLEGIO_NOMBRE'      => 'required_if:COLEGIO_ID,NEW|nullable|string|max:100',
+            'OPCION_1'                  => 'nullable|exists:CARRERA_CUP,ID',
+            'OPCION_2'                  => 'nullable|exists:CARRERA_CUP,ID',
+        ];
+
+        if ($request->input('CIUDAD_ID') === 'NEW') {
+            $rules['CIUDAD_ID'] = 'required';
+        } else {
+            $rules['CIUDAD_ID'] = 'required|integer|exists:CIUDAD,ID';
+        }
+
+        if ($request->input('COLEGIO_ID') === 'NEW') {
+            $rules['COLEGIO_ID'] = 'required';
+        } else {
+            $rules['COLEGIO_ID'] = 'required|integer|exists:COLEGIO,ID';
+        }
+
+        $validated = $request->validate($rules);
+
+        if (!empty($validated['OPCION_1']) && !empty($validated['OPCION_2']) && $validated['OPCION_1'] == $validated['OPCION_2']) {
+            throw ValidationException::withMessages([
+                'OPCION_2' => 'La segunda opción de carrera debe ser diferente a la primera opción.'
+            ]);
+        }
+
+        $activeCup = Cup::orderBy('ID_CUP', 'desc')->first();
+
+        try {
+            DB::beginTransaction();
+
+            // Procesar nueva Ciudad si se especificó
+            $ciudadId = $validated['CIUDAD_ID'] ?? null;
+            if (!empty($validated['NUEVA_CIUDAD_NOMBRE'])) {
+                $ciudad = Ciudad::firstOrCreate(
+                    ['NOMBRE' => strtoupper(trim($validated['NUEVA_CIUDAD_NOMBRE']))],
+                    ['DEPARTAMENTO' => strtoupper(trim($validated['NUEVA_CIUDAD_DEPARTAMENTO'] ?? 'SANTA CRUZ'))]
+                );
+                $ciudadId = $ciudad->ID;
+            }
+
+            // Procesar nuevo Colegio si se especificó
+            $colegioId = $validated['COLEGIO_ID'] ?? null;
+            if (!empty($validated['NUEVO_COLEGIO_NOMBRE'])) {
+                $colegio = Colegio::firstOrCreate(
+                    ['NOMBRE' => strtoupper(trim($validated['NUEVO_COLEGIO_NOMBRE']))]
+                );
+                $colegioId = $colegio->ID;
+            }
+
+            $estudiante->update([
+                'CARNET'           => $validated['CARNET'],
+                'NOMBRE'           => strtoupper(trim($validated['NOMBRE'])),
+                'APELLIDO'         => strtoupper(trim($validated['APELLIDO'])),
+                'FECHA_NAC'        => $validated['FECHA_NAC'],
+                'SEXO'             => strtoupper(trim($validated['SEXO'])),
+                'DIRECCION'        => isset($validated['DIRECCION']) ? strtoupper(trim($validated['DIRECCION'])) : null,
+                'TELEFONO'         => $validated['TELEFONO'] ?? null,
+                'CORREO'           => strtolower(trim($validated['CORREO'])),
+                'TITULO_BACHILLER' => strtoupper(trim($validated['TITULO_BACHILLER'])),
+                'ESTADO'           => $validated['ESTADO'],
+                'COLEGIO_ID'       => $colegioId,
+                'CIUDAD_ID'        => $ciudadId,
+            ]);
+
+            if ($activeCup) {
+                // Registrar o recuperar preinscripción
+                $estudianteCup = EstudianteCup::firstOrCreate(
+                    [
+                        'ID_ESTUDIANTE' => $estudiante->ID_ESTUDIANTE,
+                        'ID_CUP'        => $activeCup->ID_CUP,
+                    ],
+                    [
+                        'FECHA'         => now(),
+                        'ESTADO'        => 'INSCRITO',
+                        'NOTA_FINAL'    => 0.00,
+                        'CARRERA'       => null,
+                    ]
+                );
+
+                // Purgar intenciones de carrera antiguas
+                OpcionCarrera::where('ESTUDIANTE_CUP_ID', $estudianteCup->ID)->delete();
+
+                // Re-insertar opciones
+                if (!empty($validated['OPCION_1'])) {
+                    OpcionCarrera::create([
+                        'ESTUDIANTE_CUP_ID' => $estudianteCup->ID,
+                        'CARRERA_CUP_ID'    => $validated['OPCION_1'],
+                        'OPCION'            => 1,
+                    ]);
+                }
+
+                if (!empty($validated['OPCION_2'])) {
+                    OpcionCarrera::create([
+                        'ESTUDIANTE_CUP_ID' => $estudianteCup->ID,
+                        'CARRERA_CUP_ID'    => $validated['OPCION_2'],
+                        'OPCION'            => 2,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect('/estudiantes')->with('success', 'Estudiante actualizado correctamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'CARNET' => 'Error al actualizar el estudiante: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Delete an existing student using transactional cascade deletion.
+     */
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $estudiante = Estudiante::findOrFail($id);
+
+            // Recuperar y eliminar todas las preinscripciones y opciones asociadas
+            $estudianteCups = EstudianteCup::where('ID_ESTUDIANTE', $id)->get();
+            foreach ($estudianteCups as $ec) {
+                OpcionCarrera::where('ESTUDIANTE_CUP_ID', $ec->ID)->delete();
+                \App\Models\Calificacion::where('ESTUDIANTE_CUP_ID', $ec->ID)->delete();
+                $ec->delete();
+            }
+
+            $estudiante->delete();
+
+            DB::commit();
+
+            return redirect('/estudiantes')->with('success', 'Estudiante eliminado correctamente.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'id' => 'No se puede eliminar el estudiante debido a restricciones relacionales en la base de datos.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'id' => 'Error al eliminar el estudiante: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -34,7 +448,7 @@ class EstudianteController extends Controller
     public function importExcel(Request $request)
     {
         $request->validate([
-            'archivo_excel' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB max
+            'archivo_excel' => 'required|file|mimes:xlsx,xls|max:10240',
             'CUP_ID'        => 'required|exists:CUP,ID_CUP',
         ]);
 
@@ -48,60 +462,47 @@ class EstudianteController extends Controller
             return redirect()->back()->with('success', 'Importación de estudiantes completada con éxito.');
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             DB::rollBack();
-            $failures = $e->failures();
             throw ValidationException::withMessages([
                 'archivo_excel' => 'Error en los datos del Excel. Revisa el formato e inténtalo de nuevo.'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            $message = $e->getMessage();
+            
+            // Si es una violación de valor no nulo (campo obligatorio vacío)
+            if (strpos($message, '23502') !== false) {
+                if (preg_match('/columna «(.+?)»/u', $message, $matches)) {
+                    $columna = $matches[1];
+                    // Traducir columnas conocidas para máxima experiencia de usuario
+                    $traducciones = [
+                        'FECHA_NAC' => 'Fecha de Nacimiento',
+                        'CARNET' => 'Carnet de Identidad',
+                        'NOMBRE' => 'Nombres',
+                        'APELLIDO' => 'Apellidos',
+                        'SEXO' => 'Sexo',
+                        'CORREO' => 'Correo Electrónico',
+                        'TITULO_BACHILLER' => 'Título de Bachiller'
+                    ];
+                    $nombreLimpio = $traducciones[$columna] ?? $columna;
+                    $message = "Error en el archivo Excel: El campo '{$nombreLimpio}' no puede estar vacío (viola la restricción obligatorio de base de datos).";
+                } else {
+                    $message = "Error en el archivo Excel: El archivo contiene celdas vacías en campos obligatorios.";
+                }
+            } elseif (strpos($message, '23505') !== false) {
+                // Si es una violación de unicidad (duplicados)
+                if (preg_match('/llave duplicada viola restricción de unicidad «(.+?)»/u', $message, $matches)) {
+                    $message = "Error en el archivo Excel: Se detectaron registros duplicados en el lote (ej: Carnet, Correo o Título de Bachiller que ya existen en el sistema).";
+                } else {
+                    $message = "Error en el archivo Excel: Hay datos duplicados que violan la unicidad en el sistema.";
+                }
+            } else {
+                // Mostrar un mensaje resumido
+                $message = "Error durante la importación: " . $message;
+            }
+
             throw ValidationException::withMessages([
-                'archivo_excel' => $e->getMessage()
+                'archivo_excel' => $message
             ]);
         }
-    }
-
-    /**
-     * Display a listing of all students.
-     */
-    public function index()
-    {
-        $estudiantes = Estudiante::with(['colegio', 'ciudad'])
-            ->orderBy('APELLIDO')
-            ->orderBy('NOMBRE')
-            ->get();
-
-        $colegios = Colegio::orderBy('NOMBRE')->get(['ID', 'NOMBRE']);
-        $ciudades = Ciudad::orderBy('NOMBRE')->get(['ID', 'NOMBRE', 'DEPARTAMENTO']);
-
-        return Inertia::render('estudiantes/index', [
-            'estudiantes' => $estudiantes,
-            'colegios'    => $colegios,
-            'ciudades'    => $ciudades,
-        ]);
-    }
-
-    /**
-     * Store a newly created student.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'CARNET'           => 'required|integer|unique:ESTUDIANTE,CARNET',
-            'NOMBRE'           => 'required|string|max:100',
-            'APELLIDO'         => 'required|string|max:100',
-            'FECHA_NAC'        => 'required|date',
-            'SEXO'             => 'required|in:M,F',
-            'CORREO'           => 'required|email|max:150|unique:ESTUDIANTE,CORREO',
-            'TELEFONO'         => 'required|string|max:20',
-            'DIRECCION'        => 'required|string|max:255',
-            'TITULO_BACHILLER' => 'required|string|max:255|unique:ESTUDIANTE,TITULO_BACHILLER',
-            'ESTADO'           => 'required|in:ACTIVO,INACTIVO',
-            'COLEGIO_ID'       => 'nullable|exists:COLEGIO,ID',
-            'CIUDAD_ID'        => 'nullable|exists:CIUDAD,ID',
-        ]);
-
-        Estudiante::create($validated);
-
-        return redirect('/estudiantes')->with('success', 'Estudiante registrado correctamente.');
     }
 }

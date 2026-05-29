@@ -1,0 +1,700 @@
+import { useState } from 'react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
+import { ArrowLeft, LoaderCircle, UserPlus, Save, Trash2, AlertTriangle, GraduationCap, Building2, Landmark, Calendar, ClipboardList } from 'lucide-react';
+import { FormEventHandler } from 'react';
+
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+
+interface Colegio { ID: number; NOMBRE: string; }
+interface Ciudad { ID: number; NOMBRE: string; DEPARTAMENTO: string; }
+interface Carrera { ID_CARRERA: number; NOMBRE: string; }
+interface CarreraCup { ID: number; ID_CARRERA: number; ID_CUP: number; carrera: Carrera; }
+interface Cup { ID_CUP: number; ANIO: number; SEMESTRE: string; }
+
+interface HistorialCup {
+    ID: number;
+    ID_ESTUDIANTE: number;
+    ID_CUP: number;
+    FECHA: string;
+    ESTADO: string;
+    NOTA_FINAL: number;
+    CARRERA: string | null;
+    cup: Cup;
+}
+
+interface Postulante {
+    ID_ESTUDIANTE: number;
+    CARNET: string;
+    NOMBRE: string;
+    APELLIDO: string;
+    FECHA_NAC: string;
+    SEXO: string;
+    DIRECCION: string | null;
+    TELEFONO: string | null;
+    CORREO: string;
+    TITULO_BACHILLER: string;
+    ESTADO: string;
+    COLEGIO_ID: number | null;
+    CIUDAD_ID: number | null;
+    OPCION_1: number | null; // ID of CarreraCup
+    OPCION_2: number | null; // ID of CarreraCup
+}
+
+interface Props {
+    postulante: Postulante | null;
+    colegios: Colegio[];
+    ciudades: Ciudad[];
+    carreras: CarreraCup[];
+    activeCup: Cup | null;
+    historialCups: HistorialCup[];
+}
+
+export default function EditarPostulante({ postulante, colegios, ciudades, carreras, activeCup, historialCups = [] }: Props) {
+    const isEdit = !!postulante;
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+
+    const hasHistory = isEdit && historialCups && historialCups.length > 0;
+
+    const { data, setData, post, put, processing, errors } = useForm({
+        CARNET: postulante?.CARNET || '',
+        NOMBRE: postulante?.NOMBRE || '',
+        APELLIDO: postulante?.APELLIDO || '',
+        FECHA_NAC: postulante?.FECHA_NAC || '',
+        SEXO: postulante?.SEXO || 'M',
+        CORREO: postulante?.CORREO || '',
+        TELEFONO: postulante?.TELEFONO || '',
+        DIRECCION: postulante?.DIRECCION || '',
+        TITULO_BACHILLER: postulante?.TITULO_BACHILLER || '',
+        ESTADO: postulante?.ESTADO || 'ACTIVO',
+        COLEGIO_ID: postulante?.COLEGIO_ID?.toString() || '',
+        CIUDAD_ID: postulante?.CIUDAD_ID?.toString() || '',
+        NUEVA_CIUDAD_NOMBRE: '',
+        NUEVA_CIUDAD_DEPARTAMENTO: 'SANTA CRUZ',
+        NUEVO_COLEGIO_NOMBRE: '',
+        OPCION_1: postulante?.OPCION_1?.toString() || '',
+        OPCION_2: postulante?.OPCION_2?.toString() || '',
+    });
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Gestión Académica', href: '#' },
+        { title: 'Estudiantes', href: '/estudiantes' },
+        { title: isEdit ? 'Editar Postulante' : 'Registrar Postulante', href: '#' },
+    ];
+
+    const validate = () => {
+        const errs: Record<string, string> = {};
+        if (!data.CARNET) errs.CARNET = 'El número de carnet es obligatorio y debe ser numérico.';
+        if (!data.NOMBRE.trim()) errs.NOMBRE = 'El nombre es obligatorio.';
+        if (!data.APELLIDO.trim()) errs.APELLIDO = 'El apellido es obligatorio.';
+        if (!data.FECHA_NAC) errs.FECHA_NAC = 'La fecha de nacimiento es obligatoria.';
+        if (!data.SEXO) errs.SEXO = 'El sexo es obligatorio.';
+        
+        if (!data.CORREO.trim()) {
+            errs.CORREO = 'El correo electrónico es obligatorio.';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.CORREO)) {
+            errs.CORREO = 'Debe introducir un correo electrónico válido.';
+        }
+        
+        if (!data.TITULO_BACHILLER.trim()) {
+            errs.TITULO_BACHILLER = 'El título de bachiller es obligatorio.';
+        }
+
+        // Validación condicional de Ciudad
+        if (data.CIUDAD_ID === 'NEW') {
+            if (!data.NUEVA_CIUDAD_NOMBRE.trim()) {
+                errs.NUEVA_CIUDAD_NOMBRE = 'El nombre de la nueva ciudad es obligatorio.';
+            }
+            if (!data.NUEVA_CIUDAD_DEPARTAMENTO.trim()) {
+                errs.NUEVA_CIUDAD_DEPARTAMENTO = 'El departamento es obligatorio.';
+            }
+        } else if (!data.CIUDAD_ID) {
+            errs.CIUDAD_ID = 'La ciudad de procedencia es obligatoria o seleccione registrar una nueva.';
+        }
+
+        // Validación condicional de Colegio
+        if (data.COLEGIO_ID === 'NEW') {
+            if (!data.NUEVO_COLEGIO_NOMBRE.trim()) {
+                errs.NUEVO_COLEGIO_NOMBRE = 'El nombre del nuevo colegio es obligatorio.';
+            }
+        } else if (!data.COLEGIO_ID) {
+            errs.COLEGIO_ID = 'El colegio es obligatorio o seleccione registrar uno nuevo.';
+        }
+
+        if (data.OPCION_1 && data.OPCION_2 && data.OPCION_1 === data.OPCION_2) {
+            errs.OPCION_2 = 'La segunda opción de carrera debe ser diferente a la primera opción.';
+        }
+
+        setClientErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (!validate()) return;
+
+        if (isEdit) {
+            put(`/estudiantes/${postulante.ID_ESTUDIANTE}`);
+        } else {
+            post('/estudiantes');
+        }
+    };
+
+    const handleDelete = () => {
+        if (!isEdit) return;
+        router.delete(`/estudiantes/${postulante.ID_ESTUDIANTE}`, {
+            onSuccess: () => {
+                setShowDeleteDialog(false);
+            },
+            onError: (errors) => {
+                setShowDeleteDialog(false);
+                const firstError = Object.values(errors)[0] || 'Ocurrió un error al intentar eliminar el postulante.';
+                alert(firstError);
+            }
+        });
+    };
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={isEdit ? `Editar Postulante: ${postulante.NOMBRE}` : 'Registrar Postulante Manual'} />
+
+            {/* Delete confirmation dialog */}
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="flex items-center gap-3 mb-1">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 shrink-0">
+                                <AlertTriangle className="h-5 w-5 text-destructive" />
+                            </div>
+                            <DialogTitle>Eliminar postulante</DialogTitle>
+                        </div>
+                        <DialogDescription className="pt-1">
+                            ¿Estás seguro de que deseas eliminar permanentemente este postulante? Esta acción no se puede deshacer y{' '}
+                            <span className="font-semibold text-foreground">borrará todas sus opciones y preinscripciones del periodo.</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                            Cancelar
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Sí, eliminar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            
+            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 md:p-6">
+                <div className={`w-full mx-auto mt-4 ${hasHistory ? 'max-w-6xl' : 'max-w-3xl'}`}>
+                    
+                    {/* Header */}
+                    <div className="mb-6 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Button variant="outline" size="icon" asChild>
+                                <Link href="/estudiantes">
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                            <div>
+                                <h1 className="text-2xl font-bold tracking-tight">
+                                    {isEdit ? 'Editar Postulante' : 'Registrar Postulante Manual'}
+                                </h1>
+                                <p className="text-sm text-muted-foreground mt-0.5">
+                                    {isEdit ? 'Modifica los datos del expediente del postulante y sus postulaciones.' : 'Crea un postulante e inscríbelo directamente en la gestión académica activa.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CUP Active Info Badge */}
+                    {activeCup && (
+                        <div className="mb-6 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <GraduationCap className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                <div>
+                                    <span className="block text-xs font-semibold text-indigo-500 uppercase tracking-wider">Gestión Activa Asignada</span>
+                                    <span className="font-bold text-sm text-neutral-800 dark:text-neutral-200">
+                                        CUP Admisión: Año {activeCup.ANIO} — Semestre {activeCup.SEMESTRE}
+                                    </span>
+                                </div>
+                            </div>
+                            <span className="inline-flex items-center rounded-full bg-indigo-100 dark:bg-indigo-900/50 px-2.5 py-0.5 text-xs font-bold text-indigo-800 dark:text-indigo-300">
+                                Transacción en Cascada
+                            </span>
+                        </div>
+                    )}
+
+                    {/* 2-Column Responsive Layout if hasHistory is true */}
+                    <div className={`grid grid-cols-1 ${hasHistory ? 'lg:grid-cols-3 gap-6' : ''}`}>
+                        
+                        {/* Form Card (occupies 2 cols if history exists, else full width) */}
+                        <div className={`${hasHistory ? 'lg:col-span-2' : ''}`}>
+                            
+                            <div className="border border-neutral-200/60 dark:border-neutral-800 bg-card text-card-foreground rounded-xl shadow-sm overflow-hidden">
+                                <div className="flex flex-col space-y-1.5 p-6 border-b border-neutral-100 dark:border-neutral-800">
+                                    <h3 className="font-bold leading-none tracking-tight text-lg flex items-center gap-2">
+                                        <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> 
+                                        {isEdit ? `Expediente ID: #${postulante.ID_ESTUDIANTE}` : 'Datos del Nuevo Postulante'}
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground">Los campos marcados con (*) son obligatorios del dominio.</p>
+                                </div>
+                                
+                                <div className="p-6">
+                                    <form className="flex flex-col gap-6" onSubmit={submit}>
+                                        
+                                        {/* CARNET */}
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="CARNET" className="text-sm font-semibold">Carnet de Identidad (CI) *</Label>
+                                            <Input
+                                                id="CARNET"
+                                                type="number"
+                                                required
+                                                value={data.CARNET}
+                                                onChange={e => setData('CARNET', e.target.value)}
+                                                placeholder="Ej. 7654321"
+                                                className="max-w-xs"
+                                                disabled={processing}
+                                            />
+                                            {clientErrors.CARNET && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.CARNET}</span>}
+                                            <InputError message={errors.CARNET} />
+                                        </div>
+
+                                        {/* NOMBRE + APELLIDO */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="NOMBRE" className="text-sm font-semibold">Nombres *</Label>
+                                                <Input
+                                                    id="NOMBRE"
+                                                    type="text"
+                                                    required
+                                                    value={data.NOMBRE}
+                                                    onChange={e => setData('NOMBRE', e.target.value)}
+                                                    placeholder="Nombres del postulante"
+                                                    disabled={processing}
+                                                />
+                                                {clientErrors.NOMBRE && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.NOMBRE}</span>}
+                                                <InputError message={errors.NOMBRE} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="APELLIDO" className="text-sm font-semibold">Apellidos *</Label>
+                                                <Input
+                                                    id="APELLIDO"
+                                                    type="text"
+                                                    required
+                                                    value={data.APELLIDO}
+                                                    onChange={e => setData('APELLIDO', e.target.value)}
+                                                    placeholder="Apellidos del postulante"
+                                                    disabled={processing}
+                                                />
+                                                {clientErrors.APELLIDO && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.APELLIDO}</span>}
+                                                <InputError message={errors.APELLIDO} />
+                                            </div>
+                                        </div>
+
+                                        {/* FECHA_NAC + SEXO */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="FECHA_NAC" className="text-sm font-semibold">Fecha de Nacimiento *</Label>
+                                                <Input
+                                                    id="FECHA_NAC"
+                                                    type="date"
+                                                    required
+                                                    value={data.FECHA_NAC}
+                                                    onChange={e => setData('FECHA_NAC', e.target.value)}
+                                                    className="max-w-xs"
+                                                    disabled={processing}
+                                                />
+                                                {clientErrors.FECHA_NAC && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.FECHA_NAC}</span>}
+                                                <InputError message={errors.FECHA_NAC} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label className="text-sm font-semibold">Sexo *</Label>
+                                                <div className="flex gap-2 mt-0.5">
+                                                    {(['M', 'F'] as const).map(s => (
+                                                        <button
+                                                            key={s}
+                                                            type="button"
+                                                            disabled={processing}
+                                                            onClick={() => setData('SEXO', s)}
+                                                            className={`flex-1 h-10 rounded-lg border text-xs font-bold transition-all ${
+                                                                data.SEXO === s
+                                                                    ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20 shadow-sm'
+                                                                    : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-600 dark:text-neutral-400'
+                                                            }`}
+                                                        >
+                                                            {s === 'M' ? 'Masculino' : 'Femenino'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                {clientErrors.SEXO && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.SEXO}</span>}
+                                                <InputError message={errors.SEXO} />
+                                            </div>
+                                        </div>
+
+                                        {/* CORREO */}
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="CORREO" className="text-sm font-semibold">Correo Electrónico *</Label>
+                                            <Input
+                                                id="CORREO"
+                                                type="email"
+                                                required
+                                                value={data.CORREO}
+                                                onChange={e => setData('CORREO', e.target.value)}
+                                                placeholder="correo@ejemplo.com"
+                                                className="max-w-sm"
+                                                disabled={processing}
+                                            />
+                                            {clientErrors.CORREO && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.CORREO}</span>}
+                                            <InputError message={errors.CORREO} />
+                                        </div>
+
+                                        {/* TELEFONO + DIRECCION */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="TELEFONO" className="text-sm font-semibold">Teléfono / Celular</Label>
+                                                <Input
+                                                    id="TELEFONO"
+                                                    type="text"
+                                                    value={data.TELEFONO}
+                                                    onChange={e => setData('TELEFONO', e.target.value)}
+                                                    placeholder="Ej. 70012345"
+                                                    disabled={processing}
+                                                />
+                                                <InputError message={errors.TELEFONO} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="DIRECCION" className="text-sm font-semibold">Dirección de Domicilio</Label>
+                                                <Input
+                                                    id="DIRECCION"
+                                                    type="text"
+                                                    value={data.DIRECCION}
+                                                    onChange={e => setData('DIRECCION', e.target.value)}
+                                                    placeholder="Calle, Barrio, Nro..."
+                                                    disabled={processing}
+                                                />
+                                                <InputError message={errors.DIRECCION} />
+                                            </div>
+                                        </div>
+
+                                        {/* CIUDAD_ID (Selección o Creación en caliente) */}
+                                        <div className="grid gap-4 border-t border-neutral-100 dark:border-neutral-800 pt-6">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="CIUDAD_ID" className="text-sm font-semibold">Ciudad de Procedencia *</Label>
+                                                <select
+                                                    id="CIUDAD_ID"
+                                                    required
+                                                    value={data.CIUDAD_ID}
+                                                    onChange={e => setData('CIUDAD_ID', e.target.value)}
+                                                    disabled={processing}
+                                                    className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                >
+                                                    <option value="">— Seleccionar ciudad —</option>
+                                                    <option value="NEW" className="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50">
+                                                        🌟 (+ Registrar Nueva Ciudad)
+                                                    </option>
+                                                    {ciudades.map(c => (
+                                                        <option key={c.ID} value={c.ID}>{c.NOMBRE} ({c.DEPARTAMENTO})</option>
+                                                    ))}
+                                                </select>
+                                                {clientErrors.CIUDAD_ID && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.CIUDAD_ID}</span>}
+                                                <InputError message={errors.CIUDAD_ID} />
+                                            </div>
+
+                                            {/* Campos condicionales para NUEVA CIUDAD */}
+                                            {data.CIUDAD_ID === 'NEW' && (
+                                                <div className="bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/30 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="NUEVA_CIUDAD_NOMBRE" className="text-sm font-semibold flex items-center gap-1.5">
+                                                            <Landmark className="h-4 w-4 text-indigo-500" /> Nombre de la Nueva Ciudad *
+                                                        </Label>
+                                                        <Input
+                                                            id="NUEVA_CIUDAD_NOMBRE"
+                                                            value={data.NUEVA_CIUDAD_NOMBRE}
+                                                            onChange={e => setData('NUEVA_CIUDAD_NOMBRE', e.target.value)}
+                                                            placeholder="Ej. MONTERO, WARNES"
+                                                            disabled={processing}
+                                                        />
+                                                        {clientErrors.NUEVA_CIUDAD_NOMBRE && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.NUEVA_CIUDAD_NOMBRE}</span>}
+                                                        <InputError message={errors.NUEVA_CIUDAD_NOMBRE} />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="NUEVA_CIUDAD_DEPARTAMENTO" className="text-sm font-semibold">Departamento / Provincia *</Label>
+                                                        <Input
+                                                            id="NUEVA_CIUDAD_DEPARTAMENTO"
+                                                            value={data.NUEVA_CIUDAD_DEPARTAMENTO}
+                                                            onChange={e => setData('NUEVA_CIUDAD_DEPARTAMENTO', e.target.value)}
+                                                            placeholder="SANTA CRUZ"
+                                                            disabled={processing}
+                                                        />
+                                                        {clientErrors.NUEVA_CIUDAD_DEPARTAMENTO && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.NUEVA_CIUDAD_DEPARTAMENTO}</span>}
+                                                        <InputError message={errors.NUEVA_CIUDAD_DEPARTAMENTO} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* COLEGIO_ID (Selección o Creación en caliente) */}
+                                        <div className="grid gap-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="COLEGIO_ID" className="text-sm font-semibold">Colegio de Procedencia *</Label>
+                                                <select
+                                                    id="COLEGIO_ID"
+                                                    required
+                                                    value={data.COLEGIO_ID}
+                                                    onChange={e => setData('COLEGIO_ID', e.target.value)}
+                                                    disabled={processing}
+                                                    className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                >
+                                                    <option value="">— Seleccionar colegio —</option>
+                                                    <option value="NEW" className="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50">
+                                                        🌟 (+ Registrar Nuevo Colegio)
+                                                    </option>
+                                                    {colegios.map(c => (
+                                                        <option key={c.ID} value={c.ID}>{c.NOMBRE}</option>
+                                                    ))}
+                                                </select>
+                                                {clientErrors.COLEGIO_ID && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.COLEGIO_ID}</span>}
+                                                <InputError message={errors.COLEGIO_ID} />
+                                            </div>
+
+                                            {/* Campo condicional para NUEVO COLEGIO */}
+                                            {data.COLEGIO_ID === 'NEW' && (
+                                                <div className="bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/30 rounded-xl p-4 grid gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    <Label htmlFor="NUEVO_COLEGIO_NOMBRE" className="text-sm font-semibold flex items-center gap-1.5">
+                                                        <Building2 className="h-4 w-4 text-indigo-500" /> Nombre del Nuevo Colegio *
+                                                    </Label>
+                                                    <Input
+                                                        id="NUEVO_COLEGIO_NOMBRE"
+                                                        value={data.NUEVO_COLEGIO_NOMBRE}
+                                                        onChange={e => setData('NUEVO_COLEGIO_NOMBRE', e.target.value)}
+                                                        placeholder="Ej. COLEGIO NACIONAL FLORIDA"
+                                                        className="max-w-md"
+                                                        disabled={processing}
+                                                    />
+                                                    {clientErrors.NUEVO_COLEGIO_NOMBRE && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.NUEVO_COLEGIO_NOMBRE}</span>}
+                                                    <InputError message={errors.NUEVO_COLEGIO_NOMBRE} />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* TITULO_BACHILLER (VARCHAR - Único - Mandatorio) */}
+                                        <div className="grid gap-2 border-t border-neutral-100 dark:border-neutral-800 pt-6">
+                                            <Label htmlFor="TITULO_BACHILLER" className="text-sm font-semibold">Código / Nro. de Serie de Título de Bachiller *</Label>
+                                            <Input
+                                                id="TITULO_BACHILLER"
+                                                type="text"
+                                                required
+                                                value={data.TITULO_BACHILLER}
+                                                onChange={e => setData('TITULO_BACHILLER', e.target.value)}
+                                                placeholder="Ej. T-HUM-9876543, BACHILLERATO_2026"
+                                                className="max-w-md text-neutral-800 dark:text-neutral-200"
+                                                disabled={processing}
+                                            />
+                                            {clientErrors.TITULO_BACHILLER && <span className="text-xs font-semibold text-rose-500 dark:text-rose-400">{clientErrors.TITULO_BACHILLER}</span>}
+                                            <InputError message={errors.TITULO_BACHILLER} />
+                                        </div>
+
+                                        {/* OPCONES DE CARRERA (POSTULACIÓN) */}
+                                        <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6">
+                                            <span className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4">
+                                                Postulaciones a Carrera
+                                            </span>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {/* OPCION_1 */}
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="OPCION_1" className="text-sm font-semibold">Opción 1 de Carrera (Preferencia 1)</Label>
+                                                    <select
+                                                        id="OPCION_1"
+                                                        value={data.OPCION_1}
+                                                        onChange={e => setData('OPCION_1', e.target.value)}
+                                                        disabled={processing}
+                                                        className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                    >
+                                                        <option value="">— Ninguna carrera seleccionada —</option>
+                                                        {carreras.map(cc => (
+                                                            <option key={cc.ID} value={cc.ID}>
+                                                                {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <InputError message={errors.OPCION_1} />
+                                                </div>
+
+                                                {/* OPCION_2 */}
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="OPCION_2" className="text-sm font-semibold">Opción 2 de Carrera (Preferencia 2)</Label>
+                                                    <select
+                                                        id="OPCION_2"
+                                                        value={data.OPCION_2}
+                                                        onChange={e => setData('OPCION_2', e.target.value)}
+                                                        disabled={processing}
+                                                        className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                    >
+                                                        <option value="">— Ninguna carrera seleccionada —</option>
+                                                        {carreras.map(cc => (
+                                                            <option key={cc.ID} value={cc.ID}>
+                                                                {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <InputError message={errors.OPCION_2} />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ESTADO DE EXPEDIENTE (Edit Mode Only) */}
+                                        {isEdit && (
+                                            <div className="grid gap-2 border-t border-neutral-100 dark:border-neutral-800 pt-6">
+                                                <Label className="text-sm font-semibold">Estado de Habilitación Académica *</Label>
+                                                <div className="flex gap-3 max-w-xs mt-1">
+                                                    {(['ACTIVO', 'INACTIVO'] as const).map(s => (
+                                                        <button
+                                                            key={s}
+                                                            type="button"
+                                                            disabled={processing}
+                                                            onClick={() => setData('ESTADO', s)}
+                                                            className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
+                                                                data.ESTADO === s
+                                                                    ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20 shadow-sm'
+                                                                    : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-600 dark:text-neutral-400'
+                                                            }`}
+                                                        >
+                                                            {s}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <InputError message={errors.ESTADO} />
+                                            </div>
+                                        )}
+
+                                        {/* Action Buttons */}
+                                        <div className="flex flex-col sm:flex-row gap-3 mt-6 border-t border-neutral-100 dark:border-neutral-800 pt-6">
+                                            <Button
+                                                type="submit"
+                                                disabled={processing}
+                                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 text-sm shadow-md"
+                                            >
+                                                {processing ? (
+                                                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Save className="mr-2 h-4 w-4" />
+                                                )}
+                                                {isEdit ? 'Guardar Cambios' : 'Registrar e Inscribir'}
+                                            </Button>
+
+                                            {isEdit && (
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    disabled={processing}
+                                                    className="h-11 font-bold text-sm shadow-md px-6"
+                                                    onClick={() => setShowDeleteDialog(true)}
+                                                >
+                                                    <Trash2 className="mr-2 h-4.5 w-4.5" />
+                                                    Eliminar Postulante
+                                                </Button>
+                                            )}
+                                        </div>
+
+                                    </form>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {/* History Card (occupies 1 col if hasHistory is true) */}
+                        {hasHistory && (
+                            <div className="flex flex-col gap-6 lg:col-span-1">
+                                <div className="border border-neutral-200/60 dark:border-neutral-800 bg-card text-card-foreground rounded-xl shadow-sm p-6 overflow-hidden">
+                                    <h3 className="font-bold text-lg flex items-center gap-2 mb-2">
+                                        <ClipboardList className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                        Historial CUP
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
+                                        Historial relacional de convocatorias y resultados académicos de admisión.
+                                    </p>
+                                    
+                                    <div className="space-y-4">
+                                        {historialCups.map((hc) => (
+                                            <div key={hc.ID} className="border border-neutral-100 dark:border-neutral-800 rounded-xl p-4 bg-neutral-50/50 dark:bg-neutral-900/20 shadow-2xs">
+                                                
+                                                {/* Header Period & Status */}
+                                                <div className="flex justify-between items-start mb-2 gap-2">
+                                                    <div>
+                                                        <span className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider leading-none mb-1">
+                                                            Convocatoria
+                                                        </span>
+                                                        <span className="font-extrabold text-sm text-neutral-800 dark:text-neutral-200">
+                                                            CUP {hc.cup.ANIO} - {hc.cup.SEMESTRE}
+                                                        </span>
+                                                    </div>
+                                                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide ${
+                                                        hc.ESTADO === 'APROBADO'
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-800'
+                                                            : hc.ESTADO === 'REPROBADO'
+                                                            ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-800'
+                                                            : 'bg-neutral-50 text-neutral-600 border-neutral-200 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-800'
+                                                    }`}>
+                                                        {hc.ESTADO}
+                                                    </span>
+                                                </div>
+
+                                                {/* Details Grid */}
+                                                <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 text-xs">
+                                                    <div>
+                                                        <span className="block text-neutral-400 font-semibold mb-0.5">Nota Final:</span>
+                                                        <span className="font-extrabold text-neutral-800 dark:text-neutral-200 text-sm">
+                                                            {parseFloat(hc.NOTA_FINAL.toString()).toFixed(2)} pts
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-neutral-400 font-semibold mb-0.5">Fecha Registro:</span>
+                                                        <span className="font-bold text-neutral-600 dark:text-neutral-400 block pt-0.5">
+                                                            {new Date(hc.FECHA).toLocaleDateString('es-ES', {
+                                                                day: '2-digit',
+                                                                month: '2-digit',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Carrera de Ingreso */}
+                                                <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 text-xs">
+                                                    <span className="block text-neutral-400 font-semibold mb-1">Carrera de Ingreso:</span>
+                                                    <span className={`font-bold block rounded p-2 ${
+                                                        hc.CARRERA 
+                                                            ? 'bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/30 text-xs font-extrabold'
+                                                            : 'text-neutral-400 italic font-medium'
+                                                    }`}>
+                                                        {hc.CARRERA ? hc.CARRERA : 'Ninguna asignada / No calificado'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                </div>
+            </div>
+        </AppLayout>
+    );
+}

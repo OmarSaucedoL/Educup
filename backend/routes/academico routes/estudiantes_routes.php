@@ -22,3 +22,13 @@ Route::post('/estudiantes/importar', [EstudianteController::class, 'importExcel'
 
 // Crear un nuevo estudiante
 Route::post('/estudiantes', [EstudianteController::class, 'store']);
+
+// Mostrar formulario para editar un estudiante
+Route::get('/estudiantes/{id}/editar', [EstudianteController::class, 'edit']);
+
+// Actualizar un estudiante
+Route::put('/estudiantes/{id}', [EstudianteController::class, 'update']);
+
+// Eliminar un estudiante
+Route::delete('/estudiantes/{id}', [EstudianteController::class, 'destroy']);
+
