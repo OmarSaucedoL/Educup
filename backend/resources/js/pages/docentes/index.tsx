@@ -39,6 +39,7 @@ export default function Index({ docentes }: { docentes: any[] }) {
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Username</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Carnet</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Correo Electrónico</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Estado</th>
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
@@ -54,11 +55,22 @@ export default function Index({ docentes }: { docentes: any[] }) {
                                             </td>
                                             <td className="p-4 align-middle">{docente.usuario?.CARNET}</td>
                                             <td className="p-4 align-middle">{docente.usuario?.CORREO}</td>
+                                            <td className="p-4 align-middle">
+                                                <div
+                                                    className={`focus:ring-ring inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none ${
+                                                        docente.usuario?.ESTADO === 'ACTIVO' || docente.usuario?.ESTADO === 1
+                                                            ? 'border-green-200 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                            : 'border-red-200 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                    }`}
+                                                >
+                                                    {docente.usuario?.ESTADO === 'ACTIVO' || docente.usuario?.ESTADO === 1 ? 'Activo' : 'Inactivo'}
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={5} className="text-muted-foreground p-4 text-center align-middle">
+                                        <td colSpan={6} className="text-muted-foreground p-4 text-center align-middle">
                                             No hay docentes registrados.
                                         </td>
                                     </tr>
