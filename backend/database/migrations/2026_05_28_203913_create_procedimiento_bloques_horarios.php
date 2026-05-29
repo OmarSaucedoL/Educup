@@ -43,7 +43,7 @@ return new class extends Migration
                 -- 2. INSERCIÓN DEL ENCABEZADO
                 INSERT INTO "BLOQUE_HORARIO" ("TURNO")
                 VALUES (UPPER(p_turno))
-                RETURNING "ID" INTO v_bloque_id;
+                RETURNING "ID_BLOQUE_HORARIO" INTO v_bloque_id;
 
                 -- 3. BUCLE PARA DISTRIBUIR LOS DÍAS Y LAS 2 MATERIAS
                 FOREACH v_dia_actual IN ARRAY p_dias
@@ -65,7 +65,7 @@ return new class extends Migration
                             RETURNING "ID" INTO v_horario_id;
                         END IF;
 
-                        INSERT INTO "HORARIO_EN_BLOQUE" ("HORARIO_ID", "BLOQUE_HORARIO_ID", "CARGA_HORARIA")
+                        INSERT INTO "HORARIO_EN_BLOQUE" ("HORARIO_ID", "ID_BLOQUE_HORARIO", "CARGA_HORARIA")
                         VALUES (v_horario_id, v_bloque_id, p_carga_horaria);
 
                         v_hora_actual := v_hora_fin_clase;

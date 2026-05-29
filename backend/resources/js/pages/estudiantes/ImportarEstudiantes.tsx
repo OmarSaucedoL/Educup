@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
 interface Periodo {
-    ID: number;
+    ID_CUP: number;
     ANIO: number;
     SEMESTRE: number;
 }
@@ -28,7 +28,7 @@ export default function ImportarEstudiantes({ periodos }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors, progress, reset } = useForm({
-        CUP_ID: periodos.length > 0 ? periodos[0].ID.toString() : '',
+        CUP_ID: periodos.length > 0 ? periodos[0].ID_CUP.toString() : '',
         archivo_excel: null as File | null,
     });
 
@@ -103,7 +103,7 @@ export default function ImportarEstudiantes({ periodos }: Props) {
                                     >
                                         <option value="" disabled>Selecciona un periodo</option>
                                         {periodos.map(p => (
-                                            <option key={p.ID} value={p.ID}>
+                                            <option key={p.ID_CUP} value={p.ID_CUP}>
                                                 Año {p.ANIO} - Semestre {p.SEMESTRE}
                                             </option>
                                         ))}

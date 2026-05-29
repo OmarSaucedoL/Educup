@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Cup extends Model
 {
     protected $table = 'CUP';
-    protected $primaryKey = 'ID';
+    protected $primaryKey = 'ID_CUP';
     public $timestamps = false;
 
     protected $fillable = [
@@ -35,16 +35,16 @@ class Cup extends Model
 
     public function docenteCups(): HasMany
     {
-        return $this->hasMany(DocenteCup::class, 'CUP_ID', 'ID');
+        return $this->hasMany(DocenteCup::class, 'ID_CUP', 'ID_CUP');
     }
 
     public function estudianteCups(): HasMany
     {
-        return $this->hasMany(EstudianteCup::class, 'CUP_ID', 'ID');
+        return $this->hasMany(EstudianteCup::class, 'ID_CUP', 'ID_CUP');
     }
 
     public function carreraCups(): HasMany
     {
-        return $this->hasMany(CarreraCup::class, 'CUP_ID', 'ID');
+        return $this->hasMany(CarreraCup::class, 'ID_CUP', 'ID_CUP');
     }
 }

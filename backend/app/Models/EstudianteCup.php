@@ -13,8 +13,8 @@ class EstudianteCup extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'ESTUDIANTE_ID',
-        'CUP_ID',
+        'ID_ESTUDIANTE',
+        'ID_CUP',
         'FECHA',
         'ESTADO',
         'NOTA_FINAL',
@@ -27,12 +27,12 @@ class EstudianteCup extends Model
 
     public function estudiante(): BelongsTo
     {
-        return $this->belongsTo(Estudiante::class, 'ESTUDIANTE_ID', 'ID');
+        return $this->belongsTo(Estudiante::class, 'ID_ESTUDIANTE', 'ID_ESTUDIANTE');
     }
 
     public function cup(): BelongsTo
     {
-        return $this->belongsTo(Cup::class, 'CUP_ID', 'ID');
+        return $this->belongsTo(Cup::class, 'ID_CUP', 'ID_CUP');
     }
 
     public function calificaciones(): HasMany

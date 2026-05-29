@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Grupo extends Model
 {
     protected $table = 'GRUPO';
-    protected $primaryKey = 'ID';
+    protected $primaryKey = 'ID_GRUPO';
     public $timestamps = false;
 
     protected $fillable = [
@@ -18,6 +18,6 @@ class Grupo extends Model
 
     public function clases(): HasMany
     {
-        return $this->hasMany(Clase::class, 'GRUPO_ID', 'ID');
+        return $this->hasMany(Clase::class, 'ID_GRUPO', 'ID_GRUPO');
     }
 }

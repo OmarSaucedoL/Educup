@@ -9,13 +9,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('CLASE', function (Blueprint $table) {
-            $table->id('ID');
+            $table->id('ID_CLASE');
             
             $table->foreignId('DOCENTE_CUP_ID')->constrained('DOCENTE_CUP', 'ID')->onDelete('cascade');
-            $table->foreignId('BLOQUE_HORARIO_ID')->constrained('BLOQUE_HORARIO', 'ID')->onDelete('cascade');
-            $table->foreignId('MATERIA_ID')->constrained('MATERIA', 'ID')->onDelete('restrict');
-            $table->foreignId('GRUPO_ID')->constrained('GRUPO', 'ID')->onDelete('restrict');
-            $table->foreignId('AULA_ID')->constrained('AULA', 'ID')->onDelete('restrict');
+            $table->foreignId('ID_BLOQUE_HORARIO')->constrained('BLOQUE_HORARIO', 'ID_BLOQUE_HORARIO')->onDelete('cascade');
+            $table->foreignId('ID_MATERIA')->constrained('MATERIA', 'ID_MATERIA')->onDelete('restrict');
+            $table->foreignId('ID_GRUPO')->constrained('GRUPO', 'ID_GRUPO')->onDelete('restrict');
+            $table->foreignId('ID_AULA')->constrained('AULA', 'ID_AULA')->onDelete('restrict');
         });
     }
 

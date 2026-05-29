@@ -33,14 +33,19 @@ export default function Index({ aulas }: { aulas: any[] }) {
             onSuccess: () => setDeleteId(null),
             onError: (errors) => {
                 setDeleteId(null);
-                alert(errors.id || 'Ocurrió un error al intentar eliminar el aula.');
+                alert(errors.id || errors.ID_AULA || 'Ocurrió un error al intentar eliminar el aula.');
             },
         });
+    };
+
+    const confirmDeleteHandler = () => {
+        // Just a helper to handle click
     };
 
     const handleToggleStatus = (id: number) => {
         router.patch(`/aulas/${id}/toggle-status`, {}, {
             preserveScroll: true,
+            preserveState: true,
             onError: () => {
                 alert('No se pudo actualizar el estado de la aula.');
             },
@@ -103,13 +108,13 @@ export default function Index({ aulas }: { aulas: any[] }) {
                             <tbody className="[&_tr:last-child]:border-0">
                                 {aulas && aulas.length > 0 ? (
                                     aulas.map((aula) => (
-                                        <tr key={aula.ID} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
-                                            <td className="p-4 align-middle font-medium">{aula.ID}</td>
+                                        <tr key={aula.ID_AULA} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                            <td className="p-4 align-middle font-medium">{aula.ID_AULA}</td>
                                             <td className="p-4 align-middle font-medium">{aula.NOMBRE}</td>
                                             <td className="p-4 align-middle text-muted-foreground">{aula.DESCRIPCION || <span className="italic text-muted-foreground/50">Sin descripción</span>}</td>
                                             <td className="p-4 align-middle text-center">
                                                 <button
-                                                    onClick={() => handleToggleStatus(aula.ID)}
+                                                    onClick={() => handleToggleStatus(aula.ID_AULA)}
                                                     title="Haga clic para alternar el estado"
                                                     className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold cursor-pointer transition-all hover:scale-105 select-none ${
                                                         aula.ESTADO === 'ACTIVO'
@@ -125,7 +130,7 @@ export default function Index({ aulas }: { aulas: any[] }) {
                                                     variant="destructive"
                                                     size="sm"
                                                     className="h-8 gap-1 text-xs"
-                                                    onClick={() => setDeleteId(aula.ID)}
+                                                    onClick={() => setDeleteId(aula.ID_AULA)}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" /> Eliminar
                                                 </Button>

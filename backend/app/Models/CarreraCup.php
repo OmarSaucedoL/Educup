@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CarreraCup extends Model
 {
@@ -12,19 +13,19 @@ class CarreraCup extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'CARRERA_ID',
-        'CUP_ID',
+        'ID_CARRERA',
+        'ID_CUP',
         'CUPOS'
     ];
 
     public function carrera(): BelongsTo
     {
-        return $this->belongsTo(Carrera::class, 'CARRERA_ID', 'ID');
+        return $this->belongsTo(Carrera::class, 'ID_CARRERA', 'ID_CARRERA');
     }
 
     public function cup(): BelongsTo
     {
-        return $this->belongsTo(Cup::class, 'CUP_ID', 'ID');
+        return $this->belongsTo(Cup::class, 'ID_CUP', 'ID_CUP');
     }
 
     public function opcionesCarrera(): HasMany

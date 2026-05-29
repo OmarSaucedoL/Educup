@@ -43,10 +43,7 @@ class UsuariosImport implements ToModel, WithHeadingRow
         // Fase 3: Lógica Condicional de Docentes
         if (str_contains($rolNombre, 'DOCENTE')) {
             Docente::create([
-                'CODIGO' => $usuario->ID
-                // Otros campos de la tabla DOCENTE según tu modelo
-                // Asumiendo que CODIGO es PK y no hay más campos obligatorios,
-                // de lo contrario habría que agregar sus valores por defecto aquí.
+                'CODIGO_DOCENTE' => $usuario->ID
             ]);
         }
 

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('GRUPO', function (Blueprint $table) {
-            $table->id('ID');
+            $table->id('ID_GRUPO');
             $table->integer('EST_MIN')->default(20);
             $table->integer('EST_MAX')->default(70);
         });

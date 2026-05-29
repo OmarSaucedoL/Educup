@@ -4,20 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Clase extends Model
 {
     protected $table = 'CLASE';
-    protected $primaryKey = 'ID';
+    protected $primaryKey = 'ID_CLASE';
     public $timestamps = false;
 
     protected $fillable = [
         'DOCENTE_CUP_ID',
-        'BLOQUE_HORARIO_ID',
-        'MATERIA_ID',
-        'GRUPO_ID',
-        'AULA_ID'
+        'ID_BLOQUE_HORARIO',
+        'ID_MATERIA',
+        'ID_GRUPO',
+        'ID_AULA'
     ];
 
     public function docenteCup(): BelongsTo
@@ -27,26 +27,26 @@ class Clase extends Model
 
     public function bloqueHorario(): BelongsTo
     {
-        return $this->belongsTo(BloqueHorario::class, 'BLOQUE_HORARIO_ID', 'ID');
+        return $this->belongsTo(BloqueHorario::class, 'ID_BLOQUE_HORARIO', 'ID_BLOQUE_HORARIO');
     }
 
     public function materia(): BelongsTo
     {
-        return $this->belongsTo(Materia::class, 'MATERIA_ID', 'ID');
+        return $this->belongsTo(Materia::class, 'ID_MATERIA', 'ID_MATERIA');
     }
 
     public function grupo(): BelongsTo
     {
-        return $this->belongsTo(Grupo::class, 'GRUPO_ID', 'ID');
+        return $this->belongsTo(Grupo::class, 'ID_GRUPO', 'ID_GRUPO');
     }
 
     public function aula(): BelongsTo
     {
-        return $this->belongsTo(Aula::class, 'AULA_ID', 'ID');
+        return $this->belongsTo(Aula::class, 'ID_AULA', 'ID_AULA');
     }
 
     public function calificaciones(): HasMany
     {
-        return $this->hasMany(Calificacion::class, 'CLASE_ID', 'ID');
+        return $this->hasMany(Calificacion::class, 'ID_CLASE', 'ID_CLASE');
     }
 }

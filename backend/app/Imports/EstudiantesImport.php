@@ -62,8 +62,8 @@ class EstudiantesImport implements ToModel, WithHeadingRow
 
         // Fase 2: Preinscripción en la Gestión
         $estudianteCup = EstudianteCup::create([
-            'ESTUDIANTE_ID' => $estudiante->ID,
-            'CUP_ID'        => $this->cupId,
+            'ID_ESTUDIANTE' => $estudiante->ID_ESTUDIANTE,
+            'ID_CUP'        => $this->cupId,
             'FECHA'         => now(),
             'ESTADO'        => 'INSCRITO',
             'NOTA_FINAL'    => 0.00,
@@ -86,15 +86,15 @@ class EstudiantesImport implements ToModel, WithHeadingRow
         }
 
         // Buscar la carrera en la gestión activa.
-        // Si el valor es numérico, lo buscamos por ID, sino, por NOMBRE
+        // Si el valor es numérico, lo buscamos por ID_CARRERA, sino, por NOMBRE
         $carreraCup = CarreraCup::whereHas('carrera', function ($query) use ($valor) {
                 if (is_numeric($valor)) {
-                    $query->where('ID', $valor);
+                    $query->where('ID_CARRERA', $valor);
                 } else {
                     $query->where('NOMBRE', 'ILIKE', '%' . $valor . '%');
                 }
             })
-            ->where('CUP_ID', $this->cupId)
+            ->where('ID_CUP', $this->cupId)
             ->first();
 
         if (!$carreraCup) {

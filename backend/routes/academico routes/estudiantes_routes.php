@@ -11,7 +11,7 @@ Route::get('/estudiantes/crearEstudiante', [EstudianteController::class, 'create
 
 // Vista de importación masiva
 Route::get('/estudiantes/importar', function () {
-    $periodos = \App\Models\Cup::orderBy('FECHA_INICIO', 'desc')->get(['ID', 'ANIO', 'SEMESTRE']);
+    $periodos = \App\Models\Cup::orderBy('FECHA_INICIO', 'desc')->get(['ID_CUP', 'ANIO', 'SEMESTRE']);
     return inertia('estudiantes/ImportarEstudiantes', [
         'periodos' => $periodos
     ]);

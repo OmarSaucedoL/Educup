@@ -91,8 +91,8 @@ export default function Index({ bloques }: { bloques: any[] }) {
                             <tbody className="[&_tr:last-child]:border-0">
                                 {bloques && bloques.length > 0 ? (
                                     bloques.map((bloque) => (
-                                        <tr key={bloque.ID} className="hover:bg-muted/50 border-b transition-colors">
-                                            <td className="p-4 align-middle font-medium">{bloque.ID}</td>
+                                        <tr key={bloque.ID_BLOQUE_HORARIO} className="hover:bg-muted/50 border-b transition-colors">
+                                            <td className="p-4 align-middle font-medium">{bloque.ID_BLOQUE_HORARIO}</td>
                                             <td className="p-4 align-middle font-medium">
                                                 <span className="focus:ring-ring inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none">
                                                     {bloque.TURNO}
@@ -120,7 +120,7 @@ export default function Index({ bloques }: { bloques: any[] }) {
                                                     variant="destructive"
                                                     size="sm"
                                                     className="h-8 gap-1 text-xs"
-                                                    onClick={() => setDeleteId(bloque.ID)}
+                                                    onClick={() => setDeleteId(bloque.ID_BLOQUE_HORARIO)}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" /> Eliminar
                                                 </Button>

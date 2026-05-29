@@ -9,22 +9,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Docente extends Model
 {
     protected $table = 'DOCENTE';
-    protected $primaryKey = 'CODIGO';
+    protected $primaryKey = 'CODIGO_DOCENTE';
     public $incrementing = false;
     protected $keyType = 'int';
     public $timestamps = false;
 
     protected $fillable = [
-        'CODIGO'
+        'CODIGO_DOCENTE'
     ];
 
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'CODIGO', 'ID');
+        return $this->belongsTo(Usuario::class, 'CODIGO_DOCENTE', 'ID');
     }
 
     public function docenteCups(): HasMany
     {
-        return $this->hasMany(DocenteCup::class, 'DOCENTE_CODIGO', 'CODIGO');
+        return $this->hasMany(DocenteCup::class, 'CODIGO_DOCENTE', 'CODIGO_DOCENTE');
     }
 }

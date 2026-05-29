@@ -103,8 +103,8 @@ export default function Index({ estudiantes }: { estudiantes: Estudiante[] }) {
                             <tbody className="[&_tr:last-child]:border-0">
                                 {estudiantes && estudiantes.length > 0 ? (
                                     estudiantes.map((est) => (
-                                        <tr key={est.ID} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
-                                            <td className="p-4 align-middle font-medium">{est.ID}</td>
+                                        <tr key={est.ID_ESTUDIANTE} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                            <td className="p-4 align-middle font-medium">{est.ID_ESTUDIANTE}</td>
                                             <td className="p-4 align-middle font-mono text-xs">{est.CARNET}</td>
                                             <td className="p-4 align-middle font-medium">{est.APELLIDO}, {est.NOMBRE}</td>
                                             <td className="p-4 align-middle text-muted-foreground">{est.CORREO}</td>
@@ -124,7 +124,7 @@ export default function Index({ estudiantes }: { estudiantes: Estudiante[] }) {
                                                     variant="destructive"
                                                     size="sm"
                                                     className="h-8 gap-1 text-xs"
-                                                    onClick={() => setDeleteId(est.ID)}
+                                                    onClick={() => setDeleteId(est.ID_ESTUDIANTE)}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" /> Eliminar
                                                 </Button>

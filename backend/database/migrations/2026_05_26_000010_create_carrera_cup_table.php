@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::create('CARRERA_CUP', function (Blueprint $table) {
             $table->id('ID');
-            $table->foreignId('CARRERA_ID')->constrained('CARRERA', 'ID')->onDelete('cascade');
-            $table->foreignId('CUP_ID')->constrained('CUP', 'ID')->onDelete('cascade');
+            $table->foreignId('ID_CARRERA')->constrained('CARRERA', 'ID_CARRERA')->onDelete('cascade');
+            $table->foreignId('ID_CUP')->constrained('CUP', 'ID_CUP')->onDelete('cascade');
             $table->integer('CUPOS');
             
-            $table->unique(['CARRERA_ID', 'CUP_ID']);
+            $table->unique(['ID_CARRERA', 'ID_CUP']);
         });
     }
 

@@ -13,7 +13,7 @@ class HorarioEnBloque extends Model
 
     protected $fillable = [
         'HORARIO_ID',
-        'BLOQUE_HORARIO_ID',
+        'ID_BLOQUE_HORARIO',
         'CARGA_HORARIA'
     ];
 
@@ -24,6 +24,6 @@ class HorarioEnBloque extends Model
 
     public function bloqueHorario(): BelongsTo
     {
-        return $this->belongsTo(BloqueHorario::class, 'BLOQUE_HORARIO_ID', 'ID');
+        return $this->belongsTo(BloqueHorario::class, 'ID_BLOQUE_HORARIO', 'ID_BLOQUE_HORARIO');
     }
 }

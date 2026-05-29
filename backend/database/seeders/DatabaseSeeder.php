@@ -35,25 +35,25 @@ class DatabaseSeeder extends Seeder
             ['NOMBRE' => 'AULA 101'],
             ['NOMBRE' => 'LABORATORIO 1']
         ]);
-        $idAula = DB::table('AULA')->first()->ID;
+        $idAula = DB::table('AULA')->first()->ID_AULA;
 
         DB::table('MATERIA')->insert([
             ['NOMBRE' => 'COMPUTACIÓN'],
             ['NOMBRE' => 'MATEMÁTICAS']
         ]);
-        $idMateria = DB::table('MATERIA')->first()->ID;
+        $idMateria = DB::table('MATERIA')->first()->ID_MATERIA;
 
         DB::table('GRUPO')->insert([
             ['EST_MIN' => 20, 'EST_MAX' => 70]
         ]);
-        $idGrupo = DB::table('GRUPO')->first()->ID;
+        $idGrupo = DB::table('GRUPO')->first()->ID_GRUPO;
 
         DB::table('CARRERA')->insert([
             ['NOMBRE' => 'INGENIERÍA INFORMÁTICA'],
             ['NOMBRE' => 'INGENIERÍA EN SISTEMAS']
         ]);
-        $idInformatica = DB::table('CARRERA')->where('NOMBRE', 'INGENIERÍA INFORMÁTICA')->value('ID');
-        $idSistemas = DB::table('CARRERA')->where('NOMBRE', 'INGENIERÍA EN SISTEMAS')->value('ID');
+        $idInformatica = DB::table('CARRERA')->where('NOMBRE', 'INGENIERÍA INFORMÁTICA')->value('ID_CARRERA');
+        $idSistemas = DB::table('CARRERA')->where('NOMBRE', 'INGENIERÍA EN SISTEMAS')->value('ID_CARRERA');
 
         $horarioId = DB::table('HORARIO')->insertGetId([
             'DIA' => 'LUNES',
@@ -62,13 +62,13 @@ class DatabaseSeeder extends Seeder
         ], 'ID');
 
         // 3. BLOQUE_HORARIO y HORARIO_EN_BLOQUE
-        $bloqueMananaId = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'MAÑANA'], 'ID');
-        $bloqueTardeId = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'TARDE'], 'ID');
-        $bloqueNocheId = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'NOCHE'], 'ID');
+        $bloqueMananaId = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'MAÑANA'], 'ID_BLOQUE_HORARIO');
+        $bloqueTardeId = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'TARDE'], 'ID_BLOQUE_HORARIO');
+        $bloqueNocheId = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'NOCHE'], 'ID_BLOQUE_HORARIO');
 
         DB::table('HORARIO_EN_BLOQUE')->insert([
             'HORARIO_ID' => $horarioId,
-            'BLOQUE_HORARIO_ID' => $bloqueMananaId,
+            'ID_BLOQUE_HORARIO' => $bloqueMananaId,
             'CARGA_HORARIA' => '1.5'
         ]);
 
@@ -103,7 +103,7 @@ class DatabaseSeeder extends Seeder
             'ROL_ID' => $idDocente
         ], 'ID');
 
-        DB::table('DOCENTE')->insert(['CODIGO' => $userDocenteId]);
+        DB::table('DOCENTE')->insert(['CODIGO_DOCENTE' => $userDocenteId]);
 
         $estudianteId = DB::table('ESTUDIANTE')->insertGetId([
             'CARNET' => 9999999,
@@ -113,12 +113,12 @@ class DatabaseSeeder extends Seeder
             'DIRECCION' => 'Av. Estudiantil 123',
             'TELEFONO' => '70012345',
             'CORREO' => 'juan.perez@test.edu',
-            'TITULO_BACHILLER' => true,
+            'TITULO_BACHILLER' => 'BACHILLER_9999999',
             'SEXO' => 'M',
             'ESTADO' => 'ACTIVO',
             'COLEGIO_ID' => $idColegio,
             'CIUDAD_ID' => $idCiudad
-        ], 'ID');
+        ], 'ID_ESTUDIANTE');
 
         $cupId = DB::table('CUP')->insertGetId([
             'ANIO' => 2026,
@@ -128,35 +128,35 @@ class DatabaseSeeder extends Seeder
             'FECHA_INICIO' => '2026-06-01',
             'FECHA_FIN' => '2026-07-15',
             'USUARIO_ID' => $adminId
-        ], 'ID');
+        ], 'ID_CUP');
 
         // 5. Inserción de CARRERA_CUP y DOCENTE_CUP
         $carreraCupInfoId = DB::table('CARRERA_CUP')->insertGetId([
-            'CARRERA_ID' => $idInformatica, 'CUP_ID' => $cupId, 'CUPOS' => 50
+            'ID_CARRERA' => $idInformatica, 'ID_CUP' => $cupId, 'CUPOS' => 50
         ], 'ID');
         $carreraCupSisId = DB::table('CARRERA_CUP')->insertGetId([
-            'CARRERA_ID' => $idSistemas, 'CUP_ID' => $cupId, 'CUPOS' => 60
+            'ID_CARRERA' => $idSistemas, 'ID_CUP' => $cupId, 'CUPOS' => 60
         ], 'ID');
 
         $docenteCupId = DB::table('DOCENTE_CUP')->insertGetId([
-            'DOCENTE_CODIGO' => $userDocenteId,
-            'CUP_ID' => $cupId,
+            'CODIGO_DOCENTE' => $userDocenteId,
+            'ID_CUP' => $cupId,
             'FECHA_CREACION' => now()
         ], 'ID');
 
-        // 6. Creación de la CLASE vinculando BLOQUE_HORARIO_ID y DOCENTE_CUP_ID
+        // 6. Creación de la CLASE vinculando ID_BLOQUE_HORARIO y DOCENTE_CUP_ID
         DB::table('CLASE')->insert([
             'DOCENTE_CUP_ID' => $docenteCupId,
-            'BLOQUE_HORARIO_ID' => $bloqueMananaId,
-            'MATERIA_ID' => $idMateria,
-            'GRUPO_ID' => $idGrupo,
-            'AULA_ID' => $idAula
+            'ID_BLOQUE_HORARIO' => $bloqueMananaId,
+            'ID_MATERIA' => $idMateria,
+            'ID_GRUPO' => $idGrupo,
+            'ID_AULA' => $idAula
         ]);
 
         // 7. Preinscripción ESTUDIANTE_CUP y asignación de OPCION_CARRERA (1 y 2)
         $estudianteCupId = DB::table('ESTUDIANTE_CUP')->insertGetId([
-            'ESTUDIANTE_ID' => $estudianteId,
-            'CUP_ID' => $cupId,
+            'ID_ESTUDIANTE' => $estudianteId,
+            'ID_CUP' => $cupId,
             'FECHA' => now(),
             'ESTADO' => 'APROBADO',
             'NOTA_FINAL' => 85.50,

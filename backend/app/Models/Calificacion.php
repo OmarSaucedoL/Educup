@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Calificacion extends Model
 {
     protected $table = 'CALIFICACIONES';
-    protected $primaryKey = 'ID';
+    protected $primaryKey = 'ID_CALIFICACIONES';
     public $timestamps = false;
 
     protected $fillable = [
         'NOMBRE',
         'PONDERACION',
         'ESTUDIANTE_CUP_ID',
-        'CLASE_ID'
+        'ID_CLASE'
     ];
 
     protected $casts = [
@@ -29,6 +29,6 @@ class Calificacion extends Model
 
     public function clase(): BelongsTo
     {
-        return $this->belongsTo(Clase::class, 'CLASE_ID', 'ID');
+        return $this->belongsTo(Clase::class, 'ID_CLASE', 'ID_CLASE');
     }
 }

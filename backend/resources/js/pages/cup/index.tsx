@@ -45,7 +45,7 @@ export default function Index({ cups }: { cups: any[] }) {
                             <tbody className="[&_tr:last-child]:border-0">
                                 {cups && cups.length > 0 ? (
                                     cups.map((cup) => (
-                                        <tr key={cup.ID} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                        <tr key={cup.ID_CUP} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
                                             <td className="p-4 align-middle font-medium">
                                                 {cup.ANIO} - {cup.SEMESTRE}
                                             </td>

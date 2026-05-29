@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('HORARIO_EN_BLOQUE', function (Blueprint $table) {
             $table->id('ID');
             $table->foreignId('HORARIO_ID')->constrained('HORARIO', 'ID')->onDelete('cascade');
-            $table->foreignId('BLOQUE_HORARIO_ID')->constrained('BLOQUE_HORARIO', 'ID')->onDelete('cascade');
+            $table->foreignId('ID_BLOQUE_HORARIO')->constrained('BLOQUE_HORARIO', 'ID_BLOQUE_HORARIO')->onDelete('cascade');
             $table->string('CARGA_HORARIA', 50)->nullable();
 
-            $table->unique(['HORARIO_ID', 'BLOQUE_HORARIO_ID']);
+            $table->unique(['HORARIO_ID', 'ID_BLOQUE_HORARIO']);
         });
     }
 

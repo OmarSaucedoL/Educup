@@ -34,7 +34,7 @@ class DocenteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'CODIGO' => 'required|integer|exists:USUARIO,ID|unique:DOCENTE,CODIGO'
+            'CODIGO_DOCENTE' => 'required|integer|exists:USUARIO,ID|unique:DOCENTE,CODIGO_DOCENTE'
         ]);
 
         $docente = Docente::create($validated);
@@ -59,7 +59,7 @@ class DocenteController extends Controller
         $docente = Docente::findOrFail($id);
 
         $validated = $request->validate([
-            'CODIGO' => 'sometimes|required|integer|exists:USUARIO,ID'
+            'CODIGO_DOCENTE' => 'sometimes|required|integer|exists:USUARIO,ID'
         ]);
 
         $docente->update($validated);

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Estudiante extends Model
 {
     protected $table = 'ESTUDIANTE';
-    protected $primaryKey = 'ID';
+    protected $primaryKey = 'ID_ESTUDIANTE';
     public $timestamps = false;
 
     protected $fillable = [
@@ -44,17 +44,12 @@ class Estudiante extends Model
 
     public function carreras(): BelongsToMany
     {
-        return $this->belongsToMany(Carrera::class, 'CARRERA_EST', 'ESTUDIANTE_ID', 'CARRERA_ID')
+        return $this->belongsToMany(Carrera::class, 'CARRERA_EST', 'ID_ESTUDIANTE', 'ID_CARRERA')
                     ->withPivot('OPCION');
     }
 
     public function estudianteCups(): HasMany
     {
-        return $this->hasMany(EstudianteCup::class, 'ESTUDIANTE_ID', 'ID');
-    }
-
-    public function resultados(): HasMany
-    {
-        return $this->hasMany(Resultado::class, 'ESTUDIANTE_ID', 'ID');
+        return $this->hasMany(EstudianteCup::class, 'ID_ESTUDIANTE', 'ID_ESTUDIANTE');
     }
 }

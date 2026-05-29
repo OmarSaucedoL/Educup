@@ -10,15 +10,15 @@ return new class extends Migration
     {
         Schema::create('ESTUDIANTE_CUP', function (Blueprint $table) {
             $table->id('ID');
-            $table->foreignId('ESTUDIANTE_ID')->constrained('ESTUDIANTE', 'ID')->onDelete('cascade');
-            $table->foreignId('CUP_ID')->constrained('CUP', 'ID')->onDelete('cascade');
+            $table->foreignId('ID_ESTUDIANTE')->constrained('ESTUDIANTE', 'ID_ESTUDIANTE')->onDelete('cascade');
+            $table->foreignId('ID_CUP')->constrained('CUP', 'ID_CUP')->onDelete('cascade');
             
             $table->date('FECHA')->useCurrent();
             $table->string('ESTADO', 30)->default('INSCRITO'); // INSCRITO, ABANDONO, REPROBADO, APROBADO
             $table->decimal('NOTA_FINAL', 5, 2)->nullable();
             $table->string('CARRERA', 150)->nullable();
 
-            $table->unique(['ESTUDIANTE_ID', 'CUP_ID']);
+            $table->unique(['ID_ESTUDIANTE', 'ID_CUP']);
         });
     }
 

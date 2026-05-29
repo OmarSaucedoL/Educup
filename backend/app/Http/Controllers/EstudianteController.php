@@ -35,7 +35,7 @@ class EstudianteController extends Controller
     {
         $request->validate([
             'archivo_excel' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB max
-            'CUP_ID'        => 'required|exists:CUP,ID',
+            'CUP_ID'        => 'required|exists:CUP,ID_CUP',
         ]);
 
         try {

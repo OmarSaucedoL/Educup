@@ -41,8 +41,8 @@ export default function Index({ materias }: { materias: any[] }) {
                             <tbody className="[&_tr:last-child]:border-0">
                                 {materias && materias.length > 0 ? (
                                     materias.map((materia) => (
-                                        <tr key={materia.ID} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
-                                            <td className="p-4 align-middle font-medium">{materia.ID}</td>
+                                        <tr key={materia.ID_MATERIA} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                            <td className="p-4 align-middle font-medium">{materia.ID_MATERIA}</td>
                                             <td className="p-4 align-middle font-medium">{materia.NOMBRE}</td>
                                         </tr>
                                     ))

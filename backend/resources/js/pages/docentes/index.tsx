@@ -44,8 +44,8 @@ export default function Index({ docentes }: { docentes: any[] }) {
                             <tbody className="[&_tr:last-child]:border-0">
                                 {docentes && docentes.length > 0 ? (
                                     docentes.map((docente) => (
-                                        <tr key={docente.CODIGO} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
-                                            <td className="p-4 align-middle font-medium">{docente.CODIGO}</td>
+                                        <tr key={docente.CODIGO_DOCENTE} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                            <td className="p-4 align-middle font-medium">{docente.CODIGO_DOCENTE}</td>
                                             <td className="p-4 align-middle font-medium">
                                                 {docente.usuario ? `${docente.usuario.NOMBRE} ${docente.usuario.APELLIDO}` : 'Desconocido'}
                                             </td>

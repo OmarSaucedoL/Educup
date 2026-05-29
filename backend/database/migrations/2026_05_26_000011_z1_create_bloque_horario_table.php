@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('BLOQUE_HORARIO', function (Blueprint $table) {
-            $table->id('ID');
+            $table->id('ID_BLOQUE_HORARIO');
             $table->string('TURNO', 50); // MAÑANA, TARDE, NOCHE
         });
     }

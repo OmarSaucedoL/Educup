@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('CUP', function (Blueprint $table) {
-            $table->id('ID');
+            $table->id('ID_CUP');
             $table->integer('ANIO');
             $table->string('SEMESTRE');
             $table->decimal('NOTA_MINIMA', 8, 2);
