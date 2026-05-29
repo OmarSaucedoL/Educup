@@ -32,6 +32,11 @@ class Estudiante extends Model
         'FECHA_NAC' => 'date',
     ];
 
+    public function setCorreoAttribute($value)
+    {
+        $this->attributes['CORREO'] = strtolower(trim($value));
+    }
+
     public function colegio(): BelongsTo
     {
         return $this->belongsTo(Colegio::class, 'COLEGIO_ID', 'ID');
