@@ -40,7 +40,7 @@ export interface Aula {
 
 export interface Grupo {
     ID_GRUPO: number;
-    NOMBRE: string;
+    NOMBRE?: string;
 }
 
 export interface Usuario {
@@ -63,6 +63,28 @@ export interface DocenteCup {
     docente?: Docente;
 }
 
+export interface Horario {
+    ID: number;
+    DIA: string;
+    HORA_INI: string;
+    HORA_FIN: string;
+}
+
+export interface HorarioEnBloque {
+    ID: number;
+    HORARIO_ID: number;
+    ID_BLOQUE_HORARIO: number;
+    CARGA_HORARIA: string;
+    horario?: Horario;
+}
+
+export interface BloqueHorario {
+    ID_BLOQUE_HORARIO: number;
+    TURNO: string;
+    horariosEnBloque?: HorarioEnBloque[];
+    horarios_en_bloque?: HorarioEnBloque[];
+}
+
 export interface Clase {
     ID_CLASE: number;
     DOCENTE_CUP_ID: number;
@@ -75,6 +97,9 @@ export interface Clase {
     grupo?: Grupo;
     docente_cup?: DocenteCup;
     docenteCup?: DocenteCup;
+    bloqueHorario?: BloqueHorario;
+    bloque_horario?: BloqueHorario;
+    NOTA_TOTAL?: number | string;
 }
 
 export interface Calificacion {
@@ -131,13 +156,13 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                 </div>
                                 <span className={`self-start sm:self-center inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold tracking-wide shadow-2xs ${
                                     activeHistoryDetail.ESTADO === 'APROBADO'
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-800'
+                                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-300 dark:border-blue-800'
                                         : activeHistoryDetail.ESTADO === 'REPROBADO'
                                         ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-800'
                                         : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-300 dark:border-indigo-800'
                                 }`}>
                                     {activeHistoryDetail.ESTADO === 'APROBADO' ? (
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                                     ) : activeHistoryDetail.ESTADO === 'REPROBADO' ? (
                                         <XCircle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                                     ) : (
@@ -147,7 +172,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                 </span>
                             </div>
                         </DialogHeader>
-
+ 
                         <div className="space-y-6">
                             {/* Admissions Summary Banner Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -156,7 +181,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                     <div className="flex items-baseline gap-1 mt-1">
                                         <span className={`text-3xl font-extrabold tracking-tight ${
                                             activeHistoryDetail.ESTADO === 'APROBADO'
-                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                ? 'text-blue-600 dark:text-blue-400'
                                                 : activeHistoryDetail.ESTADO === 'REPROBADO'
                                                 ? 'text-rose-600 dark:text-rose-400'
                                                 : 'text-neutral-700 dark:text-neutral-200'
@@ -209,7 +234,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                             {[...options].sort((a, b) => a.OPCION - b.OPCION).map((op) => (
                                                 <div key={op.ID} className="flex items-center justify-between bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800/80 p-3 rounded-xl shadow-3xs">
                                                     <div className="flex items-center gap-2 min-w-0">
-                                                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 border border-indigo-100/40 dark:border-indigo-900/40 shrink-0">
+                                                        <span className="inline-flex h-6 px-2.5 items-center justify-center rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 border border-indigo-100/40 dark:border-indigo-900/40 shrink-0 whitespace-nowrap">
                                                             OP {op.OPCION}
                                                         </span>
                                                         <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 truncate">
@@ -255,10 +280,14 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                     return (
                                         <div className="space-y-4">
                                             {groupsList.map(({ clase, list }) => {
-                                                const docenteName = clase.docenteCup?.docente?.usuario 
-                                                    ? `${clase.docenteCup.docente.usuario.NOMBRE} ${clase.docenteCup.docente.usuario.APELLIDO}` 
-                                                    : clase.docenteCup?.docente?.usuario?.name || 'Por asignar';
-                                                const docenteMail = clase.docenteCup?.docente?.usuario?.CORREO || clase.docenteCup?.docente?.usuario?.email;
+                                                const dc = clase.docente_cup || clase.docenteCup;
+                                                const docenteName = dc?.docente?.usuario 
+                                                    ? `${dc.docente.usuario.NOMBRE} ${dc.docente.usuario.APELLIDO}` 
+                                                    : dc?.docente?.usuario?.name || 'Por asignar';
+                                                const docenteMail = dc?.docente?.usuario?.CORREO || dc?.docente?.usuario?.email;
+
+                                                const bh = clase.bloque_horario || clase.bloqueHorario;
+                                                const heb = bh?.horarios_en_bloque || bh?.horariosEnBloque;
                                                 
                                                 return (
                                                     <div key={clase.ID_CLASE} className="border border-neutral-200/70 dark:border-neutral-800 rounded-xl overflow-hidden shadow-2xs bg-white dark:bg-neutral-900">
@@ -270,7 +299,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                                                         {clase.materia?.SIGLA || 'SIGLA'}
                                                                     </span>
                                                                     <span className="font-extrabold text-xs text-neutral-400">
-                                                                        Grupo: {clase.grupo?.NOMBRE || 'N/A'}
+                                                                        Grupo: {clase.grupo?.ID_GRUPO ? (clase.grupo.ID_GRUPO === 1 ? 'A' : (clase.grupo.ID_GRUPO === 2 ? 'B' : clase.grupo.ID_GRUPO)) : 'N/A'}
                                                                     </span>
                                                                 </div>
                                                                 <h5 className="font-bold text-sm text-neutral-800 dark:text-neutral-200 mt-1 leading-snug">
@@ -282,28 +311,48 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                                                 <span>{clase.aula?.NOMBRE || 'Aula no asignada'}</span>
                                                             </div>
                                                         </div>
-
+ 
                                                         {/* Details Body */}
                                                         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            {/* Teacher Details */}
-                                                            <div className="flex flex-col gap-2.5">
-                                                                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Docente Asignado</span>
-                                                                <div className="flex items-start gap-2.5">
-                                                                    <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200/50 dark:border-neutral-700/50">
-                                                                        <User className="h-4 w-4 text-neutral-500" />
-                                                                    </div>
-                                                                    <div className="min-w-0">
-                                                                        <span className="font-bold text-xs text-neutral-700 dark:text-neutral-300 block leading-tight truncate">
-                                                                            {docenteName}
-                                                                        </span>
-                                                                        {docenteMail && (
-                                                                            <span className="text-[10px] font-medium text-neutral-400 flex items-center gap-1 mt-0.5 truncate">
-                                                                                <Mail className="h-3 w-3 text-neutral-400" />
-                                                                                {docenteMail}
+                                                            {/* Teacher Details & Schedules */}
+                                                            <div className="flex flex-col gap-3">
+                                                                <div>
+                                                                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">Docente Asignado</span>
+                                                                    <div className="flex items-start gap-2.5">
+                                                                        <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200/50 dark:border-neutral-700/50">
+                                                                            <User className="h-4 w-4 text-neutral-500" />
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <span className="font-bold text-xs text-neutral-700 dark:text-neutral-300 block leading-tight truncate">
+                                                                                {docenteName}
                                                                             </span>
-                                                                        )}
+                                                                            {docenteMail && (
+                                                                                <span className="text-[10px] font-medium text-neutral-400 flex items-center gap-1 mt-0.5 truncate">
+                                                                                    <Mail className="h-3 w-3 text-neutral-400" />
+                                                                                    {docenteMail}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
+
+                                                                {/* Schedules */}
+                                                                {heb && heb.length > 0 && (
+                                                                    <div className="border-t border-neutral-100 dark:border-neutral-800/80 pt-2.5">
+                                                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">Horarios de Clase</span>
+                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                            {heb.map((hbItem: any) => {
+                                                                                const h = hbItem.horario;
+                                                                                if (!h) return null;
+                                                                                return (
+                                                                                    <span key={hbItem.ID || h.ID} className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-md border border-indigo-100/30 dark:border-indigo-900/30">
+                                                                                        {h.DIA}: {h.HORA_INI.substring(0, 5)} - {h.HORA_FIN.substring(0, 5)}
+                                                                                    </span>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
 
                                                             {/* Grades breakdown list */}
@@ -320,6 +369,16 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                                                         </div>
                                                                     ))}
                                                                 </div>
+
+                                                                {/* Nota Total Class Grade */}
+                                                                {clase.NOTA_TOTAL !== undefined && clase.NOTA_TOTAL !== null && (
+                                                                    <div className="mt-2 pt-2 border-t border-dashed border-neutral-200 dark:border-neutral-800/80 flex justify-between items-center text-xs font-bold bg-neutral-50/20 dark:bg-neutral-900/10 px-2 py-1.5 rounded-lg border border-neutral-100/30 dark:border-neutral-800/20 shadow-3xs">
+                                                                        <span className="text-neutral-500 dark:text-neutral-400">Nota Total Materia</span>
+                                                                        <span className="text-indigo-600 dark:text-indigo-400 font-extrabold text-sm">
+                                                                            {parseFloat(clase.NOTA_TOTAL.toString()).toFixed(1)} pts
+                                                                        </span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>

@@ -289,7 +289,7 @@ class DatabaseSeeder extends Seeder
                 'CORREO' => $correo,
                 'TITULO_BACHILLER' => $titulo,
                 'SEXO' => $gender,
-                'ESTADO' => 'ACTIVO',
+                'ESTADO' => $i <= 15 ? 'INACTIVO' : 'APROBADO',
                 'COLEGIO_ID' => $colegioId,
                 'CIUDAD_ID' => $ciudadId
             ], 'ID_ESTUDIANTE');

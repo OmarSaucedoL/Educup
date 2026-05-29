@@ -1,6 +1,6 @@
 import { Head, useForm, Link } from '@inertiajs/react';
-import { ArrowLeft, LoaderCircle, UserPlus } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { ArrowLeft, LoaderCircle, UserPlus, AlertTriangle } from 'lucide-react';
+import { FormEventHandler, useState, useEffect } from 'react';
 
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -11,13 +11,19 @@ import { type BreadcrumbItem } from '@/types';
 
 interface Colegio { ID: number; NOMBRE: string; }
 interface Ciudad  { ID: number; NOMBRE: string; DEPARTAMENTO: string; }
+interface Carrera { ID_CARRERA: number; NOMBRE: string; }
+interface CarreraCup { ID: number; ID_CARRERA: number; ID_CUP: number; CUPOS: number; carrera: Carrera; }
+interface Cup { ID_CUP: number; ANIO: number; SEMESTRE: string; }
 
 interface Props {
     colegios: Colegio[];
     ciudades: Ciudad[];
+    carreras?: CarreraCup[];
+    activeCup?: Cup | null;
 }
 
 interface CrearEstudianteForm {
+    [key: string]: any;
     CARNET: string;
     NOMBRE: string;
     APELLIDO: string;
@@ -30,6 +36,8 @@ interface CrearEstudianteForm {
     ESTADO: string;
     COLEGIO_ID: string;
     CIUDAD_ID: string;
+    OPCION_1: string;
+    OPCION_2: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -38,7 +46,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Registrar', href: '/estudiantes/crearEstudiante' },
 ];
 
-export default function CrearEstudiante({ colegios, ciudades }: Props) {
+export default function CrearEstudiante({ colegios, ciudades, carreras = [], activeCup = null }: Props) {
     const { data, setData, post, processing, errors } = useForm<CrearEstudianteForm>({
         CARNET: '',
         NOMBRE: '',
@@ -52,7 +60,22 @@ export default function CrearEstudiante({ colegios, ciudades }: Props) {
         ESTADO: 'ACTIVO',
         COLEGIO_ID: '',
         CIUDAD_ID: '',
+        OPCION_1: '',
+        OPCION_2: '',
     });
+
+    useEffect(() => {
+        if (!activeCup && data.ESTADO === 'ACTIVO') {
+            setData('ESTADO', 'INACTIVO');
+        }
+    }, [activeCup, data.ESTADO]);
+
+    useEffect(() => {
+        if (data.ESTADO !== 'ACTIVO') {
+            setData('OPCION_1', '');
+            setData('OPCION_2', '');
+        }
+    }, [data.ESTADO]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -223,23 +246,88 @@ export default function CrearEstudiante({ colegios, ciudades }: Props) {
                                 <div className="grid gap-2 border-t border-sidebar-border/50 pt-6">
                                     <Label className="text-sm font-semibold">Estado <span className="text-destructive">*</span></Label>
                                     <div className="flex gap-3 max-w-xs mt-1">
-                                        {(['ACTIVO', 'INACTIVO'] as const).map(s => (
-                                            <button
-                                                key={s}
-                                                type="button"
-                                                onClick={() => setData('ESTADO', s)}
-                                                className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
-                                                    data.ESTADO === s
-                                                        ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
-                                                        : 'border-sidebar-border hover:bg-muted/50 text-muted-foreground'
-                                                }`}
-                                            >
-                                                {s}
-                                            </button>
-                                        ))}
+                                        {(['ACTIVO', 'INACTIVO', 'APROBADO'] as const).map(s => {
+                                            const isDisabled = (s === 'ACTIVO' && !activeCup) || s === 'APROBADO';
+                                            return (
+                                                <button
+                                                    key={s}
+                                                    type="button"
+                                                    disabled={processing || isDisabled}
+                                                    onClick={() => setData('ESTADO', s)}
+                                                    className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
+                                                        data.ESTADO === s
+                                                            ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
+                                                            : 'border-sidebar-border hover:bg-muted/50 text-muted-foreground'
+                                                    } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    {s}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                     <InputError message={errors.ESTADO} />
                                 </div>
+
+                                {/* Postulaciones a Carrera (Condicional) */}
+                                {data.ESTADO === 'ACTIVO' && (
+                                    <div className="border-t border-sidebar-border/50 pt-6 grid gap-4">
+                                        <span className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                            Postulaciones a Carrera
+                                        </span>
+                                        
+                                        {!activeCup ? (
+                                            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-4 flex items-start gap-3 shadow-xs">
+                                                <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+                                                <div>
+                                                    <h4 className="font-bold text-sm text-amber-800 dark:text-amber-300">Convocatoria Cerrada / Concluida</h4>
+                                                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                                                        No existe una convocatoria de admisión CUP activa en este momento para recibir postulaciones.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {/* OPCION_1 */}
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="OPCION_1" className="text-sm font-semibold">Opción 1 de Carrera</Label>
+                                                    <select
+                                                        id="OPCION_1"
+                                                        value={data.OPCION_1}
+                                                        onChange={e => setData('OPCION_1', e.target.value)}
+                                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                    >
+                                                        <option value="">— Ninguna carrera seleccionada —</option>
+                                                        {(carreras || []).map(cc => (
+                                                            <option key={cc.ID} value={cc.ID}>
+                                                                {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <InputError message={errors.OPCION_1} />
+                                                </div>
+
+                                                {/* OPCION_2 */}
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="OPCION_2" className="text-sm font-semibold">Opción 2 de Carrera</Label>
+                                                    <select
+                                                        id="OPCION_2"
+                                                        value={data.OPCION_2}
+                                                        onChange={e => setData('OPCION_2', e.target.value)}
+                                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                    >
+                                                        <option value="">— Ninguna carrera seleccionada —</option>
+                                                        {(carreras || []).map(cc => (
+                                                            <option key={cc.ID} value={cc.ID}>
+                                                                {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <InputError message={errors.OPCION_2} />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 <Button
                                     type="submit"

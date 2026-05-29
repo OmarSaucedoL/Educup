@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { ArrowLeft, LoaderCircle, UserPlus, Save, Trash2, AlertTriangle, GraduationCap, Building2, Landmark, Calendar, ClipboardList, CheckCircle2, XCircle, BookOpen, User, Mail, MapPin, Award } from 'lucide-react';
 import { FormEventHandler } from 'react';
@@ -94,6 +94,19 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
         OPCION_1: postulante?.OPCION_1?.toString() || '',
         OPCION_2: postulante?.OPCION_2?.toString() || '',
     });
+
+    useEffect(() => {
+        if (!activeCup && data.ESTADO === 'ACTIVO') {
+            setData('ESTADO', 'INACTIVO');
+        }
+    }, [activeCup, data.ESTADO]);
+
+    useEffect(() => {
+        if (data.ESTADO !== 'ACTIVO') {
+            setData('OPCION_1', '');
+            setData('OPCION_2', '');
+        }
+    }, [data.ESTADO]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Gestión Académica', href: '#' },
@@ -514,89 +527,93 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                             <InputError message={errors.TITULO_BACHILLER} />
                                         </div>
 
-                                        {/* OPCONES DE CARRERA (POSTULACIÓN) */}
-                                        <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6">
-                                            <span className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4">
-                                                Postulaciones a Carrera
-                                            </span>
-                                            
-                                            {!activeCup ? (
-                                                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-4 flex items-start gap-3 shadow-xs">
-                                                    <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
-                                                    <div>
-                                                        <h4 className="font-bold text-sm text-amber-800 dark:text-amber-300">Convocatoria Cerrada / Concluida</h4>
-                                                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
-                                                            No existe una convocatoria de admisión CUP activa en este momento para recibir postulaciones en la carrera seleccionada.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {/* OPCION_1 */}
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="OPCION_1" className="text-sm font-semibold">Opción 1 de Carrera (Preferencia 1)</Label>
-                                                        <select
-                                                            id="OPCION_1"
-                                                            value={data.OPCION_1}
-                                                            onChange={e => setData('OPCION_1', e.target.value)}
-                                                            disabled={processing}
-                                                            className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
-                                                        >
-                                                            <option value="">— Ninguna carrera seleccionada —</option>
-                                                            {carreras.map(cc => (
-                                                                <option key={cc.ID} value={cc.ID}>
-                                                                    {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        <InputError message={errors.OPCION_1} />
-                                                    </div>
-
-                                                    {/* OPCION_2 */}
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="OPCION_2" className="text-sm font-semibold">Opción 2 de Carrera (Preferencia 2)</Label>
-                                                        <select
-                                                            id="OPCION_2"
-                                                            value={data.OPCION_2}
-                                                            onChange={e => setData('OPCION_2', e.target.value)}
-                                                            disabled={processing}
-                                                            className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
-                                                        >
-                                                            <option value="">— Ninguna carrera seleccionada —</option>
-                                                            {carreras.map(cc => (
-                                                                <option key={cc.ID} value={cc.ID}>
-                                                                    {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        <InputError message={errors.OPCION_2} />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* ESTADO DE EXPEDIENTE (Edit Mode Only) */}
-                                        {isEdit && (
-                                            <div className="grid gap-2 border-t border-neutral-100 dark:border-neutral-800 pt-6">
-                                                <Label className="text-sm font-semibold">Estado de Habilitación Académica *</Label>
-                                                <div className="flex gap-3 max-w-xs mt-1">
-                                                    {(['ACTIVO', 'INACTIVO'] as const).map(s => (
+                                        {/* ESTADO DE EXPEDIENTE */}
+                                        <div className="grid gap-2 border-t border-neutral-100 dark:border-neutral-800 pt-6">
+                                            <Label className="text-sm font-semibold">Estado de Habilitación Académica *</Label>
+                                            <div className="flex gap-3 max-w-xs mt-1">
+                                                {(['ACTIVO', 'INACTIVO', 'APROBADO'] as const).map(s => {
+                                                    const isCurrentAprobado = postulante?.ESTADO === 'APROBADO';
+                                                    const isDisabled = (s === 'ACTIVO' && !activeCup) || s === 'APROBADO' || isCurrentAprobado;
+                                                    return (
                                                         <button
                                                             key={s}
                                                             type="button"
-                                                            disabled={processing}
+                                                            disabled={processing || isDisabled}
                                                             onClick={() => setData('ESTADO', s)}
                                                             className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
                                                                 data.ESTADO === s
                                                                     ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20 shadow-sm'
                                                                     : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-600 dark:text-neutral-400'
-                                                            }`}
+                                                            } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
                                                             {s}
                                                         </button>
-                                                    ))}
-                                                </div>
-                                                <InputError message={errors.ESTADO} />
+                                                    );
+                                                })}
+                                            </div>
+                                            <InputError message={errors.ESTADO} />
+                                        </div>
+
+                                        {/* OPCONES DE CARRERA (POSTULACIÓN) */}
+                                        {data.ESTADO === 'ACTIVO' && (
+                                            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6">
+                                                <span className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4">
+                                                    Postulaciones a Carrera
+                                                </span>
+                                                
+                                                {!activeCup ? (
+                                                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-4 flex items-start gap-3 shadow-xs">
+                                                        <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+                                                        <div>
+                                                            <h4 className="font-bold text-sm text-amber-800 dark:text-amber-300">Convocatoria Cerrada / Concluida</h4>
+                                                            <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                                                                No existe una convocatoria de admisión CUP activa en este momento para recibir postulaciones en la carrera seleccionada.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {/* OPCION_1 */}
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="OPCION_1" className="text-sm font-semibold">Opción 1 de Carrera (Preferencia 1)</Label>
+                                                            <select
+                                                                id="OPCION_1"
+                                                                value={data.OPCION_1}
+                                                                onChange={e => setData('OPCION_1', e.target.value)}
+                                                                disabled={processing}
+                                                                className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                            >
+                                                                <option value="">— Ninguna carrera seleccionada —</option>
+                                                                {carreras.map(cc => (
+                                                                    <option key={cc.ID} value={cc.ID}>
+                                                                        {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            <InputError message={errors.OPCION_1} />
+                                                        </div>
+
+                                                        {/* OPCION_2 */}
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="OPCION_2" className="text-sm font-semibold">Opción 2 de Carrera (Preferencia 2)</Label>
+                                                            <select
+                                                                id="OPCION_2"
+                                                                value={data.OPCION_2}
+                                                                onChange={e => setData('OPCION_2', e.target.value)}
+                                                                disabled={processing}
+                                                                className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                            >
+                                                                <option value="">— Ninguna carrera seleccionada —</option>
+                                                                {carreras.map(cc => (
+                                                                    <option key={cc.ID} value={cc.ID}>
+                                                                        {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            <InputError message={errors.OPCION_2} />
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -670,7 +687,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                     </div>
                                                     <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide ${
                                                         hc.ESTADO === 'APROBADO'
-                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-800'
+                                                            ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-300 dark:border-blue-800'
                                                             : hc.ESTADO === 'REPROBADO'
                                                             ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-800'
                                                             : 'bg-neutral-50 text-neutral-600 border-neutral-200 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-800'
