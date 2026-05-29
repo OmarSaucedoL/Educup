@@ -24,6 +24,19 @@ interface Carrera { ID_CARRERA: number; NOMBRE: string; }
 interface CarreraCup { ID: number; ID_CARRERA: number; ID_CUP: number; CUPOS: number; carrera: Carrera; }
 interface Cup { ID_CUP: number; ANIO: number; SEMESTRE: string; }
 
+interface OpcionCarrera {
+    ID: number;
+    ESTUDIANTE_CUP_ID: number;
+    CARRERA_CUP_ID: number;
+    OPCION: number;
+    carrera_cup?: {
+        ID: number;
+        ID_CARRERA: number;
+        ID_CUP: number;
+        carrera?: Carrera;
+    };
+}
+
 interface HistorialCup {
     ID: number;
     ID_ESTUDIANTE: number;
@@ -33,6 +46,8 @@ interface HistorialCup {
     NOTA_FINAL: number;
     CARRERA: string | null;
     cup: Cup;
+    opciones_carrera?: OpcionCarrera[];
+    opcionesCarrera?: OpcionCarrera[];
 }
 
 interface Postulante {
@@ -135,7 +150,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
         }
 
         if (data.OPCION_1 && data.OPCION_2 && data.OPCION_1 === data.OPCION_2) {
-            errs.OPCION_2 = 'La segunda opción de carrera debe ser diferente a la primera opción.';
+            errs.OPCION_2 = 'opcion de carrera deben ser diferentes';
         }
 
         setClientErrors(errs);
@@ -582,6 +597,13 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                             </div>
                                         )}
 
+                                        {clientErrors.OPCION_2 && (
+                                            <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/50 rounded-lg p-3 text-xs font-semibold text-rose-500 dark:text-rose-400 mt-4 flex items-center gap-2">
+                                                <AlertTriangle className="h-4 w-4 text-rose-500 dark:text-rose-400 shrink-0" />
+                                                <span>{clientErrors.OPCION_2}</span>
+                                            </div>
+                                        )}
+
                                         {/* Action Buttons */}
                                         <div className="flex flex-col sm:flex-row gap-3 mt-6 border-t border-neutral-100 dark:border-neutral-800 pt-6">
                                             <Button
@@ -673,6 +695,27 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                         </span>
                                                     </div>
                                                 </div>
+
+                                                {/* Opciones Seleccionadas */}
+                                                {(() => {
+                                                    const options = hc.opciones_carrera || hc.opcionesCarrera;
+                                                    if (!options || options.length === 0) return null;
+                                                    return (
+                                                        <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 text-xs">
+                                                            <span className="block text-neutral-400 font-semibold mb-1.5">Opciones Postuladas:</span>
+                                                            <div className="flex flex-col gap-1.5">
+                                                                {[...options].sort((a, b) => a.OPCION - b.OPCION).map((op) => (
+                                                                    <div key={op.ID} className="flex justify-between items-center bg-neutral-100/50 dark:bg-neutral-800/40 p-1.5 rounded text-[11px] font-medium border border-neutral-200/40 dark:border-neutral-800/55">
+                                                                        <span className="text-neutral-500 font-bold shrink-0">Opción {op.OPCION}:</span>
+                                                                        <span className="text-neutral-700 dark:text-neutral-300 font-semibold text-right truncate pl-2">
+                                                                            {op.carrera_cup?.carrera?.NOMBRE || 'Desconocido'}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
 
                                                 {/* Carrera de Ingreso */}
                                                 <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 text-xs">
