@@ -7,8 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Traits\LogsActivity;
+
 class Estudiante extends Model
 {
+    use LogsActivity;
     protected $table = 'ESTUDIANTE';
     protected $primaryKey = 'ID_ESTUDIANTE';
     public $timestamps = false;

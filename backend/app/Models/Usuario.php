@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Traits\LogsActivity;
 
 class Usuario extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, LogsActivity;
 
     protected $table = 'USUARIO';
     protected $primaryKey = 'ID';

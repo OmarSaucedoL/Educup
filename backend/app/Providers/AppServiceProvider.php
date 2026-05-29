@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use App\Models\Bitacora;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +23,38 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Event::listen(Login::class, function ($event) {
+            try {
+                Bitacora::create([
+                    'USUARIO_ID' => $event->user->ID,
+                    'ACCION' => 'LOGIN',
+                    'TABLA' => 'USUARIO',
+                    'REGISTRO_ID' => $event->user->ID,
+                    'DESCRIPCION' => "El usuario '{$event->user->USERNAME}' inició sesión con éxito.",
+                    'IP_DIRECCION' => request()->ip(),
+                    'FECHA_REGISTRO' => now(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error("Error guardando bitácora de login: " . $e->getMessage());
+            }
+        });
+
+        Event::listen(Logout::class, function ($event) {
+            if ($event->user) {
+                try {
+                    Bitacora::create([
+                        'USUARIO_ID' => $event->user->ID,
+                        'ACCION' => 'LOGOUT',
+                        'TABLA' => 'USUARIO',
+                        'REGISTRO_ID' => $event->user->ID,
+                        'DESCRIPCION' => "El usuario '{$event->user->USERNAME}' cerró sesión.",
+                        'IP_DIRECCION' => request()->ip(),
+                        'FECHA_REGISTRO' => now(),
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error("Error guardando bitácora de logout: " . $e->getMessage());
+                }
+            }
+        });
     }
 }

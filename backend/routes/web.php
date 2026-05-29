@@ -22,3 +22,4 @@ require __DIR__.'/academico routes/estudiantes_routes.php';
 require __DIR__.'/academico routes/materias_routes.php';
 require __DIR__.'/academico routes/horarios_routes.php';
 require __DIR__.'/academico routes/aulas_routes.php';
+require __DIR__.'/bitacora_routes.php';

@@ -22,6 +22,10 @@ const mainNavItems: NavItem[] = [
                 title: 'Usuarios',
                 url: '/usuarios',
             },
+            {
+                title: 'Bitácora',
+                url: '/bitacora',
+            },
         ],
     },
     {

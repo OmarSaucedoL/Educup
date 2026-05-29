@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+use App\Traits\LogsActivity;
+
 class Materia extends Model
 {
+    use LogsActivity;
     protected $table = 'MATERIA';
     protected $primaryKey = 'ID_MATERIA';
     public $timestamps = false;
