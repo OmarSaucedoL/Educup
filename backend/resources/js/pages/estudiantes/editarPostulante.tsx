@@ -529,47 +529,59 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                 Postulaciones a Carrera
                                             </span>
                                             
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {/* OPCION_1 */}
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="OPCION_1" className="text-sm font-semibold">Opción 1 de Carrera (Preferencia 1)</Label>
-                                                    <select
-                                                        id="OPCION_1"
-                                                        value={data.OPCION_1}
-                                                        onChange={e => setData('OPCION_1', e.target.value)}
-                                                        disabled={processing}
-                                                        className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
-                                                    >
-                                                        <option value="">— Ninguna carrera seleccionada —</option>
-                                                        {carreras.map(cc => (
-                                                            <option key={cc.ID} value={cc.ID}>
-                                                                {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <InputError message={errors.OPCION_1} />
+                                            {!activeCup ? (
+                                                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-4 flex items-start gap-3 shadow-xs">
+                                                    <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <h4 className="font-bold text-sm text-amber-800 dark:text-amber-300">Convocatoria Cerrada / Concluida</h4>
+                                                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                                                            No existe una convocatoria de admisión CUP activa en este momento para recibir postulaciones en la carrera seleccionada.
+                                                        </p>
+                                                    </div>
                                                 </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {/* OPCION_1 */}
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="OPCION_1" className="text-sm font-semibold">Opción 1 de Carrera (Preferencia 1)</Label>
+                                                        <select
+                                                            id="OPCION_1"
+                                                            value={data.OPCION_1}
+                                                            onChange={e => setData('OPCION_1', e.target.value)}
+                                                            disabled={processing}
+                                                            className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                        >
+                                                            <option value="">— Ninguna carrera seleccionada —</option>
+                                                            {carreras.map(cc => (
+                                                                <option key={cc.ID} value={cc.ID}>
+                                                                    {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <InputError message={errors.OPCION_1} />
+                                                    </div>
 
-                                                {/* OPCION_2 */}
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="OPCION_2" className="text-sm font-semibold">Opción 2 de Carrera (Preferencia 2)</Label>
-                                                    <select
-                                                        id="OPCION_2"
-                                                        value={data.OPCION_2}
-                                                        onChange={e => setData('OPCION_2', e.target.value)}
-                                                        disabled={processing}
-                                                        className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
-                                                    >
-                                                        <option value="">— Ninguna carrera seleccionada —</option>
-                                                        {carreras.map(cc => (
-                                                            <option key={cc.ID} value={cc.ID}>
-                                                                {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <InputError message={errors.OPCION_2} />
+                                                    {/* OPCION_2 */}
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="OPCION_2" className="text-sm font-semibold">Opción 2 de Carrera (Preferencia 2)</Label>
+                                                        <select
+                                                            id="OPCION_2"
+                                                            value={data.OPCION_2}
+                                                            onChange={e => setData('OPCION_2', e.target.value)}
+                                                            disabled={processing}
+                                                            className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                                                        >
+                                                            <option value="">— Ninguna carrera seleccionada —</option>
+                                                            {carreras.map(cc => (
+                                                                <option key={cc.ID} value={cc.ID}>
+                                                                    {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <InputError message={errors.OPCION_2} />
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
 
                                         {/* ESTADO DE EXPEDIENTE (Edit Mode Only) */}
@@ -608,8 +620,8 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                         <div className="flex flex-col sm:flex-row gap-3 mt-6 border-t border-neutral-100 dark:border-neutral-800 pt-6">
                                             <Button
                                                 type="submit"
-                                                disabled={processing}
-                                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 text-sm shadow-md"
+                                                disabled={processing || (!isEdit && !activeCup)}
+                                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 {processing ? (
                                                     <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -681,7 +693,9 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                     <div>
                                                         <span className="block text-neutral-400 font-semibold mb-0.5">Nota Final:</span>
                                                         <span className="font-extrabold text-neutral-800 dark:text-neutral-200 text-sm">
-                                                            {parseFloat(hc.NOTA_FINAL.toString()).toFixed(2)} pts
+                                                            {hc.NOTA_FINAL != null 
+                                                                ? `${parseFloat(hc.NOTA_FINAL.toString()).toFixed(2)} pts` 
+                                                                : 'Sin calificar'}
                                                         </span>
                                                     </div>
                                                     <div>

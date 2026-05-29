@@ -44,9 +44,14 @@ interface Props {
     filters: {
         search?: string;
     };
+    activeCup?: {
+        ID_CUP: number;
+        ANIO: number;
+        SEMESTRE: string;
+    } | null;
 }
 
-export default function Index({ estudiantes, filters }: Props) {
+export default function Index({ estudiantes, filters, activeCup }: Props) {
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [search, setSearch] = useState(filters.search || '');
 
@@ -110,18 +115,44 @@ export default function Index({ estudiantes, filters }: Props) {
                     </div>
                     
                     <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/50" asChild>
-                            <Link href="/estudiantes/importar">
-                                <FileSpreadsheet className="mr-2 h-4 w-4" /> Importar Excel
-                            </Link>
-                        </Button>
-                        <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
-                            <Link href="/estudiantes/crearEstudiante">
-                                <Plus className="mr-2 h-4 w-4" /> Agregar Estudiante
-                            </Link>
-                        </Button>
+                        {activeCup ? (
+                            <>
+                                <Button variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/50" asChild>
+                                    <Link href="/estudiantes/importar">
+                                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Importar Excel
+                                    </Link>
+                                </Button>
+                                <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                                    <Link href="/estudiantes/crearEstudiante">
+                                        <Plus className="mr-2 h-4 w-4" /> Agregar Estudiante
+                                    </Link>
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button variant="outline" disabled className="border-neutral-200 dark:border-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed">
+                                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Importar Excel
+                                </Button>
+                                <Button disabled className="bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed">
+                                    <Plus className="mr-2 h-4 w-4" /> Agregar Estudiante
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
+
+                {!activeCup && (
+                    <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/50 rounded-xl p-4 flex items-start gap-3 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+                        <AlertTriangle className="h-5 w-5 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-bold text-sm text-rose-800 dark:text-rose-300">Procesos de Admisión Finalizados</h4>
+                            <p className="text-xs text-rose-700 dark:text-rose-400 mt-1 leading-relaxed">
+                                No existe una convocatoria de admisión CUP activa en esta gestión (todas están concluidas). 
+                                El registro manual de nuevos estudiantes y la importación masiva de datos mediante planillas Excel están deshabilitados.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Filters Section */}
                 <div className="bg-white/50 dark:bg-neutral-900/50 backdrop-blur-md border border-neutral-200/60 dark:border-neutral-800 rounded-xl p-4 shadow-sm">

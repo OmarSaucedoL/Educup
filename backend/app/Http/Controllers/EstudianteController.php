@@ -43,11 +43,14 @@ class EstudianteController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $activeCup = Cup::where('ESTADO', '!=', 'Concluido')->orderBy('ID_CUP', 'desc')->first();
+
         return Inertia::render('estudiantes/index', [
             'estudiantes' => $estudiantes,
             'filters'     => [
                 'search' => $search
-            ]
+            ],
+            'activeCup'   => $activeCup
         ]);
     }
 
@@ -59,7 +62,7 @@ class EstudianteController extends Controller
         $colegios = Colegio::orderBy('NOMBRE')->get(['ID', 'NOMBRE']);
         $ciudades = Ciudad::orderBy('NOMBRE')->get(['ID', 'NOMBRE', 'DEPARTAMENTO']);
         
-        $activeCup = Cup::orderBy('ID_CUP', 'desc')->first();
+        $activeCup = Cup::where('ESTADO', '!=', 'Concluido')->orderBy('ID_CUP', 'desc')->first();
         $carreras = [];
         if ($activeCup) {
             $carreras = CarreraCup::where('ID_CUP', $activeCup->ID_CUP)
@@ -83,7 +86,7 @@ class EstudianteController extends Controller
     public function edit($id)
     {
         $estudiante = Estudiante::findOrFail($id);
-        $activeCup = Cup::orderBy('ID_CUP', 'desc')->first();
+        $activeCup = Cup::where('ESTADO', '!=', 'Concluido')->orderBy('ID_CUP', 'desc')->first();
         
         $estudianteCup = null;
         $opciones = [];
@@ -192,7 +195,7 @@ class EstudianteController extends Controller
             ]);
         }
 
-        $activeCup = Cup::orderBy('ID_CUP', 'desc')->first();
+        $activeCup = Cup::where('ESTADO', '!=', 'Concluido')->orderBy('ID_CUP', 'desc')->first();
         if (!$activeCup) {
             throw ValidationException::withMessages([
                 'OPCION_1' => 'No existe una gestión CUP activa en el sistema.'
@@ -320,7 +323,7 @@ class EstudianteController extends Controller
             ]);
         }
 
-        $activeCup = Cup::orderBy('ID_CUP', 'desc')->first();
+        $activeCup = Cup::where('ESTADO', '!=', 'Concluido')->orderBy('ID_CUP', 'desc')->first();
 
         try {
             DB::beginTransaction();
@@ -451,6 +454,13 @@ class EstudianteController extends Controller
             'archivo_excel' => 'required|file|mimes:xlsx,xls|max:10240',
             'CUP_ID'        => 'required|exists:CUP,ID_CUP',
         ]);
+
+        $targetCup = Cup::findOrFail($request->CUP_ID);
+        if ($targetCup->ESTADO === 'Concluido') {
+            throw ValidationException::withMessages([
+                'archivo_excel' => 'Operación denegada. No se pueden importar estudiantes a un proceso de admisión concluido.'
+            ]);
+        }
 
         try {
             DB::beginTransaction();

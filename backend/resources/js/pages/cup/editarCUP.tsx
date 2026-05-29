@@ -63,6 +63,8 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
     const [selectedCarreras, setSelectedCarreras] = useState<{ ID_CARRERA: number; CUPOS: number }[]>(cup.carreras || []);
     const [selectedMateriaIds, setSelectedMateriaIds] = useState<number[]>(cup.materias || []);
 
+    const isLocked = cup.ESTADO === 'Concluido' && data.ESTADO === 'Concluido';
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Gestión Académica',
@@ -169,7 +171,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                             value={data.ANIO}
                                             onChange={e => setData('ANIO', parseInt(e.target.value) || 0)}
                                             placeholder="Ej. 2026"
-                                            disabled={processing}
+                                            disabled={processing || isLocked}
                                         />
                                         <InputError message={errors.ANIO} />
                                     </div>
@@ -181,7 +183,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                             required
                                             value={data.SEMESTRE}
                                             onChange={e => setData('SEMESTRE', e.target.value)}
-                                            disabled={processing}
+                                            disabled={processing || isLocked}
                                             className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
                                         >
                                             <option value="I">I (Primer Semestre)</option>
@@ -204,7 +206,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                             value={data.NOTA_MINIMA}
                                             onChange={e => setData('NOTA_MINIMA', parseFloat(e.target.value) || 0)}
                                             placeholder="Ej. 51"
-                                            disabled={processing}
+                                            disabled={processing || isLocked}
                                         />
                                         <InputError message={errors.NOTA_MINIMA} />
                                     </div>
@@ -239,7 +241,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                             required
                                             value={data.FECHA_INICIO}
                                             onChange={e => setData('FECHA_INICIO', e.target.value)}
-                                            disabled={processing}
+                                            disabled={processing || isLocked}
                                         />
                                         <InputError message={errors.FECHA_INICIO} />
                                     </div>
@@ -254,7 +256,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                             required
                                             value={data.FECHA_FIN}
                                             onChange={e => setData('FECHA_FIN', e.target.value)}
-                                            disabled={processing}
+                                            disabled={processing || isLocked}
                                         />
                                         <InputError message={errors.FECHA_FIN} />
                                     </div>
@@ -288,7 +290,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                                             type="button"
                                                             onClick={() => handleCareerToggle(c.ID_CARRERA)}
                                                             className="flex items-center gap-2.5 text-left focus:outline-none"
-                                                            disabled={processing}
+                                                            disabled={processing || isLocked}
                                                         >
                                                             {isSelected ? (
                                                                 <CheckSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -314,7 +316,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                                                 value={scValue?.CUPOS || ''}
                                                                 onChange={e => handleCareerQuotaChange(c.ID_CARRERA, parseInt(e.target.value) || 0)}
                                                                 className="h-8 max-w-[120px] font-bold text-xs"
-                                                                disabled={processing}
+                                                                disabled={processing || isLocked}
                                                             />
                                                         </div>
                                                     )}
@@ -354,7 +356,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                                 <button
                                                     key={m.ID_MATERIA}
                                                     type="button"
-                                                    disabled={isDisabled || processing}
+                                                    disabled={isDisabled || processing || isLocked}
                                                     onClick={() => handleMateriaToggle(m.ID_MATERIA)}
                                                     className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
                                                         isSelected
@@ -395,7 +397,7 @@ export default function EditarCUP({ cup, usuarios = [], carreras = [], materias 
                                             required
                                             value={data.USUARIO_ID}
                                             onChange={e => setData('USUARIO_ID', e.target.value)}
-                                            disabled={processing}
+                                            disabled={processing || isLocked}
                                             className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
                                         >
                                             <option value="">— Seleccionar Administrador —</option>

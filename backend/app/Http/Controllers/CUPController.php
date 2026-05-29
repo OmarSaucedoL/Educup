@@ -154,6 +154,51 @@ class CUPController extends Controller
     {
         $cup = Cup::findOrFail($id);
 
+        if ($cup->ESTADO === 'Concluido' && $request->input('ESTADO') === 'Concluido') {
+            // Compare fields to check if modifications were attempted
+            $hasChanges = $request->input('ANIO') != $cup->ANIO ||
+                          $request->input('SEMESTRE') != $cup->SEMESTRE ||
+                          $request->input('NOTA_MINIMA') != $cup->NOTA_MINIMA ||
+                          $request->input('FECHA_INICIO') != ($cup->FECHA_INICIO ? $cup->FECHA_INICIO->format('Y-m-d') : null) ||
+                          $request->input('FECHA_FIN') != ($cup->FECHA_FIN ? $cup->FECHA_FIN->format('Y-m-d') : null) ||
+                          $request->input('USUARIO_ID') != $cup->USUARIO_ID;
+
+            if (!$hasChanges) {
+                // Compare careers
+                $existingCarreras = \App\Models\CarreraCup::where('ID_CUP', $cup->ID_CUP)
+                    ->orderBy('ID_CARRERA')
+                    ->get(['ID_CARRERA', 'CUPOS'])
+                    ->toArray();
+
+                $newCarreras = collect($request->input('carreras'))
+                    ->map(fn($c) => ['ID_CARRERA' => (int)$c['ID_CARRERA'], 'CUPOS' => (int)$c['CUPOS']])
+                    ->sortBy('ID_CARRERA')
+                    ->values()
+                    ->toArray();
+
+                if ($existingCarreras != $newCarreras) {
+                    $hasChanges = true;
+                }
+            }
+
+            if (!$hasChanges) {
+                // Compare subjects
+                $existingMaterias = \App\Models\MateriaCup::where('ID_CUP', $cup->ID_CUP)
+                    ->pluck('ID_MATERIA')
+                    ->toArray();
+
+                $newMaterias = array_map('intval', $request->input('materias') ?? []);
+
+                if (array_diff($existingMaterias, $newMaterias) || array_diff($newMaterias, $existingMaterias)) {
+                    $hasChanges = true;
+                }
+            }
+
+            if ($hasChanges) {
+                return back()->withErrors(['error' => 'Para modificar la información de un CUP concluido, primero debe cambiar su estado.']);
+            }
+        }
+
         $validated = $request->validate([
             'ANIO' => 'required|integer',
             'SEMESTRE' => 'required|string|max:20',
