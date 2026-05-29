@@ -39,6 +39,12 @@ const TURNOS = [
     { value: 'NOCHE', label: 'Noche (18:00 - 22:00)' },
 ];
 
+const TURNO_LIMITS: Record<string, { min: string; max: string }> = {
+    MAÑANA: { min: '07:00', max: '11:59' },
+    TARDE: { min: '12:00', max: '17:59' },
+    NOCHE: { min: '18:00', max: '21:59' }
+};
+
 const PRESET_CARGAS = [
     { label: '45 minutos', value: 45 },
     { label: '90 minutos (Recomendado)', value: 90 },
@@ -54,6 +60,19 @@ export default function EditarHorario({ bloque }: EditarHorarioProps) {
         DIAS: bloque.DIAS || [],
         CARGA_HORARIA: bloque.CARGA_HORARIA || 90,
     });
+
+    const handleTurnoChange = (newTurno: string) => {
+        const limits = TURNO_LIMITS[newTurno];
+        let newHora = data.HORA_INICIO;
+        if (!newHora || newHora < limits.min || newHora > limits.max) {
+            newHora = limits.min;
+        }
+        setData({
+            ...data,
+            TURNO: newTurno,
+            HORA_INICIO: newHora,
+        });
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -93,6 +112,8 @@ export default function EditarHorario({ bloque }: EditarHorarioProps) {
         e.preventDefault();
         put(`/horarios/${bloque.ID_BLOQUE_HORARIO}`);
     };
+
+    const limits = TURNO_LIMITS[data.TURNO] || { min: '07:00', max: '21:59' };
 
     const handleDelete = () => {
         router.delete(`/horarios/${bloque.ID_BLOQUE_HORARIO}`, {
@@ -149,7 +170,7 @@ export default function EditarHorario({ bloque }: EditarHorarioProps) {
                             </Button>
                             <div>
                                 <h1 className="text-2xl font-semibold tracking-tight">Editar Bloque de Horario</h1>
-                                <p className="text-sm text-muted-foreground">Modifica la hora de inicio, días y la carga horaria para regenerar el bloque.</p>
+                                <p className="text-sm text-muted-foreground">Modifica la hora de inicio, días y la carga horaria para el horario de la clase.</p>
                             </div>
                         </div>
                     </div>
@@ -159,7 +180,7 @@ export default function EditarHorario({ bloque }: EditarHorarioProps) {
                             <h3 className="font-semibold leading-none tracking-tight text-lg flex items-center gap-2">
                                 <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Parámetros del Bloque (ID: #{bloque.ID_BLOQUE_HORARIO})
                             </h3>
-                            <p className="text-xs text-muted-foreground">Al guardar, se regenerarán consecutivamente los periodos para todos los días indicados.</p>
+                            <p className="text-xs text-muted-foreground">Al guardar, se actualizarán los horarios correspondientes para todos los días indicados.</p>
                         </div>
                         
                         <div className="p-6">
@@ -176,7 +197,7 @@ export default function EditarHorario({ bloque }: EditarHorarioProps) {
                                                     key={turno.value}
                                                     type="button"
                                                     disabled={processing}
-                                                    onClick={() => setData('TURNO', turno.value)}
+                                                    onClick={() => handleTurnoChange(turno.value)}
                                                     className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all ${
                                                         active
                                                             ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
@@ -203,13 +224,15 @@ export default function EditarHorario({ bloque }: EditarHorarioProps) {
                                             type="time"
                                             required
                                             disabled={processing}
+                                            min={limits.min}
+                                            max={limits.max}
                                             value={data.HORA_INICIO}
                                             onChange={(e) => setData('HORA_INICIO', e.target.value)}
                                             className="h-10 pl-3 pr-3 text-base"
                                         />
                                     </div>
                                     <p className="text-[11px] text-muted-foreground">
-                                        Debe ser entre las <strong>07:00</strong> y las <strong>20:00</strong>. Las 2 materias se distribuirán de forma secuencial.
+                                        Debe corresponder al turno seleccionado: Mañana (07:00 - 12:00), Tarde (12:00 - 18:00) o Noche (18:00 - 22:00).
                                     </p>
                                     <InputError message={errors.HORA_INICIO} />
                                 </div>

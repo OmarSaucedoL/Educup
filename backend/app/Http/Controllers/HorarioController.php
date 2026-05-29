@@ -33,6 +33,36 @@ class HorarioController extends Controller
             'CARGA_HORARIA' => 'required|integer|min:1',
         ]);
 
+        $turno = strtoupper($validated['TURNO']);
+        $hora = $validated['HORA_INICIO'];
+        if (strlen($hora) === 5) {
+            $hora .= ':00';
+        }
+
+        if ($turno === 'MAÑANA') {
+            if ($hora < '07:00:00' || $hora >= '12:00:00') {
+                throw ValidationException::withMessages([
+                    'HORA_INICIO' => 'La hora de inicio para el turno MAÑANA debe estar entre las 07:00 y las 11:59.'
+                ]);
+            }
+        } elseif ($turno === 'TARDE') {
+            if ($hora < '12:00:00' || $hora >= '18:00:00') {
+                throw ValidationException::withMessages([
+                    'HORA_INICIO' => 'La hora de inicio para el turno TARDE debe estar entre las 12:00 y las 17:59.'
+                ]);
+            }
+        } elseif ($turno === 'NOCHE') {
+            if ($hora < '18:00:00' || $hora >= '22:00:00') {
+                throw ValidationException::withMessages([
+                    'HORA_INICIO' => 'La hora de inicio para el turno NOCHE debe estar entre las 18:00 y las 21:59.'
+                ]);
+            }
+        } else {
+            throw ValidationException::withMessages([
+                'TURNO' => 'El turno seleccionado no es válido.'
+            ]);
+        }
+
         // Convert the array to PostgreSQL native 1D array string representation: e.g. {LUNES,MIERCOLES}
         $diasPgArray = '{' . implode(',', $validated['DIAS']) . '}';
 
@@ -119,12 +149,26 @@ class HorarioController extends Controller
             if (strlen($horaInicio) === 5) {
                 $horaInicio .= ':00';
             }
-            if ($horaInicio < '07:00:00' || $horaInicio > '20:00:00') {
-                throw new \Exception("La hora de inicio ($horaInicio) debe estar entre las 07:00 y las 20:00.");
+
+            $turno = strtoupper($validated['TURNO']);
+            if ($turno === 'MAÑANA') {
+                if ($horaInicio < '07:00:00' || $horaInicio >= '12:00:00') {
+                    throw new \Exception("La hora de inicio para el turno MAÑANA debe estar entre las 07:00 y las 11:59.");
+                }
+            } elseif ($turno === 'TARDE') {
+                if ($horaInicio < '12:00:00' || $horaInicio >= '18:00:00') {
+                    throw new \Exception("La hora de inicio para el turno TARDE debe estar entre las 12:00 y las 17:59.");
+                }
+            } elseif ($turno === 'NOCHE') {
+                if ($horaInicio < '18:00:00' || $horaInicio >= '22:00:00') {
+                    throw new \Exception("La hora de inicio para el turno NOCHE debe estar entre las 18:00 y las 21:59.");
+                }
+            } else {
+                throw new \Exception("El turno seleccionado no es válido.");
             }
 
-            $totalMinutes = $validated['CARGA_HORARIA'] * 2;
-            $horaFinClase = date('H:i:s', strtotime("+$totalMinutes minutes", strtotime($horaInicio)));
+            $carga = $validated['CARGA_HORARIA'];
+            $horaFinClase = date('H:i:s', strtotime("+$carga minutes", strtotime($horaInicio)));
             
             if ($horaFinClase > '22:00:00' || $horaFinClase < '07:00:00') {
                 throw new \Exception("El bloque terminaría a las $horaFinClase, excediendo el límite de las 22:00.");
@@ -138,39 +182,33 @@ class HorarioController extends Controller
             // 3. Clear old child rows in HORARIO_EN_BLOQUE
             \Illuminate\Support\Facades\DB::table('HORARIO_EN_BLOQUE')->where('ID_BLOQUE_HORARIO', $id)->delete();
 
-            // 4. Distribute days and periods
+            // 4. Distribute days
             foreach ($validated['DIAS'] as $dia) {
-                $horaActual = $horaInicio;
-                for ($materiaContador = 1; $materiaContador <= 2; $materiaContador++) {
-                    $carga = $validated['CARGA_HORARIA'];
-                    $horaFinPeriodo = date('H:i:s', strtotime("+$carga minutes", strtotime($horaActual)));
+                $horaFinPeriodo = date('H:i:s', strtotime("+$carga minutes", strtotime($horaInicio)));
 
-                    // Check or insert Horario
-                    $horario = \Illuminate\Support\Facades\DB::table('HORARIO')
-                        ->where('DIA', strtoupper($dia))
-                        ->where('HORA_INI', $horaActual)
-                        ->where('HORA_FIN', $horaFinPeriodo)
-                        ->first();
+                // Check or insert Horario
+                $horario = \Illuminate\Support\Facades\DB::table('HORARIO')
+                    ->where('DIA', strtoupper($dia))
+                    ->where('HORA_INI', $horaInicio)
+                    ->where('HORA_FIN', $horaFinPeriodo)
+                    ->first();
 
-                    if (!$horario) {
-                        $horarioId = \Illuminate\Support\Facades\DB::table('HORARIO')->insertGetId([
-                            'DIA' => strtoupper($dia),
-                            'HORA_INI' => $horaActual,
-                            'HORA_FIN' => $horaFinPeriodo
-                        ], 'ID');
-                    } else {
-                        $horarioId = $horario->ID;
-                    }
-
-                    // Insert new child link
-                    \Illuminate\Support\Facades\DB::table('HORARIO_EN_BLOQUE')->insert([
-                        'HORARIO_ID' => $horarioId,
-                        'ID_BLOQUE_HORARIO' => $id,
-                        'CARGA_HORARIA' => $carga
-                    ]);
-
-                    $horaActual = $horaFinPeriodo;
+                if (!$horario) {
+                    $horarioId = \Illuminate\Support\Facades\DB::table('HORARIO')->insertGetId([
+                        'DIA' => strtoupper($dia),
+                        'HORA_INI' => $horaInicio,
+                        'HORA_FIN' => $horaFinPeriodo
+                    ], 'ID');
+                } else {
+                    $horarioId = $horario->ID;
                 }
+
+                // Insert new child link
+                \Illuminate\Support\Facades\DB::table('HORARIO_EN_BLOQUE')->insert([
+                    'HORARIO_ID' => $horarioId,
+                    'ID_BLOQUE_HORARIO' => $id,
+                    'CARGA_HORARIA' => $carga
+                ]);
             }
 
             \Illuminate\Support\Facades\DB::commit();

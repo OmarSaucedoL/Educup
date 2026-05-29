@@ -15,6 +15,19 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const formatCargaHoraria = (carga: any) => {
+    if (!carga) return '';
+    const num = parseFloat(carga);
+    if (isNaN(num)) return `${carga}`;
+    if (num <= 10) {
+        const mins = Math.round(num * 60);
+        return `${num} hrs / ${mins} min`;
+    }
+    // Convert minutes to hours
+    const hrs = num / 60;
+    return `${hrs} hrs / ${num} min`;
+};
+
 export default function Index({ bloques }: { bloques: any[] }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -59,7 +72,7 @@ export default function Index({ bloques }: { bloques: any[] }) {
                                                                 <span className="text-foreground font-medium">{hb.horario?.DIA}:</span>{' '}
                                                                 {hb.horario?.HORA_INI} - {hb.horario?.HORA_FIN}
                                                                 <span className="text-muted-foreground ml-2 text-xs">
-                                                                    (Carga: {hb.CARGA_HORARIA} hrs)
+                                                                    (Carga: {formatCargaHoraria(hb.CARGA_HORARIA)})
                                                                 </span>
                                                             </li>
                                                         ))}

@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
 interface CrearHorarioForm {
+    [key: string]: any;
     TURNO: string;
     HORA_INICIO: string;
     DIAS: string[];
@@ -40,6 +41,12 @@ const TURNOS = [
     { value: 'NOCHE', label: 'Noche (18:00 - 22:00)' },
 ];
 
+const TURNO_LIMITS: Record<string, { min: string; max: string }> = {
+    MAÑANA: { min: '07:00', max: '11:59' },
+    TARDE: { min: '12:00', max: '17:59' },
+    NOCHE: { min: '18:00', max: '21:59' }
+};
+
 const PRESET_CARGAS = [
     { label: '45 minutos', value: 45 },
     { label: '90 minutos (Recomendado)', value: 90 },
@@ -49,10 +56,23 @@ const PRESET_CARGAS = [
 export default function CrearHorario() {
     const { data, setData, post, processing, errors } = useForm<CrearHorarioForm>({
         TURNO: 'MAÑANA',
-        HORA_INICIO: '',
+        HORA_INICIO: '07:00',
         DIAS: [],
         CARGA_HORARIA: 90,
     });
+
+    const handleTurnoChange = (newTurno: string) => {
+        const limits = TURNO_LIMITS[newTurno];
+        let newHora = data.HORA_INICIO;
+        if (!newHora || newHora < limits.min || newHora > limits.max) {
+            newHora = limits.min;
+        }
+        setData({
+            ...data,
+            TURNO: newTurno,
+            HORA_INICIO: newHora,
+        });
+    };
 
     const toggleDia = (dia: string) => {
         const upperDia = dia.toUpperCase();
@@ -79,6 +99,8 @@ export default function CrearHorario() {
         post('/horarios');
     };
 
+    const limits = TURNO_LIMITS[data.TURNO] || { min: '07:00', max: '21:59' };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Registrar Bloque de Horarios" />
@@ -94,7 +116,7 @@ export default function CrearHorario() {
                             </Button>
                             <div>
                                 <h1 className="text-2xl font-semibold tracking-tight">Registrar Bloque de Horario</h1>
-                                <p className="text-sm text-muted-foreground">Define la carga horaria y distribuye los periodos automáticamente en los días indicados.</p>
+                                <p className="text-sm text-muted-foreground">Define la carga horaria y registra el horario de la clase en los días indicados.</p>
                             </div>
                         </div>
                     </div>
@@ -104,7 +126,7 @@ export default function CrearHorario() {
                             <h3 className="font-semibold leading-none tracking-tight text-lg flex items-center gap-2">
                                 <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Parámetros del Bloque
                             </h3>
-                            <p className="text-xs text-muted-foreground">La base de datos ejecutará un procedimiento almacenado para generar los registros hijos correspondientes.</p>
+                            <p className="text-xs text-muted-foreground">La base de datos registrará el horario de la clase para cada uno de los días seleccionados.</p>
                         </div>
                         
                         <div className="p-6">
@@ -120,7 +142,7 @@ export default function CrearHorario() {
                                                 <button
                                                     key={turno.value}
                                                     type="button"
-                                                    onClick={() => setData('TURNO', turno.value)}
+                                                    onClick={() => handleTurnoChange(turno.value)}
                                                     className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all ${
                                                         active
                                                             ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
@@ -146,13 +168,15 @@ export default function CrearHorario() {
                                             id="HORA_INICIO"
                                             type="time"
                                             required
+                                            min={limits.min}
+                                            max={limits.max}
                                             value={data.HORA_INICIO}
                                             onChange={(e) => setData('HORA_INICIO', e.target.value)}
                                             className="h-10 pl-3 pr-3 text-base"
                                         />
                                     </div>
                                     <p className="text-[11px] text-muted-foreground">
-                                        Debe ser entre las <strong>07:00</strong> y las <strong>20:00</strong>. Las 2 materias del bloque se distribuirán consecutivamente desde esta hora.
+                                        Debe corresponder al turno seleccionado: Mañana (07:00 - 12:00), Tarde (12:00 - 18:00) o Noche (18:00 - 22:00).
                                     </p>
                                     <InputError message={errors.HORA_INICIO} />
                                 </div>
