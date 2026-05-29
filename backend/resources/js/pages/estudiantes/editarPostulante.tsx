@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, useForm, Link, router } from '@inertiajs/react';
-import { ArrowLeft, LoaderCircle, UserPlus, Save, Trash2, AlertTriangle, GraduationCap, Building2, Landmark, Calendar, ClipboardList } from 'lucide-react';
+import { ArrowLeft, LoaderCircle, UserPlus, Save, Trash2, AlertTriangle, GraduationCap, Building2, Landmark, Calendar, ClipboardList, CheckCircle2, XCircle, BookOpen, User, Mail, MapPin, Award } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+
+import DetalleHistorialModal, { type HistorialCup } from './components/DetalleHistorialModal';
 
 interface Colegio { ID: number; NOMBRE: string; }
 interface Ciudad { ID: number; NOMBRE: string; DEPARTAMENTO: string; }
@@ -37,18 +39,6 @@ interface OpcionCarrera {
     };
 }
 
-interface HistorialCup {
-    ID: number;
-    ID_ESTUDIANTE: number;
-    ID_CUP: number;
-    FECHA: string;
-    ESTADO: string;
-    NOTA_FINAL: number;
-    CARRERA: string | null;
-    cup: Cup;
-    opciones_carrera?: OpcionCarrera[];
-    opcionesCarrera?: OpcionCarrera[];
-}
 
 interface Postulante {
     ID_ESTUDIANTE: number;
@@ -81,6 +71,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
     const isEdit = !!postulante;
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+    const [activeHistoryDetail, setActiveHistoryDetail] = useState<HistorialCup | null>(null);
 
     const hasHistory = isEdit && historialCups && historialCups.length > 0;
 
@@ -742,6 +733,20 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                         {hc.CARRERA ? hc.CARRERA : 'Ninguna asignada / No calificado'}
                                                     </span>
                                                 </div>
+
+                                                {/* Detalles Button */}
+                                                <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-8 text-xs font-semibold px-4 border-indigo-100 hover:border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/40 dark:text-indigo-400 dark:hover:bg-indigo-950/30 shadow-none gap-1"
+                                                        onClick={() => setActiveHistoryDetail(hc)}
+                                                    >
+                                                        <ClipboardList className="h-3.5 w-3.5" />
+                                                        Detalles
+                                                    </Button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -752,6 +757,13 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
 
                 </div>
             </div>
+
+            {/* History Details Modal */}
+            <DetalleHistorialModal
+                open={activeHistoryDetail !== null}
+                onOpenChange={(open) => !open && setActiveHistoryDetail(null)}
+                activeHistoryDetail={activeHistoryDetail}
+            />
         </AppLayout>
     );
 }

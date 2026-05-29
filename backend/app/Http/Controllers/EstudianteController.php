@@ -123,7 +123,14 @@ class EstudianteController extends Controller
         }
 
         $historialCups = EstudianteCup::where('ID_ESTUDIANTE', $id)
-            ->with(['cup', 'opcionesCarrera.carreraCup.carrera'])
+            ->with([
+                'cup', 
+                'opcionesCarrera.carreraCup.carrera',
+                'calificaciones.clase.materia',
+                'calificaciones.clase.aula',
+                'calificaciones.clase.grupo',
+                'calificaciones.clase.docenteCup.docente.usuario'
+            ])
             ->orderBy('FECHA', 'desc')
             ->get();
 

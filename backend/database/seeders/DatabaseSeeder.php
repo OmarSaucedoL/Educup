@@ -12,10 +12,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Deshabilitar restricciones de FK para permitir truncamientos limpios
+        // Deshabilitar restricciones de FK para permitir truncamientos limpios en PostgreSQL
         Schema::disableForeignKeyConstraints();
 
-        // Limpieza de datos
+        // Limpieza de datos completa respetando restricciones de integridad referencial
         DB::table('CALIFICACIONES')->truncate();
         DB::table('CLASE')->truncate();
         DB::table('DOCENTE_CUP_MAT')->truncate();
@@ -43,15 +43,15 @@ class DatabaseSeeder extends Seeder
         DB::table('PERMISOS')->truncate();
         DB::table('ROL')->truncate();
 
-        // Rehabilitar restricciones de FK
         Schema::enableForeignKeyConstraints();
 
         // ==========================================
-        // 1. SECURITY & ACCESS CONTROL
+        // 1. CONTROL DE ACCESO, ROLES Y SEGURIDAD
         // ==========================================
         $rolAdmin = DB::table('ROL')->insertGetId(['NOMBRE' => 'ADMINISTRADOR'], 'ID');
         $rolDocente = DB::table('ROL')->insertGetId(['NOMBRE' => 'DOCENTE'], 'ID');
 
+        // Administrador Principal del Sistema (OMAR.ADMIN)
         $uAdminId = DB::table('USUARIO')->insertGetId([
             'USERNAME' => 'OMAR.ADMIN',
             'CONTRASENIA' => Hash::make('Admin123/*'),
@@ -64,42 +64,34 @@ class DatabaseSeeder extends Seeder
             'ROL_ID' => $rolAdmin
         ], 'ID');
 
-        // Docentes (Usuarios base)
-        $uDoc1 = DB::table('USUARIO')->insertGetId([
-            'USERNAME' => 'ALBERTO.DOC',
-            'CONTRASENIA' => Hash::make('Docente123/*'),
-            'CARNET' => 4567891,
-            'NOMBRE' => 'ALBERTO',
-            'APELLIDO' => 'PEREZ',
-            'CORREO' => 'alberto.perez@uagrm.edu.bo',
-            'ESTADO' => 'ACTIVO',
-            'FECHA_CREACION' => Carbon::now(),
-            'ROL_ID' => $rolDocente
-        ], 'ID');
+        // Generación de 10 Docentes con la estructura de cuentas DOCENTE_1 a DOCENTE_10
+        $docenteUserIds = [];
+        for ($i = 1; $i <= 10; $i++) {
+            $uDocId = DB::table('USUARIO')->insertGetId([
+                'USERNAME' => "DOCENTE_{$i}",
+                'CONTRASENIA' => Hash::make('Docente123/*'),
+                'CARNET' => 4567890 + $i,
+                'NOMBRE' => "DOCENTE {$i}",
+                'APELLIDO' => "APELLIDO {$i}",
+                'CORREO' => "docente{$i}@uagrm.edu.bo",
+                'ESTADO' => 'ACTIVO',
+                'FECHA_CREACION' => Carbon::now(),
+                'ROL_ID' => $rolDocente
+            ], 'ID');
+            $docenteUserIds[] = $uDocId;
 
-        $uDoc2 = DB::table('USUARIO')->insertGetId([
-            'USERNAME' => 'MARIA.DOC',
-            'CONTRASENIA' => Hash::make('Docente123/*'),
-            'CARNET' => 4567892,
-            'NOMBRE' => 'MARIA',
-            'APELLIDO' => 'GOMEZ',
-            'CORREO' => 'maria.gomez@uagrm.edu.bo',
-            'ESTADO' => 'ACTIVO',
-            'FECHA_CREACION' => Carbon::now(),
-            'ROL_ID' => $rolDocente
-        ], 'ID');
-
-        // Extensión a la tabla DOCENTE
-        DB::table('DOCENTE')->insert(['CODIGO_DOCENTE' => $uDoc1]);
-        DB::table('DOCENTE')->insert(['CODIGO_DOCENTE' => $uDoc2]);
+            // Extensión a la tabla semántica DOCENTE
+            DB::table('DOCENTE')->insert(['CODIGO_DOCENTE' => $uDocId]);
+        }
 
         // ==========================================
-        // 2. INFRAESTRUCTURA ACADÉMICA BASE
+        // 2. CONFIGURACIÓN DE CATÁLOGOS BASE Y CATASTRO
         // ==========================================
         $carreras = [
             'INGENIERIA EN SISTEMAS',
             'INGENIERIA INFORMATICA',
-            'INGENIERIA EN REDES Y TELECOMUNICACIONES'
+            'INGENIERIA EN REDES',
+            'LICENCIATURA EN TELECOMUNICACIONES'
         ];
         $carreraIds = [];
         foreach ($carreras as $c) {
@@ -112,168 +104,389 @@ class DatabaseSeeder extends Seeder
             $materiaIds[$m] = DB::table('MATERIA')->insertGetId(['NOMBRE' => $m], 'ID_MATERIA');
         }
 
+        // Infraestructura de Aulas
         $aula1 = DB::table('AULA')->insertGetId(['NOMBRE' => 'AULA 101', 'ESTADO' => 'ACTIVO'], 'ID_AULA');
         $aula2 = DB::table('AULA')->insertGetId(['NOMBRE' => 'AULA 102', 'ESTADO' => 'ACTIVO'], 'ID_AULA');
+        $aula3 = DB::table('AULA')->insertGetId(['NOMBRE' => 'AULA 103', 'ESTADO' => 'ACTIVO'], 'ID_AULA');
 
+        // Grupos
         $grupoA = DB::table('GRUPO')->insertGetId(['EST_MIN' => 20, 'EST_MAX' => 80], 'ID_GRUPO');
         $grupoB = DB::table('GRUPO')->insertGetId(['EST_MIN' => 20, 'EST_MAX' => 80], 'ID_GRUPO');
 
-        $ciudad = DB::table('CIUDAD')->insertGetId(['NOMBRE' => 'SANTA CRUZ DE LA SIERRA', 'DEPARTAMENTO' => 'SANTA CRUZ'], 'ID');
-        $colegio = DB::table('COLEGIO')->insertGetId(['NOMBRE' => 'NACIONAL FLORIDA'], 'ID');
+        // Colegios y Ciudades
+        $ciudadId = DB::table('CIUDAD')->insertGetId(['NOMBRE' => 'SANTA CRUZ DE LA SIERRA', 'DEPARTAMENTO' => 'SANTA CRUZ'], 'ID');
+        $colegioId = DB::table('COLEGIO')->insertGetId(['NOMBRE' => 'NACIONAL FLORIDA'], 'ID');
 
-        // Bloques Horarios y Horarios
-        $bloqueBH = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'MAÑANA'], 'ID_BLOQUE_HORARIO');
+        // Estructura Temporal de Bloques Horarios
+        $bMañana = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'MAÑANA'], 'ID_BLOQUE_HORARIO');
+        $bTarde = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'TARDE'], 'ID_BLOQUE_HORARIO');
+        $bNoche = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'NOCHE'], 'ID_BLOQUE_HORARIO');
+
+        // Asientos de Tiempo (Horas académicas)
         $h1 = DB::table('HORARIO')->insertGetId(['DIA' => 'LUNES', 'HORA_INI' => '07:00:00', 'HORA_FIN' => '09:15:00'], 'ID');
-        $h2 = DB::table('HORARIO')->insertGetId(['DIA' => 'MARTES', 'HORA_INI' => '07:00:00', 'HORA_FIN' => '09:15:00'], 'ID');
-        DB::table('HORARIO_EN_BLOQUE')->insert(['HORARIO_ID' => $h1, 'ID_BLOQUE_HORARIO' => $bloqueBH, 'CARGA_HORARIA' => '2.25']);
-        DB::table('HORARIO_EN_BLOQUE')->insert(['HORARIO_ID' => $h2, 'ID_BLOQUE_HORARIO' => $bloqueBH, 'CARGA_HORARIA' => '2.25']);
+        $h2 = DB::table('HORARIO')->insertGetId(['DIA' => 'MIERCOLES', 'HORA_INI' => '07:00:00', 'HORA_FIN' => '09:15:00'], 'ID');
+        $h3 = DB::table('HORARIO')->insertGetId(['DIA' => 'VIERNES', 'HORA_INI' => '07:00:00', 'HORA_FIN' => '09:15:00'], 'ID');
 
-        // ==========================================
-        // 3. PERIODOS CUP (HISTÓRICO VS ACTIVO)
-        // ==========================================
-        
-        // CUP 1: CONCLUIDO (Gestión Histórica 2025)
-        $cup2025 = DB::table('CUP')->insertGetId([
-            'ANIO' => 2025,
-            'SEMESTRE' => 'PRIMER SEMESTRE',
-            'NOTA_MINIMA' => 60.00,
-            'CUPOS' => 150,
-            'FECHA_INICIO' => '2025-01-15',
-            'FECHA_FIN' => '2025-06-20',
-            'USUARIO_ID' => $uAdminId,
-            'ESTADO' => 'Concluido'
-        ], 'ID_CUP');
+        DB::table('HORARIO_EN_BLOQUE')->insert(['HORARIO_ID' => $h1, 'ID_BLOQUE_HORARIO' => $bMañana, 'CARGA_HORARIA' => '2.25']);
+        DB::table('HORARIO_EN_BLOQUE')->insert(['HORARIO_ID' => $h2, 'ID_BLOQUE_HORARIO' => $bMañana, 'CARGA_HORARIA' => '2.25']);
+        DB::table('HORARIO_EN_BLOQUE')->insert(['HORARIO_ID' => $h3, 'ID_BLOQUE_HORARIO' => $bMañana, 'CARGA_HORARIA' => '2.25']);
 
-        // CUP 2: EN CURSO (Único Activo Operativo 2026)
-        $cup2026 = DB::table('CUP')->insertGetId([
-            'ANIO' => 2026,
-            'SEMESTRE' => 'PRIMER SEMESTRE',
-            'NOTA_MINIMA' => 60.00,
-            'CUPOS' => 200,
-            'FECHA_INICIO' => '2026-01-10',
-            'FECHA_FIN' => '2026-06-25',
-            'USUARIO_ID' => $uAdminId,
-            'ESTADO' => 'Inscripciones'
-        ], 'ID_CUP');
-
-        // Población de ofertas de cupos y materias para ambos periodos
-        foreach ([$cup2025, $cup2026] as $cupId) {
-            foreach ($carreraIds as $idCar) {
-                DB::table('CARRERA_CUP')->insert(['ID_CARRERA' => $idCar, 'ID_CUP' => $cupId, 'CUPOS' => 50]);
-            }
-            foreach ($materiaIds as $idMat) {
-                DB::table('MATERIA_CUP')->insert(['ID_CUP' => $cupId, 'ID_MATERIA' => $idMat]);
-            }
-        }
-
-        // Relación Docentes con los periodos
-        $docCup1_25 = DB::table('DOCENTE_CUP')->insertGetId(['CODIGO_DOCENTE' => $uDoc1, 'ID_CUP' => $cup2025, 'FECHA_CREACION' => '2025-01-10'], 'ID');
-        $docCup2_25 = DB::table('DOCENTE_CUP')->insertGetId(['CODIGO_DOCENTE' => $uDoc2, 'ID_CUP' => $cup2025, 'FECHA_CREACION' => '2025-01-10'], 'ID');
-        
-        $docCup1_26 = DB::table('DOCENTE_CUP')->insertGetId(['CODIGO_DOCENTE' => $uDoc1, 'ID_CUP' => $cup2026, 'FECHA_CREACION' => '2026-01-05'], 'ID');
-        $docCup2_26 = DB::table('DOCENTE_CUP')->insertGetId(['CODIGO_DOCENTE' => $uDoc2, 'ID_CUP' => $cup2026, 'FECHA_CREACION' => '2026-01-05'], 'ID');
-
-        // Competencias Docentes por materia
-        DB::table('DOCENTE_CUP_MAT')->insert(['DOCENTE_CUP_ID' => $docCup1_26, 'MATERIA_ID' => $materiaIds['COMPUTACION']]);
-        DB::table('DOCENTE_CUP_MAT')->insert(['DOCENTE_CUP_ID' => $docCup1_26, 'MATERIA_ID' => $materiaIds['MATEMATICA']]);
-        DB::table('DOCENTE_CUP_MAT')->insert(['DOCENTE_CUP_ID' => $docCup2_26, 'MATERIA_ID' => $materiaIds['FISICA']]);
-
-        // Instancias de clases operativas para el periodo activo
-        $claseComp = DB::table('CLASE')->insertGetId([
-            'DOCENTE_CUP_ID' => $docCup1_26, 'ID_BLOQUE_HORARIO' => $bloqueBH, 'ID_MATERIA' => $materiaIds['COMPUTACION'], 'ID_GRUPO' => $grupoA, 'ID_AULA' => $aula1
-        ], 'ID_CLASE');
-        $claseMat = DB::table('CLASE')->insertGetId([
-            'DOCENTE_CUP_ID' => $docCup1_26, 'ID_BLOQUE_HORARIO' => $bloqueBH, 'ID_MATERIA' => $materiaIds['MATEMATICA'], 'ID_GRUPO' => $grupoA, 'ID_AULA' => $aula1
-        ], 'ID_CLASE');
-
-        // ==========================================
-        // 4. ESCENARIOS DE POSTULANTES (CASOS DE PRUEBA)
-        // ==========================================
-
-        // --- CASO 1: Estudiante que APROBÓ el CUP pasado (2025) y ya consolidó su plaza ---
-        $estAprobado25 = DB::table('ESTUDIANTE')->insertGetId([
-            'CARNET' => 9000001, 'NOMBRE' => 'JUAN CARLOS', 'APELLIDO' => 'SANDOVAL', 'FECHA_NAC' => '2005-04-12',
-            'DIRECCION' => 'Radial 26', 'TELEFONO' => '78011111', 'CORREO' => 'juan.sandoval@mail.com',
-            'TITULO_BACHILLER' => 'A-2023', 'SEXO' => 'M', 'ESTADO' => 'INSCRITO', 'COLEGIO_ID' => $colegio, 'CIUDAD_ID' => $ciudad
-        ], 'ID_ESTUDIANTE');
-        $eCup1 = DB::table('ESTUDIANTE_CUP')->insertGetId([
-            'ID_ESTUDIANTE' => $estAprobado25, 'ID_CUP' => $cup2025, 'FECHA' => '2025-01-16',
-            'ESTADO' => 'APROBADO', 'NOTA_FINAL' => 85.50, 'CARRERA' => 'INGENIERIA EN SISTEMAS'
-        ], 'ID');
-        // Guardado de preferencias de ese periodo
-        $cc25_Sist = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cup2025, 'ID_CARRERA' => $carreraIds['INGENIERIA EN SISTEMAS']])->first()->ID;
-        $cc25_Info = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cup2025, 'ID_CARRERA' => $carreraIds['INGENIERIA INFORMATICA']])->first()->ID;
-        DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCup1, 'CARRERA_CUP_ID' => $cc25_Sist, 'OPCION' => 1]);
-        DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCup1, 'CARRERA_CUP_ID' => $cc25_Info, 'OPCION' => 2]);
-
-
-        // --- CASO 2: Estudiante que REPROBÓ el CUP pasado (2025) y se RE-INSCRIBE al activo (2026) ---
-        $estRepitente = DB::table('ESTUDIANTE')->insertGetId([
-            'CARNET' => 9000002, 'NOMBRE' => 'CRISTIAN', 'APELLIDO' => 'AGUILERA', 'FECHA_NAC' => '2006-08-20',
-            'DIRECCION' => 'Plan 3000', 'TELEFONO' => '69022222', 'CORREO' => 'cristian.aguilera@mail.com',
-            'TITULO_BACHILLER' => 'B-2024', 'SEXO' => 'M', 'ESTADO' => 'INSCRITO', 'COLEGIO_ID' => $colegio, 'CIUDAD_ID' => $ciudad
-        ], 'ID_ESTUDIANTE');
-        // Inscripción histórica (Reprobado)
-        $eCup2_Hist = DB::table('ESTUDIANTE_CUP')->insertGetId([
-            'ID_ESTUDIANTE' => $estRepitente, 'ID_CUP' => $cup2025, 'FECHA' => '2025-01-16',
-            'ESTADO' => 'REPROBADO', 'NOTA_FINAL' => 45.00, 'CARRERA' => null
-        ], 'ID');
-        DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCup2_Hist, 'CARRERA_CUP_ID' => $cc25_Info, 'OPCION' => 1]);
-
-        // Re-inscripción en el CUP Activo 2026 (Elige nuevas opciones si lo desea)
-        $eCup2_Activo = DB::table('ESTUDIANTE_CUP')->insertGetId([
-            'ID_ESTUDIANTE' => $estRepitente, 'ID_CUP' => $cup2026, 'FECHA' => '2026-01-12',
-            'ESTADO' => 'INSCRITO', 'NOTA_FINAL' => null, 'CARRERA' => null
-        ], 'ID');
-        $cc26_Redes = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cup2026, 'ID_CARRERA' => $carreraIds['INGENIERIA EN REDES Y TELECOMUNICACIONES']])->first()->ID;
-        $cc26_Sist = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cup2026, 'ID_CARRERA' => $carreraIds['INGENIERIA EN SISTEMAS']])->first()->ID;
-        // Elige Redes como nueva Opción 1 y Sistemas como Opción 2
-        DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCup2_Activo, 'CARRERA_CUP_ID' => $cc26_Redes, 'OPCION' => 1]);
-        DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCup2_Activo, 'CARRERA_CUP_ID' => $cc26_Sist, 'OPCION' => 2]);
-
-
-        // --- CASO 3: Estudiante Postulante Nuevo inscrito en el periodo activo (2026) ---
-        $estNuevo = DB::table('ESTUDIANTE')->insertGetId([
-            'CARNET' => 9000003, 'NOMBRE' => 'ANA MARIA', 'APELLIDO' => 'LOPEZ', 'FECHA_NAC' => '2006-01-15',
-            'DIRECCION' => 'Avenida Busch', 'TELEFONO' => '77033333', 'CORREO' => 'ana.lopez@mail.com',
-            'TITULO_BACHILLER' => 'A-2024', 'SEXO' => 'F', 'ESTADO' => 'INSCRITO', 'COLEGIO_ID' => $colegio, 'CIUDAD_ID' => $ciudad
-        ], 'ID_ESTUDIANTE');
-        $eCup3_Activo = DB::table('ESTUDIANTE_CUP')->insertGetId([
-            'ID_ESTUDIANTE' => $estNuevo, 'ID_CUP' => $cup2026, 'FECHA' => '2026-01-14',
-            'ESTADO' => 'INSCRITO', 'NOTA_FINAL' => null, 'CARRERA' => null
-        ], 'ID');
-        DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCup3_Activo, 'CARRERA_CUP_ID' => $cc26_Sist, 'OPCION' => 1]);
-        DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCup3_Activo, 'CARRERA_CUP_ID' => $cc26_Redes, 'OPCION' => 2]);
-
-
-        // ==========================================
-        // 5. SIEMBRA DE CALIFICACIONES (3 EXÁMENES POR CLASE)
-        // ==========================================
-        
-        // Asignaremos las 3 evaluaciones obligatorias para el alumno Nuevo en su clase de Computación
-        $examenes = [
-            ['NOMBRE' => 'PRIMER PARCIAL', 'PONDERACION' => 30.00],
-            ['NOMBRE' => 'SEGUNDO PARCIAL', 'PONDERACION' => 30.00],
-            ['NOMBRE' => 'EXAMEN FINAL', 'PONDERACION' => 40.00],
+        // Asignación de competencias de docentes por materia base
+        $teacherSubjects = [
+            0 => $materiaIds['COMPUTACION'],
+            1 => $materiaIds['COMPUTACION'],
+            2 => $materiaIds['MATEMATICA'],
+            3 => $materiaIds['MATEMATICA'],
+            4 => $materiaIds['INGLES'],
+            5 => $materiaIds['INGLES'],
+            6 => $materiaIds['FISICA'],
+            7 => $materiaIds['FISICA'],
+            8 => $materiaIds['MATEMATICA'],
+            9 => $materiaIds['FISICA'],
         ];
 
-        foreach ($examenes as $ex) {
-            DB::table('CALIFICACIONES')->insert([
-                'NOMBRE' => $ex['NOMBRE'],
-                'PONDERACION' => $ex['PONDERACION'],
-                'ESTUDIANTE_CUP_ID' => $eCup3_Activo,
-                'ID_CLASE' => $claseComp
-            ]);
+        // ==========================================
+        // 3. LÍNEA DE TIEMPO CUP (3 CONCLUIDOS)
+        // ==========================================
+        $cupsConfig = [
+            [
+                'ANIO' => 2024,
+                'SEMESTRE' => 'PRIMER SEMESTRE',
+                'FECHA_INICIO' => '2024-01-15',
+                'FECHA_FIN' => '2024-06-20',
+            ],
+            [
+                'ANIO' => 2024,
+                'SEMESTRE' => 'SEGUNDO SEMESTRE',
+                'FECHA_INICIO' => '2024-07-15',
+                'FECHA_FIN' => '2024-12-20',
+            ],
+            [
+                'ANIO' => 2025,
+                'SEMESTRE' => 'PRIMER SEMESTRE',
+                'FECHA_INICIO' => '2025-01-15',
+                'FECHA_FIN' => '2025-06-20',
+            ],
+        ];
+
+        $cupIds = [];
+        $clasesMap = [];
+
+        foreach ($cupsConfig as $cConf) {
+            $cupId = DB::table('CUP')->insertGetId([
+                'ANIO' => $cConf['ANIO'],
+                'SEMESTRE' => $cConf['SEMESTRE'],
+                'NOTA_MINIMA' => 60.00,
+                'CUPOS' => 200,
+                'FECHA_INICIO' => $cConf['FECHA_INICIO'],
+                'FECHA_FIN' => $cConf['FECHA_FIN'],
+                'USUARIO_ID' => $uAdminId,
+                'ESTADO' => 'Concluido'
+            ], 'ID_CUP');
+            $cupIds[] = $cupId;
+
+            // Registrar oferta de cupos por carrera en este periodo
+            foreach ($carreraIds as $cId) {
+                DB::table('CARRERA_CUP')->insert([
+                    'ID_CARRERA' => $cId,
+                    'ID_CUP' => $cupId,
+                    'CUPOS' => 50
+                ]);
+            }
+
+            // Registrar materias vinculadas en este periodo
+            foreach ($materiaIds as $mId) {
+                DB::table('MATERIA_CUP')->insert([
+                    'ID_CUP' => $cupId,
+                    'ID_MATERIA' => $mId
+                ]);
+            }
+
+            // Vincular docentes disponibles a la convocatoria actual
+            $docCupIds = [];
+            foreach ($docenteUserIds as $index => $uDocId) {
+                $docCupId = DB::table('DOCENTE_CUP')->insertGetId([
+                    'CODIGO_DOCENTE' => $uDocId,
+                    'ID_CUP' => $cupId,
+                    'FECHA_CREACION' => Carbon::parse($cConf['FECHA_INICIO'])->subDays(5)
+                ], 'ID');
+                $docCupIds[$index] = $docCupId;
+
+                // Asignar materia competente al docente dentro del CUP
+                DB::table('DOCENTE_CUP_MAT')->insert([
+                    'DOCENTE_CUP_ID' => $docCupId,
+                    'MATERIA_ID' => $teacherSubjects[$index]
+                ]);
+            }
+
+            // Generación de clases operativas para cada materia de este CUP
+            $clasesMap[$cupId] = [];
+
+            // COMPUTACION (Docente 1, Aula 101, Grupo A)
+            $clasesMap[$cupId][$materiaIds['COMPUTACION']] = DB::table('CLASE')->insertGetId([
+                'DOCENTE_CUP_ID' => $docCupIds[0],
+                'ID_BLOQUE_HORARIO' => $bMañana,
+                'ID_MATERIA' => $materiaIds['COMPUTACION'],
+                'ID_GRUPO' => $grupoA,
+                'ID_AULA' => $aula1
+            ], 'ID_CLASE');
+
+            // MATEMATICA (Docente 3, Aula 102, Grupo A)
+            $clasesMap[$cupId][$materiaIds['MATEMATICA']] = DB::table('CLASE')->insertGetId([
+                'DOCENTE_CUP_ID' => $docCupIds[2],
+                'ID_BLOQUE_HORARIO' => $bMañana,
+                'ID_MATERIA' => $materiaIds['MATEMATICA'],
+                'ID_GRUPO' => $grupoA,
+                'ID_AULA' => $aula2
+            ], 'ID_CLASE');
+
+            // INGLES (Docente 5, Aula 103, Grupo B)
+            $clasesMap[$cupId][$materiaIds['INGLES']] = DB::table('CLASE')->insertGetId([
+                'DOCENTE_CUP_ID' => $docCupIds[4],
+                'ID_BLOQUE_HORARIO' => $bMañana,
+                'ID_MATERIA' => $materiaIds['INGLES'],
+                'ID_GRUPO' => $grupoB,
+                'ID_AULA' => $aula3
+            ], 'ID_CLASE');
+
+            // FISICA (Docente 7, Aula 101, Grupo B)
+            $clasesMap[$cupId][$materiaIds['FISICA']] = DB::table('CLASE')->insertGetId([
+                'DOCENTE_CUP_ID' => $docCupIds[6],
+                'ID_BLOQUE_HORARIO' => $bMañana,
+                'ID_MATERIA' => $materiaIds['FISICA'],
+                'ID_GRUPO' => $grupoB,
+                'ID_AULA' => $aula1
+            ], 'ID_CLASE');
         }
 
-        // Asignamos también sus exámenes para la clase de Matemática
-        foreach ($examenes as $ex) {
-            DB::table('CALIFICACIONES')->insert([
-                'NOMBRE' => $ex['NOMBRE'],
-                'PONDERACION' => $ex['PONDERACION'],
-                'ESTUDIANTE_CUP_ID' => $eCup3_Activo,
-                'ID_CLASE' => $claseMat
-            ]);
+        // ==========================================
+        // 4. SIEMBRA DE 50 ESTUDIANTES REALISTAS
+        // ==========================================
+        $nombresMasc = ['CARLOS', 'JUAN', 'PEDRO', 'LUIS', 'JORGE', 'ANDRES', 'MIGUEL', 'CRISTIAN', 'FERNANDO', 'RICARDO', 'ALEJANDRO', 'DAVID', 'MAURICIO', 'ROBERTO', 'DANIEL'];
+        $nombresFem = ['MARIA', 'ANA', 'LAURA', 'SOFIA', 'ANDREA', 'CAROLINA', 'GABRIELA', 'PATRICIA', 'ELIZABETH', 'CLAUDIA', 'NATALIA', 'VALERIA', 'CAMILA', 'DANIELA', 'ISABEL'];
+        $apellidos = ['SAUCEDO', 'LINO', 'PEREZ', 'GOMEZ', 'SANDOVAL', 'AGUILERA', 'LOPEZ', 'SUAREZ', 'RODRIGUEZ', 'TORRES', 'MENDOZA', 'FLORES', 'ROJAS', 'VARGAS', 'CASTRO', 'GUZMAN', 'ORTEGA', 'PINTO', 'CHAVEZ', 'MORALES'];
+
+        $studentIds = [];
+        for ($i = 1; $i <= 50; $i++) {
+            $gender = ($i % 2 === 0) ? 'F' : 'M';
+            $name = ($gender === 'M') 
+                ? $nombresMasc[($i - 1) % count($nombresMasc)]
+                : $nombresFem[($i - 1) % count($nombresFem)];
+            $lastname1 = $apellidos[($i - 1) % count($apellidos)];
+            $lastname2 = $apellidos[($i + 3) % count($apellidos)];
+            
+            $carnet = 6000000 + $i;
+            $correo = strtolower("estudiante{$i}@mail.com");
+            $titulo = "TIT-BACH-2023-{$carnet}";
+
+            $estId = DB::table('ESTUDIANTE')->insertGetId([
+                'CARNET' => $carnet,
+                'NOMBRE' => $name,
+                'APELLIDO' => "{$lastname1} {$lastname2}",
+                'FECHA_NAC' => '2005-' . str_pad(($i % 12) + 1, 2, '0', STR_PAD_LEFT) . '-' . str_pad(($i % 28) + 1, 2, '0', STR_PAD_LEFT),
+                'DIRECCION' => "AV. BUSCH, CALLE " . ($i % 20 + 1),
+                'TELEFONO' => "700" . str_pad($i, 5, '0', STR_PAD_LEFT),
+                'CORREO' => $correo,
+                'TITULO_BACHILLER' => $titulo,
+                'SEXO' => $gender,
+                'ESTADO' => 'ACTIVO',
+                'COLEGIO_ID' => $colegioId,
+                'CIUDAD_ID' => $ciudadId
+            ], 'ID_ESTUDIANTE');
+            $studentIds[$i] = $estId;
+        }
+
+        // --- Función matemática para generar notas que promedien exactamente la Nota Final ---
+        $generateSubjectGrades = function ($notaFinal, $numSubjects = 4) {
+            $targetSum = $notaFinal * $numSubjects;
+            $grades = [];
+            $currentSum = 0;
+            
+            for ($i = 0; $i < $numSubjects - 1; $i++) {
+                $dev = rand(-700, 700) / 100; // Desviación controlada entre -7 y +7
+                $g = min(98, max(20, $notaFinal + $dev));
+                $grades[] = round($g, 2);
+                $currentSum += $g;
+            }
+            
+            $lastGrade = $targetSum - $currentSum;
+            // Si la última materia se sale de límites, devolvemos la nota uniforme
+            if ($lastGrade < 10 || $lastGrade > 100) {
+                return array_fill(0, $numSubjects, round($notaFinal, 2));
+            }
+            $grades[] = round($lastGrade, 2);
+            
+            return $grades;
+        };
+
+        // --- Función para sembrar notas exactas de 3 exámenes por clase ---
+        $seedGradesForEnrollment = function ($eCupId, $cupId, $gradesList) use ($clasesMap, $materiaIds) {
+            $materiasOrder = ['COMPUTACION', 'MATEMATICA', 'INGLES', 'FISICA'];
+            foreach ($materiasOrder as $mIdx => $mName) {
+                $mId = $materiaIds[$mName];
+                $claseId = $clasesMap[$cupId][$mId];
+                $subGrade = $gradesList[$mIdx];
+
+                // Tres calificaciones cuya suma ponderada (30% + 30% + 40%) sea exactamente la nota final
+                DB::table('CALIFICACIONES')->insert([
+                    'NOMBRE' => 'PRIMER PARCIAL',
+                    'CALIFICACION' => round($subGrade, 1),
+                    'PONDERACION' => 30.00,
+                    'ESTUDIANTE_CUP_ID' => $eCupId,
+                    'ID_CLASE' => $claseId
+                ]);
+
+                DB::table('CALIFICACIONES')->insert([
+                    'NOMBRE' => 'SEGUNDO PARCIAL',
+                    'CALIFICACION' => round($subGrade, 1),
+                    'PONDERACION' => 30.00,
+                    'ESTUDIANTE_CUP_ID' => $eCupId,
+                    'ID_CLASE' => $claseId
+                ]);
+
+                DB::table('CALIFICACIONES')->insert([
+                    'NOMBRE' => 'EXAMEN FINAL',
+                    'CALIFICACION' => round($subGrade, 1),
+                    'PONDERACION' => 40.00,
+                    'ESTUDIANTE_CUP_ID' => $eCupId,
+                    'ID_CLASE' => $claseId
+                ]);
+            }
+        };
+
+        // ==========================================
+        // 5. ESCENARIOS Y TRAYECTORIAS ESTUDIANTILES
+        // ==========================================
+
+        // --- PERFIL A (Los que fallaron en todo - 15 Estudiantes: IDs 1 a 15) ---
+        // Se inscribieron a los 3 periodos CUP y reprobaron todos sistemáticamente con NOTA_FINAL < 60
+        for ($sIdx = 1; $sIdx <= 15; $sIdx++) {
+            $estId = $studentIds[$sIdx];
+            
+            foreach ($cupIds as $cIdx => $cupId) {
+                $notaFinal = round(rand(3500, 5500) / 100, 2); // Nota reprobatoria entre 35.00 y 55.00
+                
+                $eCupId = DB::table('ESTUDIANTE_CUP')->insertGetId([
+                    'ID_ESTUDIANTE' => $estId,
+                    'ID_CUP' => $cupId,
+                    'FECHA' => Carbon::parse($cupsConfig[$cIdx]['FECHA_INICIO'])->addDays(2),
+                    'ESTADO' => 'REPROBADO',
+                    'NOTA_FINAL' => $notaFinal,
+                    'CARRERA' => null
+                ], 'ID');
+
+                // Registro de opciones postuladas en el periodo
+                $cCups = DB::table('CARRERA_CUP')->where('ID_CUP', $cupId)->get();
+                DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $cCups[0]->ID, 'OPCION' => 1]);
+                DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $cCups[1]->ID, 'OPCION' => 2]);
+
+                // Calificaciones académicas exactas
+                $gradesList = $generateSubjectGrades($notaFinal, 4);
+                $seedGradesForEnrollment($eCupId, $cupId, $gradesList);
+            }
+        }
+
+        // --- PERFIL B (La Redención - 15 Estudiantes: IDs 16 a 30) ---
+        // Reprobaron CUP 1 y CUP 2, pero en el CUP 3 aprobaron exitosamente con plaza en INGENIERIA EN SISTEMAS
+        for ($sIdx = 16; $sIdx <= 30; $sIdx++) {
+            $estId = $studentIds[$sIdx];
+
+            // CUP 1 (2024-I) y CUP 2 (2024-II): Reprobaron
+            for ($cIdx = 0; $cIdx <= 1; $cIdx++) {
+                $cupId = $cupIds[$cIdx];
+                $notaFinal = round(rand(4000, 5400) / 100, 2);
+                
+                $eCupId = DB::table('ESTUDIANTE_CUP')->insertGetId([
+                    'ID_ESTUDIANTE' => $estId,
+                    'ID_CUP' => $cupId,
+                    'FECHA' => Carbon::parse($cupsConfig[$cIdx]['FECHA_INICIO'])->addDays(2),
+                    'ESTADO' => 'REPROBADO',
+                    'NOTA_FINAL' => $notaFinal,
+                    'CARRERA' => null
+                ], 'ID');
+
+                $cCups = DB::table('CARRERA_CUP')->where('ID_CUP', $cupId)->get();
+                DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $cCups[1]->ID, 'OPCION' => 1]);
+                DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $cCups[2]->ID, 'OPCION' => 2]);
+
+                $gradesList = $generateSubjectGrades($notaFinal, 4);
+                $seedGradesForEnrollment($eCupId, $cupId, $gradesList);
+            }
+
+            // CUP 3 (2025-I): Redención y Aprobación
+            $cupId = $cupIds[2];
+            $notaFinal = round(rand(6500, 8500) / 100, 2); // Nota aprobatoria >= 60.00
+            
+            $eCupId = DB::table('ESTUDIANTE_CUP')->insertGetId([
+                'ID_ESTUDIANTE' => $estId,
+                'ID_CUP' => $cupId,
+                'FECHA' => Carbon::parse($cupsConfig[2]['FECHA_INICIO'])->addDays(2),
+                'ESTADO' => 'APROBADO',
+                'NOTA_FINAL' => $notaFinal,
+                'CARRERA' => 'INGENIERIA EN SISTEMAS'
+            ], 'ID');
+
+            $ccSist = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['INGENIERIA EN SISTEMAS']])->first()->ID;
+            $ccInfo = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['INGENIERIA INFORMATICA']])->first()->ID;
+            
+            DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $ccSist, 'OPCION' => 1]);
+            DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $ccInfo, 'OPCION' => 2]);
+
+            $gradesList = $generateSubjectGrades($notaFinal, 4);
+            $seedGradesForEnrollment($eCupId, $cupId, $gradesList);
+        }
+
+        // --- PERFIL C (Aprobación Inmediata - 20 Estudiantes: IDs 31 a 50) ---
+        // Admitidos en su primer intento. No vuelven a aparecer en periodos posteriores.
+        
+        // 10 Estudiantes ingresan en el CUP 1 (IDs 31 a 40)
+        for ($sIdx = 31; $sIdx <= 40; $sIdx++) {
+            $estId = $studentIds[$sIdx];
+            $cupId = $cupIds[0];
+            $notaFinal = round(rand(7000, 9200) / 100, 2);
+
+            $eCupId = DB::table('ESTUDIANTE_CUP')->insertGetId([
+                'ID_ESTUDIANTE' => $estId,
+                'ID_CUP' => $cupId,
+                'FECHA' => Carbon::parse($cupsConfig[0]['FECHA_INICIO'])->addDays(2),
+                'ESTADO' => 'APROBADO',
+                'NOTA_FINAL' => $notaFinal,
+                'CARRERA' => 'INGENIERIA INFORMATICA'
+            ], 'ID');
+
+            $ccInfo = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['INGENIERIA INFORMATICA']])->first()->ID;
+            $ccSist = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['INGENIERIA EN SISTEMAS']])->first()->ID;
+
+            DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $ccInfo, 'OPCION' => 1]);
+            DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $ccSist, 'OPCION' => 2]);
+
+            $gradesList = $generateSubjectGrades($notaFinal, 4);
+            $seedGradesForEnrollment($eCupId, $cupId, $gradesList);
+        }
+
+        // 10 Estudiantes ingresan en el CUP 2 (IDs 41 a 50)
+        for ($sIdx = 41; $sIdx <= 50; $sIdx++) {
+            $estId = $studentIds[$sIdx];
+            $cupId = $cupIds[1];
+            $notaFinal = round(rand(7000, 9500) / 100, 2);
+
+            $eCupId = DB::table('ESTUDIANTE_CUP')->insertGetId([
+                'ID_ESTUDIANTE' => $estId,
+                'ID_CUP' => $cupId,
+                'FECHA' => Carbon::parse($cupsConfig[1]['FECHA_INICIO'])->addDays(2),
+                'ESTADO' => 'APROBADO',
+                'NOTA_FINAL' => $notaFinal,
+                'CARRERA' => 'INGENIERIA EN REDES'
+            ], 'ID');
+
+            $ccRedes = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['INGENIERIA EN REDES']])->first()->ID;
+            $ccTel = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['LICENCIATURA EN TELECOMUNICACIONES']])->first()->ID;
+
+            DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $ccRedes, 'OPCION' => 1]);
+            DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $ccTel, 'OPCION' => 2]);
+
+            $gradesList = $generateSubjectGrades($notaFinal, 4);
+            $seedGradesForEnrollment($eCupId, $cupId, $gradesList);
         }
     }
 }

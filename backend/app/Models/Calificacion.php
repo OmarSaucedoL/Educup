@@ -13,13 +13,15 @@ class Calificacion extends Model
 
     protected $fillable = [
         'NOMBRE',
+        'CALIFICACION',
         'PONDERACION',
         'ESTUDIANTE_CUP_ID',
         'ID_CLASE'
     ];
 
     protected $casts = [
-        'PONDERACION' => 'decimal:2'
+        'PONDERACION' => 'decimal:2',
+        'CALIFICACION' => 'decimal:1'
     ];
 
     public function estudianteCup(): BelongsTo
