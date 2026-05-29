@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Cup extends Model
 {
@@ -19,7 +20,8 @@ class Cup extends Model
         'CUPOS',
         'FECHA_INICIO',
         'FECHA_FIN',
-        'USUARIO_ID'
+        'USUARIO_ID',
+        'ESTADO'
     ];
 
     protected $casts = [
@@ -46,5 +48,15 @@ class Cup extends Model
     public function carreraCups(): HasMany
     {
         return $this->hasMany(CarreraCup::class, 'ID_CUP', 'ID_CUP');
+    }
+
+    public function materiaCups(): HasMany
+    {
+        return $this->hasMany(MateriaCup::class, 'ID_CUP', 'ID_CUP');
+    }
+
+    public function materias(): BelongsToMany
+    {
+        return $this->belongsToMany(Materia::class, 'MATERIA_CUP', 'ID_CUP', 'ID_MATERIA');
     }
 }

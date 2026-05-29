@@ -21,7 +21,7 @@ import { type BreadcrumbItem } from '@/types';
 interface Colegio { ID: number; NOMBRE: string; }
 interface Ciudad { ID: number; NOMBRE: string; DEPARTAMENTO: string; }
 interface Carrera { ID_CARRERA: number; NOMBRE: string; }
-interface CarreraCup { ID: number; ID_CARRERA: number; ID_CUP: number; carrera: Carrera; }
+interface CarreraCup { ID: number; ID_CARRERA: number; ID_CUP: number; CUPOS: number; carrera: Carrera; }
 interface Cup { ID_CUP: number; ANIO: number; SEMESTRE: string; }
 
 interface HistorialCup {

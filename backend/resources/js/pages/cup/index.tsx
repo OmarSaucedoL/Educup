@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -39,7 +39,9 @@ export default function Index({ cups }: { cups: any[] }) {
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Nota Mínima</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Fecha de Inicio</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Fecha de Fin</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Estado</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Administrador</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-right align-middle font-medium w-[100px]">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
@@ -57,14 +59,32 @@ export default function Index({ cups }: { cups: any[] }) {
                                             <td className="p-4 align-middle">{cup.NOTA_MINIMA}</td>
                                             <td className="p-4 align-middle">{cup.FECHA_INICIO}</td>
                                             <td className="p-4 align-middle">{cup.FECHA_FIN}</td>
+                                            <td className="p-4 align-middle">
+                                                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                                    cup.ESTADO === 'Inscripciones'
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-800'
+                                                        : cup.ESTADO === 'En curso'
+                                                        ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:text-sky-300 dark:border-sky-800'
+                                                        : 'bg-neutral-100 text-neutral-800 border-neutral-200 dark:bg-neutral-900/60 dark:text-neutral-300 dark:border-neutral-800'
+                                                }`}>
+                                                    {cup.ESTADO || 'Inscripciones'}
+                                                </span>
+                                            </td>
                                             <td className="p-4 align-middle text-muted-foreground">
                                                 {cup.usuario ? `${cup.usuario.NOMBRE} ${cup.usuario.APELLIDO}` : 'N/A'}
+                                            </td>
+                                            <td className="p-4 align-middle text-right">
+                                                <Button variant="outline" size="sm" asChild>
+                                                    <Link href={`/cup/${cup.ID_CUP}/editar`} className="inline-flex items-center gap-1.5">
+                                                        <Edit className="h-3.5 w-3.5" /> Editar
+                                                    </Link>
+                                                </Button>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="text-muted-foreground p-4 text-center align-middle">
+                                        <td colSpan={8} className="text-muted-foreground p-4 text-center align-middle">
                                             No hay registros de CUP creados.
                                         </td>
                                     </tr>

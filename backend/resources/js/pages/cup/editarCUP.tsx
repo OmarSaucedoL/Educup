@@ -25,45 +25,60 @@ interface CatalogMateria {
     NOMBRE: string;
 }
 
-interface CrearCUPProps {
+interface Cup {
+    ID_CUP: number;
+    ANIO: number;
+    SEMESTRE: string;
+    NOTA_MINIMA: number | string;
+    CUPOS: number;
+    FECHA_INICIO: string | null;
+    FECHA_FIN: string | null;
+    USUARIO_ID: number;
+    ESTADO: string;
+    carreras: { ID_CARRERA: number; CUPOS: number }[];
+    materias: number[];
+}
+
+interface EditarCUPProps {
+    cup: Cup;
     usuarios: Usuario[];
     carreras: CatalogCarrera[];
     materias: CatalogMateria[];
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Gestión Académica',
-        href: '#',
-    },
-    {
-        title: 'CUP',
-        href: '/cup',
-    },
-    {
-        title: 'Crear',
-        href: '/cup/crearCUP',
-    },
-];
-
-export default function CrearCUP({ usuarios = [], carreras = [], materias = [] }: CrearCUPProps) {
-    const { data, setData, post, processing, errors } = useForm({
-        ANIO: new Date().getFullYear(),
-        SEMESTRE: 'I',
-        NOTA_MINIMA: 51,
-        CUPOS: 0,
-        FECHA_INICIO: '',
-        FECHA_FIN: '',
-        USUARIO_ID: '',
-        ESTADO: 'Inscripciones',
-        carreras: [] as { ID_CARRERA: number; CUPOS: number }[],
-        materias: [] as number[],
+export default function EditarCUP({ cup, usuarios = [], carreras = [], materias = [] }: EditarCUPProps) {
+    const { data, setData, put, processing, errors } = useForm({
+        ANIO: cup.ANIO || new Date().getFullYear(),
+        SEMESTRE: cup.SEMESTRE || 'I',
+        NOTA_MINIMA: cup.NOTA_MINIMA || 51,
+        CUPOS: cup.CUPOS || 0,
+        FECHA_INICIO: cup.FECHA_INICIO || '',
+        FECHA_FIN: cup.FECHA_FIN || '',
+        USUARIO_ID: cup.USUARIO_ID?.toString() || '',
+        ESTADO: cup.ESTADO || 'Inscripciones',
+        carreras: cup.carreras || [],
+        materias: cup.materias || [],
     });
 
-    const [selectedMateriaIds, setSelectedMateriaIds] = useState<number[]>([]);
-    const [selectedCarreras, setSelectedCarreras] = useState<{ ID_CARRERA: number; CUPOS: number }[]>([]);
+    const [selectedCarreras, setSelectedCarreras] = useState<{ ID_CARRERA: number; CUPOS: number }[]>(cup.carreras || []);
+    const [selectedMateriaIds, setSelectedMateriaIds] = useState<number[]>(cup.materias || []);
 
-    // Automatically sync and compute total cupos when selected careers or their quotas change
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Gestión Académica',
+            href: '#',
+        },
+        {
+            title: 'CUP',
+            href: '/cup',
+        },
+        {
+            title: `Editar: ${cup.ANIO} - ${cup.SEMESTRE}`,
+            href: `/cup/${cup.ID_CUP}/editar`,
+        },
+    ];
+
+    // Compute total cupos when selected careers or quotas change
     useEffect(() => {
         const sum = selectedCarreras.reduce((acc, curr) => acc + (curr.CUPOS || 0), 0);
         setData(currData => ({
@@ -107,12 +122,12 @@ export default function CrearCUP({ usuarios = [], carreras = [], materias = [] }
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post('/cup');
+        put(`/cup/${cup.ID_CUP}`);
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Crear CUP" />
+            <Head title={`Editar CUP: ${cup.ANIO} - ${cup.SEMESTRE}`} />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 md:p-6">
                 <div className="max-w-4xl w-full mx-auto mt-4">
                     
@@ -124,9 +139,9 @@ export default function CrearCUP({ usuarios = [], carreras = [], materias = [] }
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Nuevo Periodo CUP</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Editar Periodo CUP</h1>
                             <p className="text-sm text-muted-foreground mt-0.5">
-                                Registra y configura una nueva gestión académica para el Curso Universitario Pre-Facultativo.
+                                Modifica los parámetros de configuración del Curso Universitario Pre-Facultativo.
                             </p>
                         </div>
                     </div>
@@ -135,7 +150,7 @@ export default function CrearCUP({ usuarios = [], carreras = [], materias = [] }
                         <div className="flex flex-col space-y-1.5 p-6 border-b border-neutral-100 dark:border-neutral-800">
                             <h3 className="font-bold leading-none tracking-tight text-lg flex items-center gap-2">
                                 <GraduationCap className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                                Configuración de Admisión
+                                Detalles de la Gestión (ID: #{cup.ID_CUP})
                             </h3>
                             <p className="text-xs text-muted-foreground">Todos los campos marcados con (*) son obligatorios.</p>
                         </div>
@@ -425,7 +440,7 @@ export default function CrearCUP({ usuarios = [], carreras = [], materias = [] }
                                         ) : (
                                             <Save className="mr-2 h-4 w-4" />
                                         )}
-                                        Guardar Configuración
+                                        Guardar Cambios
                                     </Button>
                                     <Button variant="outline" type="button" className="h-11 font-bold text-sm" asChild>
                                         <Link href="/cup">

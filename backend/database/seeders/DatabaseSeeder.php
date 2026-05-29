@@ -127,7 +127,8 @@ class DatabaseSeeder extends Seeder
             'CUPOS' => 150,
             'FECHA_INICIO' => '2026-06-01',
             'FECHA_FIN' => '2026-07-15',
-            'USUARIO_ID' => $adminId
+            'USUARIO_ID' => $adminId,
+            'ESTADO' => 'Inscripciones'
         ], 'ID_CUP');
 
         // 5. Inserción de CARRERA_CUP y DOCENTE_CUP
