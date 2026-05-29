@@ -9,6 +9,14 @@ Route::get('/usuarios', [UsuarioController::class, 'index']);
 // Mostrar formulario para crear un usuario (Inertia)
 Route::get('/usuarios/crearUsuario', [UsuarioController::class, 'create']);
 
+// Vista de importación masiva de usuarios
+Route::get('/usuarios/importar', function () {
+    return inertia('usuarios/ImportarUsuarios');
+});
+
+// Importar usuarios masivamente
+Route::post('/usuarios/importar', [UsuarioController::class, 'importExcel']);
+
 // Obtener un usuario específico
 Route::get('/usuarios/{id}', [UsuarioController::class, 'show']);
 

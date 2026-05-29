@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Imports;
+
+use App\Models\Rol;
+use App\Models\Usuario;
+use App\Models\Docente;
+use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+
+class UsuariosImport implements ToModel, WithHeadingRow
+{
+    public function model(array $row)
+    {
+        // Saltar filas vacías
+        if (empty(array_filter($row))) {
+            return null;
+        }
+
+        // Fase 1: Validación del Rol
+        $rolNombre = strtoupper(trim($row['rol'] ?? ''));
+
+        $rol = Rol::where('NOMBRE', $rolNombre)->first();
+
+        if (!$rol) {
+            throw new \Exception("El rol '" . ($row['rol'] ?? '') . "' no es válido en el sistema. Proceso abortado.");
+        }
+
+        // Fase 2: Registro en la Tabla USUARIO
+        $usuario = Usuario::create([
+            'USERNAME'       => strtoupper(trim($row['username'] ?? '')),
+            'CONTRASENIA'    => Hash::make($row['contrasenia'] ?? ''),
+            'CARNET'         => strtoupper(trim($row['carnet'] ?? '')),
+            'NOMBRE'         => strtoupper(trim($row['nombre'] ?? '')),
+            'APELLIDO'       => strtoupper(trim($row['apellido'] ?? '')),
+            'CORREO'         => strtoupper(trim($row['correo'] ?? '')),
+            'ESTADO'         => 1, // Por defecto ACTIVO (1)
+            'FECHA_CREACION' => now(),
+            'ROL_ID'         => $rol->ID,
+        ]);
+
+        // Fase 3: Lógica Condicional de Docentes
+        if (str_contains($rolNombre, 'DOCENTE')) {
+            Docente::create([
+                'CODIGO' => $usuario->ID
+                // Otros campos de la tabla DOCENTE según tu modelo
+                // Asumiendo que CODIGO es PK y no hay más campos obligatorios,
+                // de lo contrario habría que agregar sus valores por defecto aquí.
+            ]);
+        }
+
+        return $usuario;
+    }
+}

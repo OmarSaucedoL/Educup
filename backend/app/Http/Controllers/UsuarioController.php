@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use App\Imports\UsuariosImport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\ValidationException;
 
 class UsuarioController extends Controller
@@ -29,6 +32,37 @@ class UsuarioController extends Controller
         return inertia('usuarios/crearUsuario', [
             'roles' => $roles
         ]);
+    }
+
+    /**
+     * Handle the Excel import for users.
+     */
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'archivo_excel' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB max
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            Excel::import(new UsuariosImport(), $request->file('archivo_excel'));
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Importación masiva de usuarios completada con éxito.');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            DB::rollBack();
+            $failures = $e->failures();
+            throw ValidationException::withMessages([
+                'archivo_excel' => 'Error de formato en los datos del Excel. Revisa el archivo e inténtalo de nuevo.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages([
+                'archivo_excel' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
