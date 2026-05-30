@@ -1,34 +1,54 @@
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { BookOpen, Users, Building2, Clock, User, ChevronLeft } from 'lucide-react';
+import { BookOpen, Users, Building2, Clock, User, ChevronLeft, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function VerClasesPage({ cup }: { cup: any }) {
     const todasLasClases: any[] = cup.clases ?? [];
 
+    // Agrupar clases por ID_GRUPO
+    const clasesPorGrupo = todasLasClases.reduce((acc: any, clase: any) => {
+        const grupoId = clase.grupo?.ID_GRUPO ?? 'sin_grupo';
+        if (!acc[grupoId]) {
+            acc[grupoId] = {
+                grupo: clase.grupo,
+                clases: []
+            };
+        }
+        acc[grupoId].clases.push(clase);
+        return acc;
+    }, {});
+
+    const grupos = Object.values(clasesPorGrupo).sort((a: any, b: any) => {
+        // Ordenar por nombre de grupo si es posible
+        const nameA = a.grupo?.NOMBRE || '';
+        const nameB = b.grupo?.NOMBRE || '';
+        return nameA.localeCompare(nameB);
+    });
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Gestión Académica', href: '#' },
         { title: 'CUP', href: '/cup' },
         { title: `CUP #${cup.ID_CUP}`, href: `/cup/${cup.ID_CUP}` },
-        { title: 'Clases', href: '#' },
+        { title: 'Clases y Grupos', href: '#' },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Clases CUP #${cup.ID_CUP}`} />
 
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 max-w-4xl mx-auto w-full">
+            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 max-w-5xl mx-auto w-full">
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-4">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800">
-                            <BookOpen className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/60 border border-violet-200 dark:border-violet-800">
+                            <BookOpen className="h-7 w-7 text-violet-700 dark:text-violet-300" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Clases del CUP #{cup.ID_CUP}</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Clases y Grupos del CUP</h1>
                             <p className="text-sm text-muted-foreground mt-0.5">
-                                Lista de todas las clases asignadas en este curso universitario de preparación.
+                                Periodo: {cup.ANIO} - {cup.SEMESTRE}
                             </p>
                         </div>
                     </div>
@@ -39,89 +59,55 @@ export default function VerClasesPage({ cup }: { cup: any }) {
                     </Button>
                 </div>
 
-                <div className="flex-1 space-y-4">
-                    {todasLasClases.length === 0 ? (
-                        <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 p-8 text-center bg-white dark:bg-neutral-950">
-                            <BookOpen className="h-8 w-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
-                            <p className="text-sm text-neutral-500">No hay clases registradas en este CUP.</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-4">
-                            {todasLasClases.map((clase: any, i: number) => {
-                                const bloque = clase.bloque_horario ?? clase.bloqueHorario;
-                                const horariosEnBloque: any[] = bloque?.horarios_en_bloque ?? bloque?.horariosEnBloque ?? [];
-                                const docente = clase.docente_cup?.docente ?? clase.docenteCup?.docente;
-                                const codigoDocente = clase.docente_cup?.CODIGO_DOCENTE ?? clase.docenteCup?.CODIGO_DOCENTE;
-                                
-                                return (
-                                    <div key={`${clase.ID_CLASE}-${i}`} className="rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 p-4 shadow-sm flex flex-col gap-3">
-                                        <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-2">
-                                            <div className="flex items-center gap-2">
-                                                <BookOpen className="h-4 w-4 text-violet-500" />
-                                                <span className="font-extrabold text-neutral-800 dark:text-neutral-200 text-sm">
-                                                    {clase.materia?.NOMBRE ?? `Clase #${clase.ID_CLASE}`}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {clase.grupo && (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full border px-2 py-0.5 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-800">
-                                                        <Users className="h-3 w-3" />
-                                                        Grupo {clase.grupo.NOMBRE ?? `#${clase.grupo.ID_GRUPO}`}
+                <div className="border-sidebar-border/70 dark:border-sidebar-border bg-card text-card-foreground relative flex-1 rounded-xl border shadow-sm overflow-hidden">
+                    <div className="relative w-full overflow-auto">
+                        <table className="w-full caption-bottom text-sm">
+                            <thead className="[&_tr]:border-b">
+                                <tr className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Grupo</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Turno</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Aula Asignada</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-center align-middle font-medium">Inscritos</th>
+                                </tr>
+                            </thead>
+                            <tbody className="[&_tr:last-child]:border-0">
+                                {grupos.length > 0 ? (
+                                    grupos.map((groupData: any, groupIndex: number) => {
+                                        const { grupo, clases } = groupData;
+                                        const totalEstudiantes = clases.length > 0 ? (clases[0].estudiante_cups_count || 0) : 0;
+                                        const aulaDelGrupo = clases.length > 0 ? clases[0].aula : null;
+                                        const bloque = clases.length > 0 ? (clases[0].bloque_horario ?? clases[0].bloqueHorario) : null;
+                                        const turnoDelGrupo = bloque?.TURNO ?? 'No definido';
+
+                                        return (
+                                            <tr key={`grupo-${groupIndex}`} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                                <td className="p-4 align-middle font-bold text-neutral-900 dark:text-neutral-100">
+                                                    {grupo?.NOMBRE ?? 'SIN ASIGNAR'}
+                                                </td>
+                                                <td className="p-4 align-middle font-medium text-neutral-600 dark:text-neutral-300">
+                                                    {turnoDelGrupo}
+                                                </td>
+                                                <td className="p-4 align-middle text-neutral-600 dark:text-neutral-300">
+                                                    {aulaDelGrupo ? (aulaDelGrupo.NOMBRE ?? `Aula #${aulaDelGrupo.ID_AULA}`) : <span className="italic text-muted-foreground">Sin asignar</span>}
+                                                </td>
+                                                <td className="p-4 align-middle text-center">
+                                                    <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-800">
+                                                        {totalEstudiantes}
                                                     </span>
-                                                )}
-                                                {clase.aula && (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full border px-2 py-0.5 bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:text-sky-300 dark:border-sky-800">
-                                                        <Building2 className="h-3 w-3" />
-                                                        {clase.aula.NOMBRE ?? `Aula #${clase.aula.ID_AULA}`}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center shrink-0">
-                                                    <span className="text-xs font-bold text-neutral-600 dark:text-neutral-300">
-                                                        {docente?.usuario?.NOMBRE?.substring(0, 1) ?? 'D'}
-                                                        {docente?.usuario?.APELLIDO?.substring(0, 1) ?? ''}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-xs text-neutral-800 dark:text-neutral-200">
-                                                        {docente?.usuario ? `${docente.usuario.NOMBRE} ${docente.usuario.APELLIDO}` : (codigoDocente ? `Docente #${codigoDocente}` : 'Sin asignar')}
-                                                    </p>
-                                                    <p className="text-[10px] text-neutral-500 flex items-center gap-1 mt-0.5">
-                                                        <User className="h-3 w-3" />
-                                                        {docente ? 'Docente' : 'Pendiente de asignación'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="flex flex-col justify-center">
-                                                {bloque?.TURNO && (
-                                                    <div className="flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400 mb-1">
-                                                        <Clock className="h-3 w-3" /> Turno: <span className="font-semibold text-neutral-700 dark:text-neutral-300">{bloque.TURNO}</span>
-                                                    </div>
-                                                )}
-                                                {horariosEnBloque.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {horariosEnBloque.map((heb: any, idx: number) => {
-                                                            const h = heb.horario;
-                                                            return (
-                                                                <span key={idx} className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 text-[10px] font-bold text-neutral-600 dark:text-neutral-300">
-                                                                    {h?.DIA} {h?.HORA_INI} – {h?.HORA_FIN}
-                                                                </span>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                ) : (
+                                    <tr>
+                                        <td colSpan={4} className="text-muted-foreground p-8 text-center align-middle">
+                                            No hay grupos ni clases registradas en este CUP.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </AppLayout>

@@ -255,14 +255,15 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                 </h4>
                                 {(() => {
                                     const grouped = activeHistoryDetail.calificaciones?.reduce<Record<number, { clase: Clase; list: Calificacion[] }>>((acc, curr) => {
-                                        if (!curr.ID_CLASE || !curr.clase) return acc;
-                                        if (!acc[curr.ID_CLASE]) {
-                                            acc[curr.ID_CLASE] = {
+                                        const claseId = curr.ID_CLASE || curr.clase?.ID_CLASE;
+                                        if (!claseId || !curr.clase) return acc;
+                                        if (!acc[claseId]) {
+                                            acc[claseId] = {
                                                 clase: curr.clase,
                                                 list: []
                                             };
                                         }
-                                        acc[curr.ID_CLASE].list.push(curr);
+                                        acc[claseId].list.push(curr);
                                         return acc;
                                     }, {}) || {};
 

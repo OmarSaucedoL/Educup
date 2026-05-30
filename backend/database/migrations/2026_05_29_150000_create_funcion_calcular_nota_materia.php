@@ -22,10 +22,11 @@ return new class extends Migration
             DECLARE
                 v_nota_total NUMERIC;
             BEGIN
-                SELECT COALESCE(SUM(("CALIFICACION" * "PONDERACION") / 100.0), 0) INTO v_nota_total
-                FROM "CALIFICACIONES"
-                WHERE "ESTUDIANTE_CUP_ID" = p_estudiante_cup_id
-                  AND "ID_CLASE" = p_clase_id;
+                SELECT COALESCE(SUM((c."CALIFICACION" * c."PONDERACION") / 100.0), 0) INTO v_nota_total
+                FROM "CALIFICACIONES" c
+                JOIN "ESTUDIANTES_CLASE" ec ON c."ESTUDIANTE_CLASE_ID" = ec."ID"
+                WHERE ec."ESTUDIANTE_CUP_ID" = p_estudiante_cup_id
+                  AND ec."ID_CLASE" = p_clase_id;
 
                 RETURN ROUND(v_nota_total, 2);
             END;

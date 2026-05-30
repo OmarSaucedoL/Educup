@@ -179,11 +179,15 @@ class CUPController extends Controller
     public function clases(string $id)
     {
         $cup = Cup::with([
-            'clases.materia',
-            'clases.grupo',
-            'clases.bloqueHorario.horariosEnBloque.horario',
-            'clases.aula',
-            'clases.docenteCup.docente.usuario',
+            'clases' => function ($query) {
+                $query->with([
+                    'materia',
+                    'grupo',
+                    'bloqueHorario.horariosEnBloque.horario',
+                    'aula',
+                    'docenteCup.docente.usuario',
+                ])->withCount('estudianteCups');
+            }
         ])->findOrFail($id);
 
         return inertia('cup/clases', [
@@ -415,10 +419,15 @@ class CUPController extends Controller
         try {
             DB::beginTransaction();
 
-            $inscritos = \App\Models\EstudianteCup::where('ID_CUP', $idCup)->count();
+            $estudiantesDisponibles = \App\Models\EstudianteCup::where('ID_CUP', $idCup)
+                ->where('ESTADO', 'INSCRITO')
+                ->whereDoesntHave('clases')
+                ->get();
+                
+            $inscritos = $estudiantesDisponibles->count();
             
             if ($inscritos === 0) {
-                throw ValidationException::withMessages(['inscritos' => 'No hay estudiantes inscritos. No se puede calcular la cantidad de grupos.']);
+                throw ValidationException::withMessages(['inscritos' => 'No hay estudiantes inscritos sin asignar clases. No se puede calcular la cantidad de grupos.']);
             }
 
             $cup = Cup::with('materias')->findOrFail($idCup);
@@ -445,14 +454,22 @@ class CUPController extends Controller
             $turnosSeleccionados = $validated['turnos'];
             $numTurnos = count($turnosSeleccionados);
 
+            // Preparar estudiantes a asignar
+            $estudiantesAAsignar = $estudiantesDisponibles->take($totalGrupos * $estMax);
+            $chunksEstudiantes = $estudiantesAAsignar->chunk($estMax)->values();
+
+            // Determinar prefijo y offset de grupos existentes para evitar nombres duplicados
+            $anioCorto = substr((string)$cup->ANIO, -2);
+            $nroSemestre = str_contains(strtoupper($cup->SEMESTRE), 'PRIMER') ? '1' : '2';
+            $prefijoGrupo = $anioCorto . $nroSemestre;
+            $gruposExistentes = \App\Models\Grupo::where('NOMBRE', 'LIKE', $prefijoGrupo . '%')->count();
+
             // Repartir los grupos entre los turnos usando Round-Robin
             for ($i = 0; $i < $totalGrupos; $i++) {
                 $turnoNombre = $turnosSeleccionados[$i % $numTurnos];
                 
-                // Generar nombre de grupo: años(2 dígitos) + semestre + número de grupo
-                $anioCorto = substr((string)$cup->ANIO, -2);
-                $nroSemestre = str_contains(strtoupper($cup->SEMESTRE), 'PRIMER') ? '1' : '2';
-                $nombreGrupo = $anioCorto . $nroSemestre . ($i + 1);
+                // Generar nombre de grupo secuencial
+                $nombreGrupo = $prefijoGrupo . ($gruposExistentes + $i + 1);
 
                 // 1. Crear el Grupo en la BD
                 $grupo = Grupo::create([
@@ -468,8 +485,9 @@ class CUPController extends Controller
                 }
 
                 // 3. Crear 4 clases para este grupo usando materias y bloques horarios distintos
+                $clasesCreadasIds = [];
                 for ($j = 0; $j < 4; $j++) {
-                    Clase::create([
+                    $clase = Clase::create([
                         'ID_CUP' => $idCup,
                         'ID_MATERIA' => $materias[$j]->ID_MATERIA,
                         'ID_BLOQUE_HORARIO' => $bloques[$j]->ID_BLOQUE_HORARIO,
@@ -477,6 +495,26 @@ class CUPController extends Controller
                         'DOCENTE_CUP_ID' => null,
                         'ID_AULA' => null,
                     ]);
+                    $clasesCreadasIds[] = $clase->ID_CLASE;
+                }
+
+                // 4. Asignar los estudiantes disponibles a estas 4 clases
+                $estudiantesDeEsteGrupo = $chunksEstudiantes->get($i) ?? collect();
+                $estudiantesClaseInsert = [];
+                
+                foreach ($estudiantesDeEsteGrupo as $est) {
+                    foreach ($clasesCreadasIds as $cId) {
+                        $estudiantesClaseInsert[] = [
+                            'ESTUDIANTE_CUP_ID' => $est->ID,
+                            'ID_CLASE' => $cId,
+                            'ESTADO' => 'CURSANDO',
+                            'FECHA_CREACION' => now()
+                        ];
+                    }
+                }
+                
+                if (count($estudiantesClaseInsert) > 0) {
+                    DB::table('ESTUDIANTES_CLASE')->insert($estudiantesClaseInsert);
                 }
             }
 
