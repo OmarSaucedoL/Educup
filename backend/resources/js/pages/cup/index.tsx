@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit } from 'lucide-react';
+import { Plus, Edit, Info } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -34,6 +34,7 @@ export default function Index({ cups }: { cups: any[] }) {
                         <table className="w-full caption-bottom text-sm">
                             <thead className="[&_tr]:border-b">
                                 <tr className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">#</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Gestión / Semestre</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Cupos</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Nota Mínima</th>
@@ -41,13 +42,18 @@ export default function Index({ cups }: { cups: any[] }) {
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Fecha de Fin</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Estado</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Administrador</th>
-                                    <th className="text-muted-foreground h-12 px-4 text-right align-middle font-medium w-[100px]">Acciones</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-right align-middle font-medium w-[160px]">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
                                 {cups && cups.length > 0 ? (
                                     cups.map((cup) => (
                                         <tr key={cup.ID_CUP} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                            <td className="p-4 align-middle">
+                                                <span className="inline-flex items-center rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 text-xs font-bold text-neutral-600 dark:text-neutral-300">
+                                                    #{cup.ID_CUP}
+                                                </span>
+                                            </td>
                                             <td className="p-4 align-middle font-medium">
                                                 {cup.ANIO} - {cup.SEMESTRE}
                                             </td>
@@ -74,17 +80,29 @@ export default function Index({ cups }: { cups: any[] }) {
                                                 {cup.usuario ? `${cup.usuario.NOMBRE} ${cup.usuario.APELLIDO}` : 'N/A'}
                                             </td>
                                             <td className="p-4 align-middle text-right">
-                                                <Button variant="outline" size="sm" asChild>
-                                                    <Link href={`/cup/${cup.ID_CUP}/editar`} className="inline-flex items-center gap-1.5">
-                                                        <Edit className="h-3.5 w-3.5" /> Editar
-                                                    </Link>
-                                                </Button>
+                                                <div className="inline-flex items-center gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        asChild
+                                                        className="h-8 gap-1.5 border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:bg-indigo-950/50 font-semibold text-xs"
+                                                    >
+                                                        <Link href={`/cup/${cup.ID_CUP}`} className="inline-flex items-center gap-1.5">
+                                                            <Info className="h-3.5 w-3.5" /> Información
+                                                        </Link>
+                                                    </Button>
+                                                    <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs font-semibold">
+                                                        <Link href={`/cup/${cup.ID_CUP}/editar`} className="inline-flex items-center gap-1.5">
+                                                            <Edit className="h-3.5 w-3.5" /> Editar
+                                                        </Link>
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={8} className="text-muted-foreground p-4 text-center align-middle">
+                                        <td colSpan={9} className="text-muted-foreground p-4 text-center align-middle">
                                             No hay registros de CUP creados.
                                         </td>
                                     </tr>

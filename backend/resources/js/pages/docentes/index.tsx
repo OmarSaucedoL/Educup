@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Plus, Edit } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Edit, Plus } from 'lucide-react';
+import { useState } from 'react';
 import EditarDocenteModal from './EditarDocenteModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -51,28 +51,38 @@ export default function Index({ docentes }: { docentes: any[] }) {
                             <tbody className="[&_tr:last-child]:border-0">
                                 {docentes && docentes.length > 0 ? (
                                     docentes.map((docente) => (
-                                        <tr key={docente.CODIGO_DOCENTE} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+                                        <tr
+                                            key={docente.CODIGO_DOCENTE}
+                                            className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
+                                        >
                                             <td className="p-4 align-middle font-medium">{docente.CODIGO_DOCENTE}</td>
                                             <td className="p-4 align-middle font-medium">
                                                 {docente.usuario ? `${docente.usuario.NOMBRE} ${docente.usuario.APELLIDO}` : 'Desconocido'}
                                             </td>
-                                            <td className="p-4 align-middle text-muted-foreground">
-                                                {docente.usuario?.USERNAME}
-                                            </td>
+                                            <td className="text-muted-foreground p-4 align-middle">{docente.usuario?.USERNAME}</td>
                                             <td className="p-4 align-middle">{docente.usuario?.CARNET}</td>
                                             <td className="p-4 align-middle">{docente.usuario?.CORREO}</td>
                                             <td className="p-4 align-middle">
-                                                <div
-                                                    className={`focus:ring-ring inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none ${
+                                                <button
+                                                    type="button"
+                                                    title="Haz clic para cambiar el estado"
+                                                    onClick={() =>
+                                                        router.patch(
+                                                            `/docentes/${docente.CODIGO_DOCENTE}/toggle-estado`,
+                                                            {},
+                                                            { preserveScroll: true },
+                                                        )
+                                                    }
+                                                    className={`inline-flex cursor-pointer items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-all hover:opacity-80 active:scale-95 ${
                                                         docente.usuario?.ESTADO === 'ACTIVO' || docente.usuario?.ESTADO === 1
                                                             ? 'border-green-200 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                                             : 'border-red-200 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                                     }`}
                                                 >
                                                     {docente.usuario?.ESTADO === 'ACTIVO' || docente.usuario?.ESTADO === 1 ? 'Activo' : 'Inactivo'}
-                                                </div>
+                                                </button>
                                             </td>
-                                            <td className="p-4 align-middle text-right">
+                                            <td className="p-4 text-right align-middle">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -80,10 +90,10 @@ export default function Index({ docentes }: { docentes: any[] }) {
                                                         setSelectedDocente(docente);
                                                         setIsModalOpen(true);
                                                     }}
-                                                    className="h-8 gap-1.5 text-xs border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold"
+                                                    className="h-8 gap-1.5 border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                                 >
                                                     <Edit className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-                                                    Editar
+                                                    Detalles
                                                 </Button>
                                             </td>
                                         </tr>
@@ -102,11 +112,7 @@ export default function Index({ docentes }: { docentes: any[] }) {
             </div>
 
             {/* Modal de Información de Docente - Componente Separado */}
-            <EditarDocenteModal
-                open={isModalOpen}
-                onOpenChange={setIsModalOpen}
-                selectedDocente={selectedDocente}
-            />
+            <EditarDocenteModal open={isModalOpen} onOpenChange={setIsModalOpen} selectedDocente={selectedDocente} />
         </AppLayout>
     );
 }

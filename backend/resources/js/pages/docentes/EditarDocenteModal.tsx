@@ -11,12 +11,15 @@ interface EditarDocenteModalProps {
 
 function CupCard({ dc }: { dc: any }) {
     const [expanded, setExpanded] = useState(true);
+    // Laravel serializes to snake_case
     const cup = dc.cup;
+    const clases: any[] = dc.clases ?? [];
 
     return (
         <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm">
             {/* CUP Header */}
             <button
+                type="button"
                 onClick={() => setExpanded(!expanded)}
                 className="w-full flex items-center justify-between px-4 py-3 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 transition-colors text-left"
             >
@@ -35,17 +38,21 @@ function CupCard({ dc }: { dc: any }) {
                         {cup?.ESTADO ?? '—'}
                     </span>
                 </div>
-                {expanded ? <ChevronUp className="h-4 w-4 text-indigo-500" /> : <ChevronDown className="h-4 w-4 text-indigo-500" />}
+                {expanded
+                    ? <ChevronUp className="h-4 w-4 text-indigo-500" />
+                    : <ChevronDown className="h-4 w-4 text-indigo-500" />}
             </button>
 
             {/* Clases */}
             {expanded && (
                 <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                    {dc.clases && dc.clases.length > 0 ? (
-                        dc.clases.map((clase: any) => {
-                            const horarios: any[] = clase.bloque_horario?.horarios_en_bloque
-                                ?? clase.bloqueHorario?.horariosEnBloque
-                                ?? [];
+                    {clases.length > 0 ? (
+                        clases.map((clase: any) => {
+                            // Laravel serializes bloque_horario, horarios_en_bloque, etc.
+                            const bloque = clase.bloque_horario ?? clase.bloqueHorario;
+                            const horariosEnBloque: any[] =
+                                bloque?.horarios_en_bloque ?? bloque?.horariosEnBloque ?? [];
+
                             return (
                                 <div key={clase.ID_CLASE} className="px-4 py-3 bg-white dark:bg-neutral-950 space-y-2">
                                     {/* Materia */}
@@ -79,25 +86,28 @@ function CupCard({ dc }: { dc: any }) {
                                         )}
                                     </div>
 
-                                    {/* Horario */}
-                                    {horarios.length > 0 ? (
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-neutral-400 mb-1">
-                                                <Clock className="h-3 w-3" /> Horario (Turno: {clase.bloqueHorario?.TURNO ?? '—'})
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {horarios.map((heb: any, i: number) => {
-                                                    const h = heb.horario;
-                                                    return (
-                                                        <span
-                                                            key={i}
-                                                            className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 text-[10px] font-bold text-neutral-600 dark:text-neutral-300"
-                                                        >
-                                                            {h?.DIA ?? '?'} {h?.HORA_INI} – {h?.HORA_FIN}
-                                                        </span>
-                                                    );
-                                                })}
-                                            </div>
+                                    {/* Turno del bloque */}
+                                    {bloque?.TURNO && (
+                                        <div className="flex items-center gap-1 text-[11px] text-neutral-400 font-semibold">
+                                            <Clock className="h-3 w-3" />
+                                            Turno: {bloque.TURNO}
+                                        </div>
+                                    )}
+
+                                    {/* Horario chips */}
+                                    {horariosEnBloque.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {horariosEnBloque.map((heb: any, i: number) => {
+                                                const h = heb.horario;
+                                                return (
+                                                    <span
+                                                        key={i}
+                                                        className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 text-[10px] font-bold text-neutral-600 dark:text-neutral-300"
+                                                    >
+                                                        {h?.DIA ?? '?'} {h?.HORA_INI} – {h?.HORA_FIN}
+                                                    </span>
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <p className="text-[11px] text-neutral-400 italic">Sin horario asignado</p>
@@ -117,6 +127,9 @@ function CupCard({ dc }: { dc: any }) {
 }
 
 export default function EditarDocenteModal({ open, onOpenChange, selectedDocente }: EditarDocenteModalProps) {
+    // Laravel serializes docenteCups → docente_cups
+    const docenteCups: any[] = selectedDocente?.docente_cups ?? selectedDocente?.docenteCups ?? [];
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-0 shadow-xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
@@ -134,7 +147,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                     {selectedDocente && (
                         <>
                             {/* Avatar & Personal Info */}
-                            <div className="flex items-center gap-4 bg-neutral-50/50 dark:bg-neutral-900/20 border border-neutral-100 dark:border-neutral-800/80 rounded-xl p-4 shadow-2xs">
+                            <div className="flex items-center gap-4 bg-neutral-50/50 dark:bg-neutral-900/20 border border-neutral-100 dark:border-neutral-800/80 rounded-xl p-4">
                                 <div className="h-14 w-14 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center shrink-0">
                                     <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
                                         {selectedDocente.usuario?.NOMBRE?.substring(0, 1)}
@@ -153,7 +166,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                                 </div>
                             </div>
 
-                            {/* Quick Info */}
+                            {/* Quick Info Grid */}
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50">
                                     <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
@@ -200,16 +213,18 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                                     Historial Académico
                                 </h4>
 
-                                {selectedDocente.docenteCups && selectedDocente.docenteCups.length > 0 ? (
+                                {docenteCups.length > 0 ? (
                                     <div className="space-y-3">
-                                        {selectedDocente.docenteCups.map((dc: any) => (
+                                        {docenteCups.map((dc: any) => (
                                             <CupCard key={dc.ID} dc={dc} />
                                         ))}
                                     </div>
                                 ) : (
                                     <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 p-6 text-center">
                                         <Calendar className="h-8 w-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
-                                        <p className="text-xs text-neutral-400">Este docente no ha participado en ningún CUP todavía.</p>
+                                        <p className="text-xs text-neutral-400">
+                                            Este docente no ha participado en ningún CUP todavía.
+                                        </p>
                                     </div>
                                 )}
                             </div>

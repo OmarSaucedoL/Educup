@@ -7,6 +7,9 @@ use App\Models\Carrera;
 use App\Models\Materia;
 use App\Models\CarreraCup;
 use App\Models\MateriaCup;
+use App\Models\Docente;
+use App\Models\DocenteCup;
+use App\Models\DocenteCupMat;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +22,9 @@ class CUPController extends Controller
     public function index()
     {
         // Load the CUPs with the associated user (administrator)
-        $cups = Cup::with(['usuario', 'carreraCups.carrera', 'materias'])->get();
+        $cups = Cup::with(['usuario', 'carreraCups.carrera', 'materias'])
+            ->orderBy('ID_CUP')
+            ->get();
         return inertia('cup/index', [
             'cups' => $cups
         ]);
@@ -143,8 +148,86 @@ class CUPController extends Controller
      */
     public function show(string $id)
     {
-        $cup = Cup::with(['usuario', 'carreraCups.carrera', 'materias'])->findOrFail($id);
-        return response()->json($cup);
+        $cup = Cup::with([
+            'usuario',
+            'carreraCups.carrera',
+            'materias',
+            'docenteCups.docente.usuario',
+            'docenteCups.clases.materia',
+            'docenteCups.clases.grupo',
+            'docenteCups.clases.bloqueHorario.horariosEnBloque.horario',
+            'docenteCups.clases.aula',
+            'docenteCups.docenteCupMats.materia',
+        ])->findOrFail($id);
+
+        // All active docentes (even those already assigned)
+        $docentesActivos = Docente::with('usuario')
+            ->whereHas('usuario', fn($q) => $q->where('ESTADO', 'ACTIVO'))
+            ->get();
+
+        return inertia('cup/informacion', [
+            'cup'             => $cup,
+            'docentesActivos' => $docentesActivos,
+        ]);
+    }
+
+    /**
+     * Assign multiple docentes (with materias) to a CUP. Supports syncing and removal.
+     */
+    public function asignarDocentes(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'asignaciones'                  => 'present|array',
+            'asignaciones.*.CODIGO_DOCENTE' => 'required|integer|exists:DOCENTE,CODIGO_DOCENTE',
+            'asignaciones.*.materias'       => 'array',
+            'asignaciones.*.materias.*'     => 'integer|exists:MATERIA,ID_MATERIA',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($validated['asignaciones'] as $asignacion) {
+                $codigoDocente = $asignacion['CODIGO_DOCENTE'];
+                $materias = $asignacion['materias'] ?? [];
+
+                $docenteCup = DocenteCup::where('ID_CUP', $id)
+                    ->where('CODIGO_DOCENTE', $codigoDocente)
+                    ->first();
+
+                if (empty($materias)) {
+                    // Remove if 0 materias selected
+                    if ($docenteCup) {
+                        DocenteCupMat::where('DOCENTE_CUP_ID', $docenteCup->ID)->delete();
+                        $docenteCup->delete();
+                    }
+                } else {
+                    // Create if not exists
+                    if (!$docenteCup) {
+                        $docenteCup = DocenteCup::create([
+                            'CODIGO_DOCENTE' => $codigoDocente,
+                            'ID_CUP'         => $id,
+                            'FECHA_CREACION' => now()->toDateString(),
+                        ]);
+                    }
+
+                    // Sync materias (delete all and recreate)
+                    DocenteCupMat::where('DOCENTE_CUP_ID', $docenteCup->ID)->delete();
+                    foreach ($materias as $materiaId) {
+                        DocenteCupMat::create([
+                            'DOCENTE_CUP_ID' => $docenteCup->ID,
+                            'MATERIA_ID'     => $materiaId,
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect("/cup/{$id}")->with('success', 'Asignaciones actualizadas correctamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Error al actualizar asignaciones: ' . $e->getMessage()]);
+        }
     }
 
     /**

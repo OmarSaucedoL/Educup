@@ -17,3 +17,6 @@ Route::post('/docentes', [DocenteController::class, 'store']);
 
 // Modificar un docente existente
 Route::put('/docentes/{id}', [DocenteController::class, 'update']);
+
+// Alternar estado (ACTIVO / INACTIVO) del usuario asociado
+Route::patch('/docentes/{id}/toggle-estado', [DocenteController::class, 'toggleEstado']);

@@ -18,3 +18,6 @@ Route::post('/cup', [CUPController::class, 'store']);
 // Modificar un CUP existente
 Route::get('/cup/{id}/editar', [CUPController::class, 'edit']);
 Route::put('/cup/{id}', [CUPController::class, 'update']);
+
+// Asignar docentes (con materias) a un CUP
+Route::post('/cup/{id}/docentes', [CUPController::class, 'asignarDocentes']);

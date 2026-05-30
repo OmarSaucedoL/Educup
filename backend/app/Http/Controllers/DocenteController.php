@@ -73,4 +73,21 @@ class DocenteController extends Controller
 
         return redirect('/docentes')->with('success', 'Docente actualizado correctamente.');
     }
+
+    /**
+     * Toggle the ESTADO of the associated usuario between ACTIVO and INACTIVO.
+     */
+    public function toggleEstado(string $id)
+    {
+        $docente = Docente::with('usuario')->findOrFail($id);
+
+        if (!$docente->usuario) {
+            return back()->withErrors(['error' => 'Docente no tiene usuario asociado.']);
+        }
+
+        $docente->usuario->ESTADO = $docente->usuario->ESTADO === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+        $docente->usuario->save();
+
+        return redirect('/docentes')->with('success', 'Estado del docente actualizado.');
+    }
 }
