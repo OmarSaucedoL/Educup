@@ -541,8 +541,20 @@ class EstudianteController extends Controller
                 }
             } elseif (strpos($message, '23505') !== false) {
                 // Si es una violación de unicidad (duplicados)
-                if (preg_match('/llave duplicada viola restricción de unicidad «(.+?)»/u', $message, $matches)) {
-                    $message = "Error en el archivo Excel: Se detectaron registros duplicados en el lote (ej: Carnet, Correo o Título de Bachiller que ya existen en el sistema).";
+                if (preg_match('/\((.+?)\)=\((.+?)\)/u', $message, $detMatches)) {
+                    $columna = strtoupper($detMatches[1]);
+                    $valor = $detMatches[2];
+                    
+                    $traducciones = [
+                        'CARNET' => 'Carnet de Identidad',
+                        'CORREO' => 'Correo Electrónico',
+                        'TITULO_BACHILLER' => 'Título de Bachiller'
+                    ];
+                    $nombreLimpio = $traducciones[$columna] ?? $columna;
+                    
+                    $message = "Error en el archivo Excel: El dato '{$valor}' para '{$nombreLimpio}' ya se encuentra registrado en el sistema. Asegúrate de no incluir estudiantes duplicados.";
+                } elseif (preg_match('/llave duplicada viola restricción de unicidad «(.+?)»/u', $message, $matches)) {
+                    $message = "Error en el archivo Excel: Se detectó un dato duplicado que ya existe en el sistema ({$matches[1]}).";
                 } else {
                     $message = "Error en el archivo Excel: Hay datos duplicados que violan la unicidad en el sistema.";
                 }

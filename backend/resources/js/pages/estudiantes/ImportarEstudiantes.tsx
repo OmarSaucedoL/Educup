@@ -81,7 +81,7 @@ export default function ImportarEstudiantes({ periodos }: Props) {
                                         Asegúrate de que la primera fila contenga exactamente estos encabezados en minúscula:
                                         <br />
                                         <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 mt-2 inline-block">
-                                            carnet, nombre, apellido, fecha_nac, sexo, direccion, telefono, correo, ciudad, colegio, opcion_1, opcion_2
+                                            carnet, nombre, apellido, fecha_nac, sexo, direccion, telefono, correo, titulo_bachiller, ciudad, departamento, colegio, opcion_1, opcion_2
                                         </code>
                                     </p>
                                 </div>

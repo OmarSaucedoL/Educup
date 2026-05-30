@@ -33,10 +33,12 @@ class EstudiantesImport implements ToModel, WithHeadingRow
         $ciudadNombre = strtoupper(trim($row['ciudad'] ?? ''));
         $colegioNombre = strtoupper(trim($row['colegio'] ?? ''));
 
-        // Buscar en la tabla CIUDAD por el campo NOMBRE. Si no existe, crear con DEPARTAMENTO = 'SANTA CRUZ'
+        $departamento = strtoupper(trim($row['departamento'] ?? 'SANTA CRUZ'));
+
+        // Buscar en la tabla CIUDAD por el campo NOMBRE. Si no existe, crear con el DEPARTAMENTO proporcionado
         $ciudad = Ciudad::firstOrCreate(
             ['NOMBRE' => $ciudadNombre],
-            ['DEPARTAMENTO' => 'SANTA CRUZ']
+            ['DEPARTAMENTO' => $departamento]
         );
 
         // Buscar en la tabla COLEGIO por el campo NOMBRE. Si no existe, crear el registro.
@@ -54,7 +56,7 @@ class EstudiantesImport implements ToModel, WithHeadingRow
             'DIRECCION'        => strtoupper(trim($row['direccion'] ?? '')),
             'TELEFONO'         => trim($row['telefono'] ?? ''),
             'CORREO'           => strtolower(trim($row['correo'] ?? '')),
-            'TITULO_BACHILLER' => 'PENDIENTE_' . trim($row['carnet'] ?? uniqid()),
+            'TITULO_BACHILLER' => !empty(trim($row['titulo_bachiller'] ?? '')) ? strtoupper(trim($row['titulo_bachiller'])) : 'PENDIENTE_' . trim($row['carnet'] ?? uniqid()),
             'ESTADO'           => 'ACTIVO',
             'COLEGIO_ID'       => $colegio->ID,
             'CIUDAD_ID'        => $ciudad->ID,
