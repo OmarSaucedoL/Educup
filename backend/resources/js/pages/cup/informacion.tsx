@@ -187,6 +187,7 @@ export default function Informacion({ cup, docentesActivos }: CupInformacionProp
     const carreraCups: any[] = cup.carrera_cups ?? cup.carreraCups ?? [];
     const materias: any[]    = cup.materias ?? [];
     const docenteCups: any[] = cup.docente_cups ?? cup.docenteCups ?? [];
+    const estudianteCups: any[] = cup.estudiante_cups ?? cup.estudianteCups ?? [];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -328,21 +329,53 @@ export default function Informacion({ cup, docentesActivos }: CupInformacionProp
                             <span className="ml-auto text-xs font-bold text-neutral-400">{docenteCups.length} docente(s)</span>
                         </div>
 
-                        {/* Asignar Docentes Button */}
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsModalOpen(true)}
-                            className="w-full gap-2 border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 font-semibold"
-                        >
-                            <UserPlus className="h-4 w-4" />
-                            Administrar Docentes
-                        </Button>
+                        {/* Action Buttons */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsModalOpen(true)}
+                                className="w-full gap-2 border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 font-semibold"
+                            >
+                                <UserPlus className="h-4 w-4" />
+                                Administrar Docentes
+                            </Button>
+
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full gap-2 border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 font-semibold"
+                            >
+                                <Link href={`/cup/${cup.ID_CUP}/clases`}>
+                                    <BookOpen className="h-4 w-4" />
+                                    Ver Clases
+                                </Link>
+                            </Button>
+
+                            <Button
+                                asChild
+                                className="w-full gap-2 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 font-bold shadow-sm"
+                            >
+                                <Link href={`/cup/${cup.ID_CUP}/clases/crear`}>
+                                    <Plus className="h-4 w-4" />
+                                    Crear Paquete
+                                </Link>
+                            </Button>
+                        </div>
                         
                         <AsignarDocentesModal cup={cup} docentesActivos={docentesActivos} open={isModalOpen} onOpenChange={setIsModalOpen} />
 
-                        {/* Docente cards */}
-                        {docenteCups.length > 0 ? docenteCups.map((dc: any) => {
-                            const docente = dc.docente;
+                        {/* Docente cards (Collapsible) */}
+                        <details className="group border-none bg-transparent" open>
+                            <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:bg-neutral-900 transition-colors list-none [&::-webkit-details-marker]:hidden group-open:mb-4">
+                                <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4" />
+                                    <span>Lista de Docentes ({docenteCups.length})</span>
+                                </div>
+                                <ChevronLeft className="h-4 w-4 transition-transform group-open:-rotate-90" />
+                            </summary>
+                            <div className="flex flex-col gap-4">
+                                {docenteCups.length > 0 ? docenteCups.map((dc: any) => {
+                                    const docente = dc.docente;
                             const clases: any[] = dc.clases ?? [];
                             const materiasDc: any[] = (dc.docente_cup_mats ?? dc.docenteCupMats ?? []).map((m: any) => m.materia);
 
@@ -427,12 +460,40 @@ export default function Informacion({ cup, docentesActivos }: CupInformacionProp
                                     </div>
                                 </div>
                             );
-                        }) : (
-                            <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 p-8 text-center">
-                                <User className="h-8 w-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
-                                <p className="text-sm text-neutral-400">No hay docentes asignados a este CUP todavía.</p>
+                                }) : (
+                                    <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 p-8 text-center">
+                                        <User className="h-8 w-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
+                                        <p className="text-sm text-neutral-400">No hay docentes asignados a este CUP todavía.</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </details>
+
+                        {/* Estudiantes */}
+                        <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden flex flex-col max-h-[500px]">
+                            <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3 shrink-0">
+                                <Users className="h-4 w-4 text-neutral-900 dark:text-neutral-100" />
+                                <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Estudiantes Inscritos</h2>
+                                <span className="ml-auto text-xs font-bold text-neutral-400">{estudianteCups.length}</span>
+                            </div>
+                            <div className="divide-y divide-neutral-100 dark:divide-neutral-800 overflow-y-auto">
+                                {estudianteCups.length > 0 ? estudianteCups.map((ec: any) => {
+                                    const est = ec.estudiante;
+                                    return (
+                                        <div key={ec.ID} className="flex flex-col px-4 py-3 text-sm">
+                                            <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">
+                                                {est ? `${est.NOMBRE} ${est.APELLIDO}` : `Estudiante #${ec.ID_ESTUDIANTE}`}
+                                            </span>
+                                            <span className="text-[11px] text-neutral-500 mt-0.5">
+                                                CI: {est?.CARNET ?? '—'} <span className="mx-1">•</span> Estado: <span className="font-medium text-neutral-700 dark:text-neutral-300">{ec.ESTADO ?? '—'}</span>
+                                            </span>
+                                        </div>
+                                    )
+                                }) : (
+                                    <p className="px-4 py-3 text-xs text-neutral-400 italic">Sin estudiantes inscritos.</p>
+                                )}
+                            </div>
+                        </section>
                     </div>
 
                 </div>

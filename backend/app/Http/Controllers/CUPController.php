@@ -11,8 +11,12 @@ use App\Models\Docente;
 use App\Models\DocenteCup;
 use App\Models\DocenteCupMat;
 use App\Models\Usuario;
+use App\Models\BloqueHorario;
+use App\Models\Clase;
+use App\Models\Grupo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CUPController extends Controller
 {
@@ -158,6 +162,7 @@ class CUPController extends Controller
             'docenteCups.clases.bloqueHorario.horariosEnBloque.horario',
             'docenteCups.clases.aula',
             'docenteCups.docenteCupMats.materia',
+            'estudianteCups.estudiante',
         ])->findOrFail($id);
 
         // All active docentes (even those already assigned)
@@ -168,6 +173,24 @@ class CUPController extends Controller
         return inertia('cup/informacion', [
             'cup'             => $cup,
             'docentesActivos' => $docentesActivos,
+        ]);
+    }
+
+    /**
+     * Show the classes associated with a CUP.
+     */
+    public function clases(string $id)
+    {
+        $cup = Cup::with([
+            'docenteCups.docente.usuario',
+            'docenteCups.clases.materia',
+            'docenteCups.clases.grupo',
+            'docenteCups.clases.bloqueHorario.horariosEnBloque.horario',
+            'docenteCups.clases.aula',
+        ])->findOrFail($id);
+
+        return inertia('cup/clases', [
+            'cup' => $cup,
         ]);
     }
 
@@ -338,6 +361,130 @@ class CUPController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Error al actualizar el CUP: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Renderiza el formulario para crear un paquete de clases.
+     */
+    public function crearClasesForm(string $idCup)
+    {
+        $cup = Cup::findOrFail($idCup);
+        $inscritos = \App\Models\EstudianteCup::where('ID_CUP', $idCup)->count();
+        
+        // Cargar todos los turnos y sus horarios para la visualización en UI
+        $turnosData = BloqueHorario::with('horariosEnBloque.horario')
+            ->get()
+            ->groupBy('TURNO');
+            
+        $turnos = [];
+        foreach ($turnosData as $turnoNombre => $bloques) {
+            $horariosTurno = [];
+            foreach ($bloques as $bloque) {
+                foreach ($bloque->horariosEnBloque as $heb) {
+                    if ($heb->horario) {
+                        $dia = $heb->horario->DIA;
+                        $ini = substr($heb->horario->HORA_INI, 0, 5);
+                        $fin = substr($heb->horario->HORA_FIN, 0, 5);
+                        $horariosTurno[] = "$dia $ini - $fin";
+                    }
+                }
+            }
+            $turnos[] = [
+                'nombre' => $turnoNombre,
+                'horarios' => array_values(array_unique($horariosTurno))
+            ];
+        }
+
+        return inertia('cup/crearClases', [
+            'cup' => $cup,
+            'inscritos' => $inscritos,
+            'turnos' => $turnos,
+        ]);
+    }
+
+    /**
+     * Crea un paquete de clases basado en grupos calculados dinámicamente.
+     */
+    public function crearPaqueteClases(Request $request, string $idCup)
+    {
+        $validated = $request->validate([
+            'EST_MIN' => 'required|integer|min:1',
+            'EST_MAX' => 'required|integer|gte:EST_MIN',
+            'turnos' => 'required|array|min:1',
+            'turnos.*' => 'required|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $inscritos = \App\Models\EstudianteCup::where('ID_CUP', $idCup)->count();
+            
+            if ($inscritos === 0) {
+                throw ValidationException::withMessages(['inscritos' => 'No hay estudiantes inscritos. No se puede calcular la cantidad de grupos.']);
+            }
+
+            $cup = Cup::with('materias')->findOrFail($idCup);
+            $materias = $cup->materias;
+
+            if ($materias->count() !== 4) {
+                throw ValidationException::withMessages(['cup' => 'El CUP no tiene exactamente 4 materias asignadas.']);
+            }
+
+            $estMax = $validated['EST_MAX'];
+            $estMin = $validated['EST_MIN'];
+            
+            $numGruposCompletos = floor($inscritos / $estMax);
+            $sobrantes = $inscritos % $estMax;
+            
+            $totalGrupos = $numGruposCompletos;
+            if ($sobrantes >= $estMin) {
+                $totalGrupos++;
+            }
+            if ($totalGrupos == 0) {
+                $totalGrupos = 1; // Al menos un grupo si hay inscritos > 0 pero menos del mínimo
+            }
+
+            $turnosSeleccionados = $validated['turnos'];
+            $numTurnos = count($turnosSeleccionados);
+
+            // Repartir los grupos entre los turnos usando Round-Robin
+            for ($i = 0; $i < $totalGrupos; $i++) {
+                $turnoNombre = $turnosSeleccionados[$i % $numTurnos];
+                
+                // 1. Crear el Grupo en la BD
+                $grupo = Grupo::create([
+                    'EST_MIN' => $estMin,
+                    'EST_MAX' => $estMax
+                ]);
+
+                // 2. Obtener bloques horarios para el turno
+                $bloques = BloqueHorario::where('TURNO', $turnoNombre)->get();
+                if ($bloques->count() < 4) {
+                    throw ValidationException::withMessages(['turnos' => "No hay suficientes bloques horarios (mínimo 4) para el turno: $turnoNombre."]);
+                }
+
+                // 3. Crear 4 clases para este grupo usando materias y bloques horarios intercalados
+                for ($j = 0; $j < 4; $j++) {
+                    Clase::create([
+                        'ID_MATERIA' => $materias[$j]->ID_MATERIA,
+                        'ID_BLOQUE_HORARIO' => $bloques[$j]->ID_BLOQUE_HORARIO,
+                        'ID_GRUPO' => $grupo->ID_GRUPO,
+                        'DOCENTE_CUP_ID' => null, // Ya es nullable en DB
+                        'ID_AULA' => null,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect("/cup/{$idCup}")->with('success', "Algoritmo completado: Se generaron {$totalGrupos} grupo(s) distribuidos en los turnos seleccionados.");
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw ValidationException::withMessages(['error' => 'Error en base de datos: ' . $e->getMessage()]);
         }
     }
 }

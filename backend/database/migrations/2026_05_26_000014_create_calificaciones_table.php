@@ -13,8 +13,7 @@ return new class extends Migration
             $table->string('NOMBRE', 100);
             $table->decimal('CALIFICACION', 5, 1);
             $table->decimal('PONDERACION', 5, 2);
-            $table->foreignId('ESTUDIANTE_CUP_ID')->constrained('ESTUDIANTE_CUP', 'ID')->onDelete('cascade');
-            $table->foreignId('ID_CLASE')->constrained('CLASE', 'ID_CLASE')->onDelete('cascade');
+            $table->foreignId('ESTUDIANTE_CLASE_ID')->constrained('ESTUDIANTES_CLASE', 'ID')->onDelete('cascade');
         });
     }
 

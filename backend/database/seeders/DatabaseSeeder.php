@@ -327,29 +327,33 @@ class DatabaseSeeder extends Seeder
                 $claseId = $clasesMap[$cupId][$mId];
                 $subGrade = $gradesList[$mIdx];
 
+                $estClaseId = DB::table('ESTUDIANTES_CLASE')->insertGetId([
+                    'ESTUDIANTE_CUP_ID' => $eCupId,
+                    'ID_CLASE' => $claseId,
+                    'NOTA_FINAL' => round($subGrade, 2),
+                    'ESTADO' => ($subGrade >= 60.00) ? 'APROBADO' : 'REPROBADO',
+                ], 'ID');
+
                 // Tres calificaciones cuya suma ponderada (30% + 30% + 40%) sea exactamente la nota final
                 DB::table('CALIFICACIONES')->insert([
                     'NOMBRE' => 'PRIMER PARCIAL',
                     'CALIFICACION' => round($subGrade, 1),
                     'PONDERACION' => 30.00,
-                    'ESTUDIANTE_CUP_ID' => $eCupId,
-                    'ID_CLASE' => $claseId
+                    'ESTUDIANTE_CLASE_ID' => $estClaseId
                 ]);
 
                 DB::table('CALIFICACIONES')->insert([
                     'NOMBRE' => 'SEGUNDO PARCIAL',
                     'CALIFICACION' => round($subGrade, 1),
                     'PONDERACION' => 30.00,
-                    'ESTUDIANTE_CUP_ID' => $eCupId,
-                    'ID_CLASE' => $claseId
+                    'ESTUDIANTE_CLASE_ID' => $estClaseId
                 ]);
 
                 DB::table('CALIFICACIONES')->insert([
                     'NOMBRE' => 'EXAMEN FINAL',
                     'CALIFICACION' => round($subGrade, 1),
                     'PONDERACION' => 40.00,
-                    'ESTUDIANTE_CUP_ID' => $eCupId,
-                    'ID_CLASE' => $claseId
+                    'ESTUDIANTE_CLASE_ID' => $estClaseId
                 ]);
             }
         };

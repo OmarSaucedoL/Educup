@@ -15,8 +15,7 @@ class Calificacion extends Model
         'NOMBRE',
         'CALIFICACION',
         'PONDERACION',
-        'ESTUDIANTE_CUP_ID',
-        'ID_CLASE'
+        'ESTUDIANTE_CLASE_ID'
     ];
 
     protected $casts = [
@@ -24,13 +23,8 @@ class Calificacion extends Model
         'CALIFICACION' => 'decimal:1'
     ];
 
-    public function estudianteCup(): BelongsTo
+    public function estudianteClase(): BelongsTo
     {
-        return $this->belongsTo(EstudianteCup::class, 'ESTUDIANTE_CUP_ID', 'ID');
-    }
-
-    public function clase(): BelongsTo
-    {
-        return $this->belongsTo(Clase::class, 'ID_CLASE', 'ID_CLASE');
+        return $this->belongsTo(EstudianteClase::class, 'ESTUDIANTE_CLASE_ID', 'ID');
     }
 }

@@ -35,13 +35,15 @@ class EstudianteCup extends Model
         return $this->belongsTo(Cup::class, 'ID_CUP', 'ID_CUP');
     }
 
-    public function calificaciones(): HasMany
-    {
-        return $this->hasMany(Calificacion::class, 'ESTUDIANTE_CUP_ID', 'ID');
-    }
-
     public function opcionesCarrera(): HasMany
     {
         return $this->hasMany(OpcionCarrera::class, 'ESTUDIANTE_CUP_ID', 'ID');
+    }
+
+    public function clases(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Clase::class, 'ESTUDIANTES_CLASE', 'ESTUDIANTE_CUP_ID', 'ID_CLASE')
+                    ->using(EstudianteClase::class)
+                    ->withPivot(['ID', 'NOTA_FINAL', 'ESTADO', 'FECHA_CREACION']);
     }
 }

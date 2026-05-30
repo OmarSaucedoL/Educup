@@ -45,8 +45,10 @@ class Clase extends Model
         return $this->belongsTo(Aula::class, 'ID_AULA', 'ID_AULA');
     }
 
-    public function calificaciones(): HasMany
+    public function estudianteCups(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->hasMany(Calificacion::class, 'ID_CLASE', 'ID_CLASE');
+        return $this->belongsToMany(EstudianteCup::class, 'ESTUDIANTES_CLASE', 'ID_CLASE', 'ESTUDIANTE_CUP_ID')
+                    ->using(EstudianteClase::class)
+                    ->withPivot(['ID', 'NOTA_FINAL', 'ESTADO', 'FECHA_CREACION']);
     }
 }
