@@ -24,6 +24,7 @@ class Rol extends Model
     public function permisos(): BelongsToMany
     {
         return $this->belongsToMany(Permiso::class, 'PERMISO_ROL', 'ROL_ID', 'PERMISOS_ID')
+                    ->wherePivot('ESTADO', 'ACTIVO')
                     ->withPivot('ESTADO', 'FECHA_MOD');
     }
 }

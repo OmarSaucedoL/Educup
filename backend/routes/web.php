@@ -20,6 +20,7 @@ Route::middleware(['auth'])->group(function () {
     require __DIR__.'/academico routes/horarios_routes.php';
     require __DIR__.'/academico routes/aulas_routes.php';
     require __DIR__.'/bitacora_routes.php';
+    require __DIR__.'/roles_routes.php';
 });
 
 require __DIR__.'/settings.php';

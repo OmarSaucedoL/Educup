@@ -51,6 +51,40 @@ class DatabaseSeeder extends Seeder
         $rolAdmin = DB::table('ROL')->insertGetId(['NOMBRE' => 'ADMINISTRADOR'], 'ID');
         $rolDocente = DB::table('ROL')->insertGetId(['NOMBRE' => 'DOCENTE'], 'ID');
 
+        // Permisos básicos del sistema
+        $permisosData = [
+            'VER_USUARIOS', 'CREAR_USUARIOS', 'EDITAR_USUARIOS', 'ELIMINAR_USUARIOS',
+            'VER_ROLES_PERMISOS', 'VER_BITACORA',
+            'VER_CUP', 'GESTIONAR_CUP',
+            'VER_MATERIAS', 'GESTIONAR_MATERIAS',
+            'VER_AULAS', 'VER_HORARIOS',
+            'VER_CALIFICACIONES', 'GESTIONAR_CALIFICACIONES'
+        ];
+
+        $permisosIds = [];
+        foreach ($permisosData as $pNombre) {
+            $permisosIds[$pNombre] = DB::table('PERMISOS')->insertGetId(['NOMBRE' => $pNombre], 'ID');
+            
+            // Asignar todos los permisos al Administrador
+            DB::table('PERMISO_ROL')->insert([
+                'ROL_ID' => $rolAdmin,
+                'PERMISOS_ID' => $permisosIds[$pNombre],
+                'ESTADO' => 'ACTIVO',
+                'FECHA_MOD' => Carbon::now()
+            ]);
+        }
+
+        // Permisos específicos para Docentes
+        $permisosDocente = ['VER_MATERIAS', 'VER_AULAS', 'VER_HORARIOS', 'VER_CALIFICACIONES', 'GESTIONAR_CALIFICACIONES'];
+        foreach ($permisosDocente as $pDoc) {
+            DB::table('PERMISO_ROL')->insert([
+                'ROL_ID' => $rolDocente,
+                'PERMISOS_ID' => $permisosIds[$pDoc],
+                'ESTADO' => 'ACTIVO',
+                'FECHA_MOD' => Carbon::now()
+            ]);
+        }
+
         // Administrador Principal del Sistema (OMAR.ADMIN)
         $uAdminId = DB::table('USUARIO')->insertGetId([
             'USERNAME' => 'OMAR.ADMIN',
@@ -69,11 +103,11 @@ class DatabaseSeeder extends Seeder
         for ($i = 1; $i <= 10; $i++) {
             $uDocId = DB::table('USUARIO')->insertGetId([
                 'USERNAME' => "DOCENTE_{$i}",
-                'CONTRASENIA' => Hash::make('Docente123/*'),
+                'CONTRASENIA' => Hash::make('Docente'),
                 'CARNET' => 4567890 + $i,
                 'NOMBRE' => "DOCENTE {$i}",
                 'APELLIDO' => "APELLIDO {$i}",
-                'CORREO' => "docente{$i}@uagrm.edu.bo",
+                'CORREO' => "docente{$i}cup.edu",
                 'ESTADO' => 'ACTIVO',
                 'FECHA_CREACION' => Carbon::now(),
                 'ROL_ID' => $rolDocente
@@ -91,7 +125,7 @@ class DatabaseSeeder extends Seeder
             'INGENIERIA EN SISTEMAS',
             'INGENIERIA INFORMATICA',
             'INGENIERIA EN REDES',
-            'LICENCIATURA EN TELECOMUNICACIONES'
+            'INGENIERIA ROBOTICA'
         ];
         $carreraIds = [];
         foreach ($carreras as $c) {
@@ -527,7 +561,7 @@ class DatabaseSeeder extends Seeder
             ], 'ID');
 
             $ccRedes = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['INGENIERIA EN REDES']])->first()->ID;
-            $ccTel = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['LICENCIATURA EN TELECOMUNICACIONES']])->first()->ID;
+            $ccTel = DB::table('CARRERA_CUP')->where(['ID_CUP' => $cupId, 'ID_CARRERA' => $carreraIds['INGENIERIA ROBOTICA']])->first()->ID;
 
             DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $ccRedes, 'OPCION' => 1]);
             DB::table('OPCION_CARRERA')->insert(['ESTUDIANTE_CUP_ID' => $eCupId, 'CARRERA_CUP_ID' => $ccTel, 'OPCION' => 2]);

@@ -55,6 +55,10 @@ const mainNavItems: NavItem[] = [
         icon: Shield,
         items: [
             {
+                title: 'Roles y Permisos',
+                url: '/roles',
+            },
+            {
                 title: 'Usuarios',
                 url: '/usuarios',
             },
