@@ -451,7 +451,8 @@ class CUPController extends Controller
                 
                 // Generar nombre de grupo: años(2 dígitos) + semestre + número de grupo
                 $anioCorto = substr((string)$cup->ANIO, -2);
-                $nombreGrupo = $anioCorto . $cup->SEMESTRE . ($i + 1);
+                $nroSemestre = str_contains(strtoupper($cup->SEMESTRE), 'PRIMER') ? '1' : '2';
+                $nombreGrupo = $anioCorto . $nroSemestre . ($i + 1);
 
                 // 1. Crear el Grupo en la BD
                 $grupo = Grupo::create([
@@ -487,6 +488,7 @@ class CUPController extends Controller
             throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error creating clases: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             throw ValidationException::withMessages(['error' => 'Error en base de datos: ' . $e->getMessage()]);
         }
     }

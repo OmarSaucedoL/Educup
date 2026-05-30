@@ -88,6 +88,20 @@ export default function CrearClases({ cup, inscritos, turnos }: CrearClasesProps
                             {(errors as any).inscritos}
                         </div>
                     )}
+                    
+                    {(errors as any).error && (
+                        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20 p-3 text-sm text-red-700 dark:text-red-300">
+                            <AlertCircle className="h-4 w-4 shrink-0" />
+                            {(errors as any).error}
+                        </div>
+                    )}
+                    
+                    {(errors as any).cup && (
+                        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20 p-3 text-sm text-red-700 dark:text-red-300">
+                            <AlertCircle className="h-4 w-4 shrink-0" />
+                            {(errors as any).cup}
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
