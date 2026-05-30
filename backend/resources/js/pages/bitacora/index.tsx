@@ -34,6 +34,7 @@ interface LogEntry {
     TABLA: string | null;
     REGISTRO_ID: number | null;
     DESCRIPCION: string;
+    SESSION_ID: string | null;
     IP_DIRECCION: string | null;
     FECHA_REGISTRO: string;
     usuario: {
@@ -445,6 +446,22 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                                                         <span className="block text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase leading-none mb-0.5">Dirección IP</span>
                                                         <span className="font-mono text-sm text-neutral-800 dark:text-neutral-200 font-bold">
                                                             {selectedLog.IP_DIRECCION || 'Desconocida'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Session ID */}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-9 w-9 bg-neutral-100 dark:bg-neutral-900 rounded-full flex items-center justify-center text-neutral-400">
+                                                        <Database className="h-4.5 w-4.5" />
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase leading-none mb-0.5">ID de Sesión</span>
+                                                        <span 
+                                                            className="font-mono text-xs text-neutral-800 dark:text-neutral-200 block truncate max-w-[200px] sm:max-w-[250px]" 
+                                                            title={selectedLog.SESSION_ID || 'N/A'}
+                                                        >
+                                                            {selectedLog.SESSION_ID || 'N/A'}
                                                         </span>
                                                     </div>
                                                 </div>

@@ -14,10 +14,25 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
+     * Instanciate a new controller instance.
+     */
+    public function __construct()
+    {
+        // Enforce admin role
+        if (request()->route() && auth()->check() && auth()->user()->ROL_ID !== 1) {
+            abort(403, 'Solo el administrador puede acceder a la configuración de perfil.');
+        }
+    }
+
+    /**
      * Show the user's profile settings page.
      */
     public function edit(Request $request): Response
     {
+        if ($request->user()->ROL_ID !== 1) {
+            abort(403, 'Solo el administrador puede acceder a la configuración de perfil.');
+        }
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
@@ -29,6 +44,10 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        if ($request->user()->ROL_ID !== 1) {
+            abort(403, 'Solo el administrador puede acceder a la configuración de perfil.');
+        }
+
         $request->user()->fill($request->validated());
 
         if ($request->user()->isDirty('email')) {
@@ -38,26 +57,5 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return to_route('profile.edit');
-    }
-
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'password' => ['required', 'current_password'],
-        ]);
-
-        $user = $request->user();
-
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/');
     }
 }

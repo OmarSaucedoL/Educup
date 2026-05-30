@@ -49,6 +49,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (Auth::user()->ESTADO === 'INACTIVO') {
+            Auth::logout();
+            
+            throw ValidationException::withMessages([
+                'email' => 'Su cuenta se encuentra deshabilitada',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

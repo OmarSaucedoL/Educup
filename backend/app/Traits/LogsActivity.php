@@ -53,6 +53,7 @@ trait LogsActivity
         try {
             Bitacora::create([
                 'USUARIO_ID' => Auth::id(),
+                'SESSION_ID' => request()->session()->getId(),
                 'ACCION' => $action,
                 'TABLA' => $model->getTable(),
                 'REGISTRO_ID' => $model->getKey(),
