@@ -21,16 +21,16 @@ function CupCard({ dc }: { dc: any }) {
             <button
                 type="button"
                 onClick={() => setExpanded(!expanded)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3 bg-primary/5 hover:bg-primary/10 transition-colors text-left"
             >
                 <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span className="font-bold text-sm text-indigo-800 dark:text-indigo-200">
+                    <Calendar className="h-4 w-4 text-primary shrink-0" />
+                    <span className="font-bold text-sm text-primary">
                         CUP {cup?.ANIO} — Sem. {cup?.SEMESTRE}
                     </span>
                     <span className={`ml-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide ${
                         cup?.ESTADO === 'EN CURSO'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800'
+                            ? 'bg-primary/10 text-primary border-primary/20'
                             : cup?.ESTADO === 'CONCLUIDO'
                             ? 'bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700'
                             : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800'
@@ -39,8 +39,8 @@ function CupCard({ dc }: { dc: any }) {
                     </span>
                 </div>
                 {expanded
-                    ? <ChevronUp className="h-4 w-4 text-indigo-500" />
-                    : <ChevronDown className="h-4 w-4 text-indigo-500" />}
+                    ? <ChevronUp className="h-4 w-4 text-primary" />
+                    : <ChevronDown className="h-4 w-4 text-primary" />}
             </button>
 
             {/* Clases */}
@@ -135,7 +135,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
             <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col rounded-xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-0 shadow-xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
                 <DialogHeader className="border-b border-neutral-100 dark:border-neutral-800 px-6 pt-6 pb-4">
                     <DialogTitle className="text-lg font-bold tracking-tight text-neutral-800 dark:text-neutral-200 flex items-center gap-2">
-                        <User className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        <User className="h-5 w-5 text-primary" />
                         Detalles del Docente
                     </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
@@ -148,8 +148,8 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                         <>
                             {/* Avatar & Personal Info */}
                             <div className="flex items-center gap-4 bg-neutral-50/50 dark:bg-neutral-900/20 border border-neutral-100 dark:border-neutral-800/80 rounded-xl p-4">
-                                <div className="h-14 w-14 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center shrink-0">
-                                    <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                                <div className="h-14 w-14 rounded-full bg-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
+                                    <span className="text-xl font-bold text-primary">
                                         {selectedDocente.usuario?.NOMBRE?.substring(0, 1)}
                                         {selectedDocente.usuario?.APELLIDO?.substring(0, 1)}
                                     </span>
@@ -170,7 +170,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50">
                                     <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
-                                        <Shield className="h-3 w-3 text-indigo-400" /> Usuario
+                                        <Shield className="h-3 w-3 text-primary" /> Usuario
                                     </span>
                                     <span className="text-xs font-extrabold text-neutral-700 dark:text-neutral-300 truncate">
                                         {selectedDocente.usuario?.USERNAME ?? '—'}
@@ -178,7 +178,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                                 </div>
                                 <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50">
                                     <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
-                                        <User className="h-3 w-3 text-indigo-400" /> C.I. / Carnet
+                                        <User className="h-3 w-3 text-primary" /> C.I. / Carnet
                                     </span>
                                     <span className="text-xs font-extrabold text-neutral-700 dark:text-neutral-300 truncate">
                                         {selectedDocente.usuario?.CARNET ?? '—'}
@@ -186,7 +186,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                                 </div>
                                 <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50 col-span-2">
                                     <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
-                                        <Mail className="h-3 w-3 text-indigo-400" /> Correo
+                                        <Mail className="h-3 w-3 text-primary" /> Correo
                                     </span>
                                     <span className="text-xs font-extrabold text-neutral-700 dark:text-neutral-300 truncate">
                                         {selectedDocente.usuario?.CORREO ?? '—'}
@@ -194,7 +194,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                                 </div>
                                 <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50 col-span-2">
                                     <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
-                                        <UserCheck className="h-3 w-3 text-indigo-400" /> Estado
+                                        <UserCheck className="h-3 w-3 text-primary" /> Estado
                                     </span>
                                     <span className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide ${
                                         selectedDocente.usuario?.ESTADO === 'ACTIVO' || selectedDocente.usuario?.ESTADO === 1
@@ -209,7 +209,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                             {/* Academic History */}
                             <div>
                                 <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                    <BookOpen className="h-3.5 w-3.5 text-indigo-400" />
+                                    <BookOpen className="h-3.5 w-3.5 text-primary" />
                                     Historial Académico
                                 </h4>
 
@@ -236,7 +236,7 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                     <Button
                         type="button"
                         onClick={() => onOpenChange(false)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 shadow-sm"
+                        className="font-bold bg-primary hover:bg-primary/90 text-primary-foreground px-6 shadow-sm"
                     >
                         Cerrar
                     </Button>

@@ -141,8 +141,8 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                         <DialogHeader className="border-b border-neutral-100 dark:border-neutral-800 pb-4 mb-4">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 shadow-2xs shrink-0">
-                                        <GraduationCap className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 border border-primary/20 shadow-2xs shrink-0">
+                                        <GraduationCap className="h-6 w-6 text-primary" />
                                     </div>
                                     <div>
                                         <DialogTitle className="text-xl font-bold tracking-tight text-neutral-800 dark:text-neutral-200">
@@ -156,17 +156,17 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                 </div>
                                 <span className={`self-start sm:self-center inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold tracking-wide shadow-2xs ${
                                     activeHistoryDetail.ESTADO === 'APROBADO'
-                                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-300 dark:border-blue-800'
+                                        ? 'bg-primary/10 text-primary border-primary/20'
                                         : activeHistoryDetail.ESTADO === 'REPROBADO'
                                         ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-800'
-                                        : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-300 dark:border-indigo-800'
+                                        : 'bg-primary/5 text-primary border-primary/20'
                                 }`}>
                                     {activeHistoryDetail.ESTADO === 'APROBADO' ? (
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                                     ) : activeHistoryDetail.ESTADO === 'REPROBADO' ? (
                                         <XCircle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                                     ) : (
-                                        <ClipboardList className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                                        <ClipboardList className="h-3.5 w-3.5 text-primary" />
                                     )}
                                     {activeHistoryDetail.ESTADO}
                                 </span>
@@ -181,7 +181,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                     <div className="flex items-baseline gap-1 mt-1">
                                         <span className={`text-3xl font-extrabold tracking-tight ${
                                             activeHistoryDetail.ESTADO === 'APROBADO'
-                                                ? 'text-blue-600 dark:text-blue-400'
+                                                ? 'text-primary'
                                                 : activeHistoryDetail.ESTADO === 'REPROBADO'
                                                 ? 'text-rose-600 dark:text-rose-400'
                                                 : 'text-neutral-700 dark:text-neutral-200'
@@ -199,10 +199,10 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                     <div className="flex items-center gap-2 mt-2">
                                         <div className={`p-2 rounded-lg shrink-0 ${
                                             activeHistoryDetail.CARRERA 
-                                                ? 'bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900/50'
+                                                ? 'bg-primary/5 border border-primary/20'
                                                 : 'bg-neutral-100 dark:bg-neutral-800'
                                         }`}>
-                                            <Award className={`h-5 w-5 ${activeHistoryDetail.CARRERA ? 'text-indigo-600 dark:text-indigo-400' : 'text-neutral-400'}`} />
+                                            <Award className={`h-5 w-5 ${activeHistoryDetail.CARRERA ? 'text-primary' : 'text-neutral-400'}`} />
                                         </div>
                                         <span className={`font-bold text-sm leading-tight ${
                                             activeHistoryDetail.CARRERA 
@@ -218,7 +218,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                             {/* Career Options chosen in this CUP */}
                             <div>
                                 <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                                    <ClipboardList className="h-4 w-4 text-indigo-500" /> Preferencias de Carreras Postuladas
+                                    <ClipboardList className="h-4 w-4 text-primary" /> Preferencias de Carreras Postuladas
                                 </h4>
                                 {(() => {
                                     const options = activeHistoryDetail.opciones_carrera || activeHistoryDetail.opcionesCarrera;
@@ -234,7 +234,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                             {[...options].sort((a, b) => a.OPCION - b.OPCION).map((op) => (
                                                 <div key={op.ID} className="flex items-center justify-between bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800/80 p-3 rounded-xl shadow-3xs">
                                                     <div className="flex items-center gap-2 min-w-0">
-                                                        <span className="inline-flex h-6 px-2.5 items-center justify-center rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 border border-indigo-100/40 dark:border-indigo-900/40 shrink-0 whitespace-nowrap">
+                                                        <span className="inline-flex h-6 px-2.5 items-center justify-center rounded-md bg-primary/5 text-[10px] font-extrabold text-primary border border-primary/20 shrink-0 whitespace-nowrap">
                                                             OP {op.OPCION}
                                                         </span>
                                                         <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 truncate">
@@ -251,7 +251,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                             {/* Grouped Academics: Materias, Aulas, Docentes & Calificaciones */}
                             <div>
                                 <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                    <BookOpen className="h-4 w-4 text-indigo-500" /> Detalle de Asignaturas y Calificaciones
+                                    <BookOpen className="h-4 w-4 text-primary" /> Detalle de Asignaturas y Calificaciones
                                 </h4>
                                 {(() => {
                                     const grouped = activeHistoryDetail.calificaciones?.reduce<Record<number, { clase: Clase; list: Calificacion[] }>>((acc, curr) => {
@@ -296,7 +296,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                                         <div className="bg-neutral-50/55 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                                             <div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="inline-flex items-center rounded-md bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/50 uppercase tracking-wide">
+                                                                    <span className="inline-flex items-center rounded-md bg-primary/5 px-2 py-0.5 text-[10px] font-extrabold text-primary border border-primary/20 uppercase tracking-wide">
                                                                         {clase.materia?.SIGLA || 'SIGLA'}
                                                                     </span>
                                                                     <span className="font-extrabold text-xs text-neutral-400">
@@ -308,7 +308,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                                                 </h5>
                                                             </div>
                                                             <div className="flex items-center gap-1.5 text-[11px] font-bold text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-lg self-start sm:self-center border border-neutral-200/30 dark:border-neutral-700/30">
-                                                                <MapPin className="h-3.5 w-3.5 text-indigo-500" />
+                                                                <MapPin className="h-3.5 w-3.5 text-primary" />
                                                                 <span>{clase.aula?.NOMBRE || 'Aula no asignada'}</span>
                                                             </div>
                                                         </div>
@@ -346,7 +346,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                                                                 const h = hbItem.horario;
                                                                                 if (!h) return null;
                                                                                 return (
-                                                                                    <span key={hbItem.ID || h.ID} className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-md border border-indigo-100/30 dark:border-indigo-900/30">
+                                                                                    <span key={hbItem.ID || h.ID} className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-md border border-primary/20">
                                                                                         {h.DIA}: {h.HORA_INI.substring(0, 5)} - {h.HORA_FIN.substring(0, 5)}
                                                                                     </span>
                                                                                 );
@@ -375,7 +375,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                                                 {clase.NOTA_TOTAL !== undefined && clase.NOTA_TOTAL !== null && (
                                                                     <div className="mt-2 pt-2 border-t border-dashed border-neutral-200 dark:border-neutral-800/80 flex justify-between items-center text-xs font-bold bg-neutral-50/20 dark:bg-neutral-900/10 px-2 py-1.5 rounded-lg border border-neutral-100/30 dark:border-neutral-800/20 shadow-3xs">
                                                                         <span className="text-neutral-500 dark:text-neutral-400">Nota Total Materia</span>
-                                                                        <span className="text-indigo-600 dark:text-indigo-400 font-extrabold text-sm">
+                                                                        <span className="text-primary font-extrabold text-sm">
                                                                             {parseFloat(clase.NOTA_TOTAL.toString()).toFixed(1)} pts
                                                                         </span>
                                                                     </div>

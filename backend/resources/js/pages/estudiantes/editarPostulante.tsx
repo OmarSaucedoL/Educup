@@ -241,17 +241,17 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
 
                     {/* CUP Active Info Badge */}
                     {activeCup && (
-                        <div className="mb-6 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                        <div className="mb-6 bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-3">
-                                <GraduationCap className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                <GraduationCap className="h-6 w-6 text-primary" />
                                 <div>
-                                    <span className="block text-xs font-semibold text-indigo-500 uppercase tracking-wider">Gestión Activa Asignada</span>
+                                    <span className="block text-xs font-semibold text-primary uppercase tracking-wider">Gestión Activa Asignada</span>
                                     <span className="font-bold text-sm text-neutral-800 dark:text-neutral-200">
                                         CUP Admisión: Año {activeCup.ANIO} — Semestre {activeCup.SEMESTRE}
                                     </span>
                                 </div>
                             </div>
-                            <span className="inline-flex items-center rounded-full bg-indigo-100 dark:bg-indigo-900/50 px-2.5 py-0.5 text-xs font-bold text-indigo-800 dark:text-indigo-300">
+                            <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
                                 Transacción en Cascada
                             </span>
                         </div>
@@ -266,7 +266,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                             <div className="border border-neutral-200/60 dark:border-neutral-800 bg-card text-card-foreground rounded-xl shadow-sm overflow-hidden">
                                 <div className="flex flex-col space-y-1.5 p-6 border-b border-neutral-100 dark:border-neutral-800">
                                     <h3 className="font-bold leading-none tracking-tight text-lg flex items-center gap-2">
-                                        <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> 
+                                        <UserPlus className="h-5 w-5 text-primary" /> 
                                         {isEdit ? `Expediente ID: #${postulante.ID_ESTUDIANTE}` : 'Datos del Nuevo Postulante'}
                                     </h3>
                                     <p className="text-xs text-muted-foreground">Los campos marcados con (*) son obligatorios del dominio.</p>
@@ -351,7 +351,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                             onClick={() => setData('SEXO', s)}
                                                             className={`flex-1 h-10 rounded-lg border text-xs font-bold transition-all ${
                                                                 data.SEXO === s
-                                                                    ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20 shadow-sm'
+                                                                    ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20 shadow-sm'
                                                                     : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-600 dark:text-neutral-400'
                                                             }`}
                                                         >
@@ -422,7 +422,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                     className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
                                                 >
                                                     <option value="">— Seleccionar ciudad —</option>
-                                                    <option value="NEW" className="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50">
+                                                    <option value="NEW" className="text-primary font-bold bg-primary/5">
                                                         🌟 (+ Registrar Nueva Ciudad)
                                                     </option>
                                                     {ciudades.map(c => (
@@ -435,10 +435,10 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
 
                                             {/* Campos condicionales para NUEVA CIUDAD */}
                                             {data.CIUDAD_ID === 'NEW' && (
-                                                <div className="bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/30 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
                                                     <div className="grid gap-2">
                                                         <Label htmlFor="NUEVA_CIUDAD_NOMBRE" className="text-sm font-semibold flex items-center gap-1.5">
-                                                            <Landmark className="h-4 w-4 text-indigo-500" /> Nombre de la Nueva Ciudad *
+                                                            <Landmark className="h-4 w-4 text-primary" /> Nombre de la Nueva Ciudad *
                                                         </Label>
                                                         <Input
                                                             id="NUEVA_CIUDAD_NOMBRE"
@@ -479,7 +479,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                     className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
                                                 >
                                                     <option value="">— Seleccionar colegio —</option>
-                                                    <option value="NEW" className="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50">
+                                                    <option value="NEW" className="text-primary font-bold bg-primary/5">
                                                         🌟 (+ Registrar Nuevo Colegio)
                                                     </option>
                                                     {colegios.map(c => (
@@ -492,9 +492,9 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
 
                                             {/* Campo condicional para NUEVO COLEGIO */}
                                             {data.COLEGIO_ID === 'NEW' && (
-                                                <div className="bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/30 rounded-xl p-4 grid gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 grid gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
                                                     <Label htmlFor="NUEVO_COLEGIO_NOMBRE" className="text-sm font-semibold flex items-center gap-1.5">
-                                                        <Building2 className="h-4 w-4 text-indigo-500" /> Nombre del Nuevo Colegio *
+                                                        <Building2 className="h-4 w-4 text-primary" /> Nombre del Nuevo Colegio *
                                                     </Label>
                                                     <Input
                                                         id="NUEVO_COLEGIO_NOMBRE"
@@ -542,7 +542,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                             onClick={() => setData('ESTADO', s)}
                                                             className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
                                                                 data.ESTADO === s
-                                                                    ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20 shadow-sm'
+                                                                    ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20 shadow-sm'
                                                                     : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-600 dark:text-neutral-400'
                                                             } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
@@ -557,7 +557,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                         {/* OPCONES DE CARRERA (POSTULACIÓN) */}
                                         {data.ESTADO === 'ACTIVO' && (
                                             <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6">
-                                                <span className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4">
+                                                <span className="block text-xs font-bold text-primary uppercase tracking-wider mb-4">
                                                     Postulaciones a Carrera
                                                 </span>
                                                 
@@ -629,7 +629,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                             <Button
                                                 type="submit"
                                                 disabled={processing || (!isEdit && !activeCup)}
-                                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="flex-1 font-bold h-11 text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 {processing ? (
                                                     <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -664,7 +664,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                             <div className="flex flex-col gap-6 lg:col-span-1">
                                 <div className="border border-neutral-200/60 dark:border-neutral-800 bg-card text-card-foreground rounded-xl shadow-sm p-6 overflow-hidden">
                                     <h3 className="font-bold text-lg flex items-center gap-2 mb-2">
-                                        <ClipboardList className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                        <ClipboardList className="h-5 w-5 text-primary" />
                                         Historial CUP
                                     </h3>
                                     <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
@@ -687,7 +687,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                     </div>
                                                     <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide ${
                                                         hc.ESTADO === 'APROBADO'
-                                                            ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-300 dark:border-blue-800'
+                                                            ? 'bg-primary/10 text-primary border-primary/20'
                                                             : hc.ESTADO === 'REPROBADO'
                                                             ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-800'
                                                             : 'bg-neutral-50 text-neutral-600 border-neutral-200 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-800'
@@ -744,7 +744,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                     <span className="block text-neutral-400 font-semibold mb-1">Carrera de Ingreso:</span>
                                                     <span className={`font-bold block rounded p-2 ${
                                                         hc.CARRERA 
-                                                            ? 'bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/30 text-xs font-extrabold'
+                                                            ? 'bg-primary/5 text-primary border-primary/20 text-xs font-extrabold'
                                                             : 'text-neutral-400 italic font-medium'
                                                     }`}>
                                                         {hc.CARRERA ? hc.CARRERA : 'Ninguna asignada / No calificado'}
@@ -757,7 +757,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                         type="button"
                                                         variant="outline"
                                                         size="sm"
-                                                        className="h-8 text-xs font-semibold px-4 border-indigo-100 hover:border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/40 dark:text-indigo-400 dark:hover:bg-indigo-950/30 shadow-none gap-1"
+                                                        className="h-8 text-xs font-semibold px-4 border-primary/20 hover:border-primary/30 text-primary hover:bg-primary/5 shadow-none gap-1"
                                                         onClick={() => setActiveHistoryDetail(hc)}
                                                     >
                                                         <ClipboardList className="h-3.5 w-3.5" />

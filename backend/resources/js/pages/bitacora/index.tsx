@@ -133,7 +133,7 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                 <div className="mb-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
                         <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                            <Activity className="h-6 w-6 text-indigo-500 animate-pulse" />
+                            <Activity className="h-6 w-6 text-primary animate-pulse" />
                             Bitácora del Sistema
                         </h1>
                         <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
@@ -154,7 +154,7 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                                 placeholder="Buscar por descripción, tabla o usuario..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg pl-10 pr-4 py-2 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-neutral-800 dark:text-neutral-200"
+                                className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg pl-10 pr-4 py-2 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-neutral-800 dark:text-neutral-200"
                             />
                         </div>
                         <div className="flex gap-2">
@@ -177,7 +177,7 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                                 onClick={() => handleFilterAccion(cat.value)}
                                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                                     (filters.accion || '') === cat.value
-                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                                        ? 'bg-primary border-primary text-primary-foreground shadow-sm'
                                         : 'bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900 hover:text-neutral-800'
                                 }`}
                             >
@@ -261,7 +261,7 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                                             <td className="p-4 align-middle text-center" onClick={(e) => e.stopPropagation()}>
                                                 <button
                                                     onClick={() => setSelectedLog(log)}
-                                                    className="p-1.5 rounded-lg text-neutral-400 group-hover:text-indigo-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
+                                                    className="p-1.5 rounded-lg text-neutral-400 group-hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
                                                     title="Ver Detalles"
                                                 >
                                                     <Info className="h-4.5 w-4.5" />
@@ -301,7 +301,7 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                                         href={link.url}
                                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                                             link.active
-                                                ? 'bg-indigo-600 text-white shadow-sm'
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
                                                 : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                                         }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
@@ -335,7 +335,7 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                                         <div className="flex items-start justify-between pb-5 border-b border-neutral-100 dark:border-neutral-800">
                                             <div>
                                                 <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                                                    <Terminal className="h-5 w-5 text-indigo-500" />
+                                                    <Terminal className="h-5 w-5 text-primary" />
                                                     Detalles del Log
                                                 </h2>
                                                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
@@ -396,7 +396,7 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                                                                 <tr>
                                                                     <th className="p-2.5">Campo</th>
                                                                     <th className="p-2.5">Original</th>
-                                                                    <th className="p-2.5 text-indigo-500">Nuevo</th>
+                                                                    <th className="p-2.5 text-primary">Nuevo</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800 bg-white dark:bg-neutral-950/20">

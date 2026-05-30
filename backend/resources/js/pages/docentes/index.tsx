@@ -92,7 +92,7 @@ export default function Index({ docentes }: { docentes: any[] }) {
                                                     }}
                                                     className="h-8 gap-1.5 border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800"
                                                 >
-                                                    <Edit className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                                                    <Edit className="h-3.5 w-3.5 text-primary" />
                                                     Detalles
                                                 </Button>
                                             </td>

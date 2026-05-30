@@ -70,17 +70,17 @@ export default function ImportarEstudiantes({ periodos }: Props) {
                     {/* Card */}
                     <div className="border-sidebar-border/70 dark:border-sidebar-border bg-card text-card-foreground rounded-xl border shadow-sm overflow-hidden">
                         
-                        <div className="bg-indigo-50/50 dark:bg-indigo-950/20 p-6 border-b border-sidebar-border/50">
+                        <div className="bg-primary/5 p-6 border-b border-sidebar-border/50">
                             <div className="flex gap-4">
-                                <div className="h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0">
-                                    <FileSpreadsheet className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <FileSpreadsheet className="h-6 w-6 text-primary" />
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-lg text-foreground">Instrucciones del Archivo</h3>
                                     <p className="text-sm text-muted-foreground mt-1">
                                         Asegúrate de que la primera fila contenga exactamente estos encabezados en minúscula:
                                         <br />
-                                        <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 mt-2 inline-block">
+                                        <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-primary mt-2 inline-block">
                                             carnet, nombre, apellido, fecha_nac, sexo, direccion, telefono, correo, titulo_bachiller, ciudad, departamento, colegio, opcion_1, opcion_2
                                         </code>
                                     </p>
@@ -98,7 +98,7 @@ export default function ImportarEstudiantes({ periodos }: Props) {
                                         id="CUP_ID"
                                         value={data.CUP_ID}
                                         onChange={e => setData('CUP_ID', e.target.value)}
-                                        className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500"
+                                        className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                         required
                                     >
                                         <option value="" disabled>Selecciona un periodo</option>
@@ -116,7 +116,7 @@ export default function ImportarEstudiantes({ periodos }: Props) {
                                     <Label className="text-sm font-semibold">Archivo Excel (.xlsx, .xls) <span className="text-destructive">*</span></Label>
                                     
                                     <div className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                                        data.archivo_excel ? 'border-indigo-500 bg-indigo-50/30 dark:bg-indigo-950/10' : 'border-sidebar-border hover:border-sidebar-border/80 hover:bg-muted/30'
+                                        data.archivo_excel ? 'border-primary bg-primary/5' : 'border-sidebar-border hover:border-sidebar-border/80 hover:bg-muted/30'
                                     }`}>
                                         <input
                                             ref={fileInputRef}
@@ -155,7 +155,7 @@ export default function ImportarEstudiantes({ periodos }: Props) {
                                     <Button
                                         type="submit"
                                         disabled={processing || !data.archivo_excel || !data.CUP_ID}
-                                        className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md transition-all"
+                                        className="w-full h-11 font-semibold text-sm shadow-md transition-all"
                                     >
                                         {processing ? (
                                             <>
@@ -169,7 +169,7 @@ export default function ImportarEstudiantes({ periodos }: Props) {
 
                                     {progress && (
                                         <div className="w-full bg-muted rounded-full h-1.5 mt-4 overflow-hidden">
-                                            <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${progress.percentage}%` }}></div>
+                                            <div className="bg-primary h-1.5 rounded-full transition-all" style={{ width: `${progress.percentage}%` }}></div>
                                         </div>
                                     )}
                                 </div>

@@ -108,7 +108,7 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = [], act
                     <div className="border-sidebar-border/70 dark:border-sidebar-border bg-card text-card-foreground rounded-xl border shadow-sm">
                         <div className="flex flex-col space-y-1.5 p-6 border-b border-sidebar-border/50">
                             <h3 className="font-semibold leading-none tracking-tight text-lg flex items-center gap-2">
-                                <UserPlus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Datos del Estudiante
+                                <UserPlus className="h-5 w-5 text-primary" /> Datos del Estudiante
                             </h3>
                             <p className="text-xs text-muted-foreground">Los campos marcados con <span className="text-destructive">*</span> son obligatorios.</p>
                         </div>
@@ -162,7 +162,7 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = [], act
                                                     onClick={() => setData('SEXO', s)}
                                                     className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
                                                         data.SEXO === s
-                                                            ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
+                                                            ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20'
                                                             : 'border-sidebar-border hover:bg-muted/50 text-muted-foreground'
                                                     }`}
                                                 >
@@ -256,7 +256,7 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = [], act
                                                     onClick={() => setData('ESTADO', s)}
                                                     className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
                                                         data.ESTADO === s
-                                                            ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
+                                                            ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20'
                                                             : 'border-sidebar-border hover:bg-muted/50 text-muted-foreground'
                                                     } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
@@ -271,7 +271,7 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = [], act
                                 {/* Postulaciones a Carrera (Condicional) */}
                                 {data.ESTADO === 'ACTIVO' && (
                                     <div className="border-t border-sidebar-border/50 pt-6 grid gap-4">
-                                        <span className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                        <span className="block text-xs font-bold text-primary uppercase tracking-wider">
                                             Postulaciones a Carrera
                                         </span>
                                         
@@ -331,7 +331,7 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = [], act
 
                                 <Button
                                     type="submit"
-                                    className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 text-sm shadow-md"
+                                    className="mt-4 w-full font-bold h-11 text-sm shadow-md"
                                     disabled={processing}
                                 >
                                     {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}

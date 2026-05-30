@@ -117,12 +117,12 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
                     <div className="flex flex-wrap gap-2">
                         {activeCup ? (
                             <>
-                                <Button variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/50" asChild>
+                                <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5" asChild>
                                     <Link href="/estudiantes/importar">
                                         <FileSpreadsheet className="mr-2 h-4 w-4" /> Importar Excel
                                     </Link>
                                 </Button>
-                                <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                                <Button asChild className="font-semibold">
                                     <Link href="/estudiantes/crearEstudiante">
                                         <Plus className="mr-2 h-4 w-4" /> Agregar Estudiante
                                     </Link>
@@ -164,7 +164,7 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
                                 placeholder="Buscar por carnet, nombre o apellido..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg pl-10 pr-4 py-2 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-neutral-800 dark:text-neutral-200"
+                                className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg pl-10 pr-4 py-2 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-neutral-800 dark:text-neutral-200"
                             />
                         </div>
                         <div className="flex gap-2">
@@ -224,7 +224,7 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
                                             <td className="p-4 align-middle text-center">
                                                 <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
                                                     est.ESTADO === 'APROBADO'
-                                                        ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-300 dark:border-blue-800'
+                                                        ? 'bg-primary/10 text-primary border-primary/20'
                                                         : est.ESTADO === 'ACTIVO'
                                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-800'
                                                         : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-800'
@@ -288,7 +288,7 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
                                         href={link.url}
                                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                                             link.active
-                                                ? 'bg-indigo-600 text-white shadow-sm'
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
                                                 : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                                         }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
