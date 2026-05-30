@@ -19,7 +19,7 @@ export default function Index({ usuarios }: { usuarios: any[] }) {
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-2xl font-semibold tracking-tight">Gestión de Usuarios</h1>
                     <div className="flex gap-2">
-                        <Button variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-950/50" asChild>
+                        <Button variant="outline" className="border-neutral-200 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900" asChild>
                             <Link href="/usuarios/importar">
                                 <Users className="mr-2 h-4 w-4" /> Importar Excel
                             </Link>
@@ -42,6 +42,7 @@ export default function Index({ usuarios }: { usuarios: any[] }) {
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Correo</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Rol</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Estado</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-right align-middle font-medium">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
@@ -56,16 +57,23 @@ export default function Index({ usuarios }: { usuarios: any[] }) {
                                             <td className="p-4 align-middle">{usuario.rol ? usuario.rol.NOMBRE : 'Sin rol'}</td>
                                             <td className="p-4 align-middle">
                                                 <div
-                                                    className={`focus:ring-ring inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none ${usuario.ESTADO === 1 ? 'border-green-200 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'border-red-200 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}
+                                                    className={`focus:ring-ring inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none ${usuario.ESTADO === 'ACTIVO' ? 'border-green-200 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'border-red-200 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}
                                                 >
-                                                    {usuario.ESTADO === 1 ? 'Activo' : 'Inactivo'}
+                                                    {usuario.ESTADO === 'ACTIVO' ? 'Activo' : 'Inactivo'}
                                                 </div>
+                                            </td>
+                                            <td className="p-4 align-middle text-right">
+                                                <Button variant="outline" size="sm" asChild className="h-8 text-xs font-semibold">
+                                                    <Link href={`/usuarios/${usuario.ID}/editar`}>
+                                                        Modificar
+                                                    </Link>
+                                                </Button>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={5} className="text-muted-foreground p-4 text-center align-middle">
+                                        <td colSpan={6} className="text-muted-foreground p-4 text-center align-middle">
                                             No hay usuarios registrados.
                                         </td>
                                     </tr>

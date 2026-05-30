@@ -23,5 +23,8 @@ Route::get('/usuarios/{id}', [UsuarioController::class, 'show']);
 // Crear un nuevo usuario
 Route::post('/usuarios', [UsuarioController::class, 'store']);
 
+// Mostrar formulario para editar usuario
+Route::get('/usuarios/{id}/editar', [UsuarioController::class, 'edit']);
+
 // Modificar un usuario existente
 Route::put('/usuarios/{id}', [UsuarioController::class, 'update']);

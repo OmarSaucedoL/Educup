@@ -73,11 +73,11 @@ class UsuarioController extends Controller
         $validated = $request->validate([
             'USERNAME' => 'required|string|max:255|unique:USUARIO',
             'CONTRASENIA' => 'required|string|min:6',
-            'CARNET' => 'nullable|string|max:255',
+            'CARNET' => 'nullable',
             'NOMBRE' => 'required|string|max:255',
             'APELLIDO' => 'required|string|max:255',
             'CORREO' => 'required|string|email|max:255|unique:USUARIO',
-            'ESTADO' => 'nullable|integer',
+            'ESTADO' => 'nullable|string|in:ACTIVO,INACTIVO',
             'ROL_ID' => 'nullable|integer|exists:ROL,ID'
         ]);
 
@@ -85,7 +85,12 @@ class UsuarioController extends Controller
         $validated['FECHA_CREACION'] = now();
         
         if (!isset($validated['ESTADO'])) {
-            $validated['ESTADO'] = 1; // Default to active
+            $validated['ESTADO'] = 'ACTIVO'; // Default to active
+        }
+
+        // Ensure CARNET is cast to string if provided
+        if (isset($validated['CARNET'])) {
+            $validated['CARNET'] = (string) $validated['CARNET'];
         }
 
         $usuario = Usuario::create($validated);
@@ -103,6 +108,20 @@ class UsuarioController extends Controller
     }
 
     /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        $roles = \App\Models\Rol::all();
+        
+        return inertia('usuarios/editarUsuario', [
+            'usuario' => $usuario,
+            'roles' => $roles
+        ]);
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
@@ -112,22 +131,27 @@ class UsuarioController extends Controller
         $validated = $request->validate([
             'USERNAME' => 'sometimes|required|string|max:255|unique:USUARIO,USERNAME,' . $id . ',ID',
             'CONTRASENIA' => 'nullable|string|min:6',
-            'CARNET' => 'nullable|string|max:255',
+            'CARNET' => 'nullable',
             'NOMBRE' => 'sometimes|required|string|max:255',
             'APELLIDO' => 'sometimes|required|string|max:255',
             'CORREO' => 'sometimes|required|string|email|max:255|unique:USUARIO,CORREO,' . $id . ',ID',
-            'ESTADO' => 'nullable|integer',
+            'ESTADO' => 'nullable|string|in:ACTIVO,INACTIVO',
             'ROL_ID' => 'nullable|integer|exists:ROL,ID'
         ]);
 
-        if (isset($validated['CONTRASENIA'])) {
+        if (!empty($validated['CONTRASENIA'])) {
             $validated['CONTRASENIA'] = Hash::make($validated['CONTRASENIA']);
         } else {
             unset($validated['CONTRASENIA']);
         }
 
+        // Ensure CARNET is cast to string if provided
+        if (isset($validated['CARNET'])) {
+            $validated['CARNET'] = (string) $validated['CARNET'];
+        }
+
         $usuario->update($validated);
 
-        return response()->json($usuario);
+        return redirect('/usuarios')->with('success', 'Usuario actualizado correctamente.');
     }
 }

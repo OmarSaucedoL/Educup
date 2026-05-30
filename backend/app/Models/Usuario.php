@@ -45,6 +45,11 @@ class Usuario extends Authenticatable
         return 'CONTRASENIA';
     }
 
+    public function getAuthPassword()
+    {
+        return $this->CONTRASENIA;
+    }
+
     public function getRememberTokenName()
     {
         return 'REMEMBER_TOKEN';
