@@ -34,7 +34,6 @@ export default function Index({ cups }: { cups: any[] }) {
                         <table className="w-full caption-bottom text-sm">
                             <thead className="[&_tr]:border-b">
                                 <tr className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
-                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">#</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Gestión / Semestre</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Cupos</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Nota Mínima</th>
@@ -49,11 +48,6 @@ export default function Index({ cups }: { cups: any[] }) {
                                 {cups && cups.length > 0 ? (
                                     cups.map((cup) => (
                                         <tr key={cup.ID_CUP} className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
-                                            <td className="p-4 align-middle">
-                                                <span className="inline-flex items-center rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 text-xs font-bold text-neutral-600 dark:text-neutral-300">
-                                                    #{cup.ID_CUP}
-                                                </span>
-                                            </td>
                                             <td className="p-4 align-middle font-medium">
                                                 {cup.ANIO} - {cup.SEMESTRE}
                                             </td>
@@ -63,8 +57,12 @@ export default function Index({ cups }: { cups: any[] }) {
                                                 </div>
                                             </td>
                                             <td className="p-4 align-middle">{cup.NOTA_MINIMA}</td>
-                                            <td className="p-4 align-middle">{cup.FECHA_INICIO}</td>
-                                            <td className="p-4 align-middle">{cup.FECHA_FIN}</td>
+                                            <td className="p-4 align-middle text-muted-foreground">
+                                                {cup.FECHA_INICIO ? new Date(cup.FECHA_INICIO).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
+                                            </td>
+                                            <td className="p-4 align-middle text-muted-foreground">
+                                                {cup.FECHA_FIN ? new Date(cup.FECHA_FIN).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
+                                            </td>
                                             <td className="p-4 align-middle">
                                                 <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
                                                     cup.ESTADO === 'Inscripciones'
@@ -85,7 +83,7 @@ export default function Index({ cups }: { cups: any[] }) {
                                                         variant="outline"
                                                         size="sm"
                                                         asChild
-                                                        className="h-8 gap-1.5 border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:bg-indigo-950/50 font-semibold text-xs"
+                                                        className="h-8 gap-1.5 text-xs font-semibold"
                                                     >
                                                         <Link href={`/cup/${cup.ID_CUP}`} className="inline-flex items-center gap-1.5">
                                                             <Info className="h-3.5 w-3.5" /> Información
@@ -102,7 +100,7 @@ export default function Index({ cups }: { cups: any[] }) {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={9} className="text-muted-foreground p-4 text-center align-middle">
+                                        <td colSpan={8} className="text-muted-foreground p-4 text-center align-middle">
                                             No hay registros de CUP creados.
                                         </td>
                                     </tr>

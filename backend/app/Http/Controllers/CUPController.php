@@ -440,23 +440,28 @@ class CUPController extends Controller
             $estMax = $validated['EST_MAX'];
             $estMin = $validated['EST_MIN'];
             
-            $numGruposCompletos = floor($inscritos / $estMax);
+            // 1. Primera ronda de grupos
+            $totalGrupos = (int) floor($inscritos / $estMax);
             $sobrantes = $inscritos % $estMax;
-            
-            $totalGrupos = $numGruposCompletos;
+
+            // 2. Revisar lo que sobró comparado con est_min
             if ($sobrantes >= $estMin) {
-                $totalGrupos++;
+                $totalGrupos++; // Creamos un grupo más para los sobrantes
             }
+
             if ($totalGrupos == 0) {
-                $totalGrupos = 1; // Al menos un grupo si hay inscritos > 0 pero menos del mínimo
+                $totalGrupos = 1;
             }
 
             $turnosSeleccionados = $validated['turnos'];
             $numTurnos = count($turnosSeleccionados);
 
-            // Preparar estudiantes a asignar
-            $estudiantesAAsignar = $estudiantesDisponibles->take($totalGrupos * $estMax);
-            $chunksEstudiantes = $estudiantesAAsignar->chunk($estMax)->values();
+            // Al hacer split($totalGrupos), Laravel distribuye equitativamente.
+            // Si totalGrupos no se incrementó (sobrantes < est_min), split() meterá 
+            // a los sobrantes de 1 en 1 en los grupos que ya existen (ej: 8,8,7,7,7,7).
+            // Si se incrementó (sobrantes >= est_min), split() balanceará para no dejar a uno con muy pocos.
+
+            $chunksEstudiantes = $estudiantesDisponibles->split($totalGrupos)->values();
 
             // Determinar prefijo y offset de grupos existentes para evitar nombres duplicados
             $anioCorto = substr((string)$cup->ANIO, -2);

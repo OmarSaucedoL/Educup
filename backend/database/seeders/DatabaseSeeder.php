@@ -54,11 +54,11 @@ class DatabaseSeeder extends Seeder
         // Administrador Principal del Sistema (OMAR.ADMIN)
         $uAdminId = DB::table('USUARIO')->insertGetId([
             'USERNAME' => 'OMAR.ADMIN',
-            'CONTRASENIA' => Hash::make('Admin123/*'),
+            'CONTRASENIA' => Hash::make('contraseña'),
             'CARNET' => 8432111,
             'NOMBRE' => 'OMAR ALY',
             'APELLIDO' => 'SAUCEDO LINO',
-            'CORREO' => 'omar.admin@ficct.uagrm.edu.bo',
+            'CORREO' => 'admin@cup.edu',
             'ESTADO' => 'ACTIVO',
             'FECHA_CREACION' => Carbon::now(),
             'ROL_ID' => $rolAdmin
