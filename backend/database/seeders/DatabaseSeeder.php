@@ -114,19 +114,54 @@ class DatabaseSeeder extends Seeder
         $ciudadId = DB::table('CIUDAD')->insertGetId(['NOMBRE' => 'SANTA CRUZ DE LA SIERRA', 'DEPARTAMENTO' => 'SANTA CRUZ'], 'ID');
         $colegioId = DB::table('COLEGIO')->insertGetId(['NOMBRE' => 'NACIONAL FLORIDA'], 'ID');
 
-        // Estructura Temporal de Bloques Horarios
-        $bMañana = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'MAÑANA'], 'ID_BLOQUE_HORARIO');
-        $bTarde = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'TARDE'], 'ID_BLOQUE_HORARIO');
-        $bNoche = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => 'NOCHE'], 'ID_BLOQUE_HORARIO');
+        // ==============================================================
+        // ESTRUCTURA TEMPORAL DE BLOQUES HORARIOS REALISTA (2 MATERIAS/DIA)
+        // ==============================================================
+        $bloquesMañana = [];
+        $bloquesTarde = [];
+        $bloquesNoche = [];
 
-        // Asientos de Tiempo (Horas académicas)
-        $h1 = DB::table('HORARIO')->insertGetId(['DIA' => 'LUNES', 'HORA_INI' => '07:00:00', 'HORA_FIN' => '09:15:00'], 'ID');
-        $h2 = DB::table('HORARIO')->insertGetId(['DIA' => 'MIERCOLES', 'HORA_INI' => '07:00:00', 'HORA_FIN' => '09:15:00'], 'ID');
-        $h3 = DB::table('HORARIO')->insertGetId(['DIA' => 'VIERNES', 'HORA_INI' => '07:00:00', 'HORA_FIN' => '09:15:00'], 'ID');
+        $diasG1 = ['LUNES', 'MIERCOLES', 'VIERNES'];
+        $diasG2 = ['MARTES', 'JUEVES', 'SABADO'];
 
-        DB::table('HORARIO_EN_BLOQUE')->insert(['HORARIO_ID' => $h1, 'ID_BLOQUE_HORARIO' => $bMañana, 'CARGA_HORARIA' => '2.25']);
-        DB::table('HORARIO_EN_BLOQUE')->insert(['HORARIO_ID' => $h2, 'ID_BLOQUE_HORARIO' => $bMañana, 'CARGA_HORARIA' => '2.25']);
-        DB::table('HORARIO_EN_BLOQUE')->insert(['HORARIO_ID' => $h3, 'ID_BLOQUE_HORARIO' => $bMañana, 'CARGA_HORARIA' => '2.25']);
+        $horariosConfig = [
+            'MAÑANA' => [['07:00:00', '09:00:00'], ['09:00:00', '11:00:00']],
+            'TARDE'  => [['13:30:00', '15:30:00'], ['15:30:00', '17:30:00']],
+            'NOCHE'  => [['18:00:00', '20:00:00'], ['20:00:00', '22:00:00']]
+        ];
+
+        foreach (['MAÑANA', 'TARDE', 'NOCHE'] as $turno) {
+            $bloques = [];
+            foreach ([$diasG1, $diasG2] as $grupoDias) {
+                foreach ($horariosConfig[$turno] as $horaObj) {
+                    $bloqueId = DB::table('BLOQUE_HORARIO')->insertGetId(['TURNO' => $turno], 'ID_BLOQUE_HORARIO');
+                    $bloques[] = $bloqueId;
+                    foreach ($grupoDias as $dia) {
+                        // Insertar o buscar el horario
+                        $hId = DB::table('HORARIO')->where([
+                            'DIA' => $dia, 'HORA_INI' => $horaObj[0], 'HORA_FIN' => $horaObj[1]
+                        ])->value('ID');
+                        
+                        if (!$hId) {
+                            $hId = DB::table('HORARIO')->insertGetId([
+                                'DIA' => $dia, 'HORA_INI' => $horaObj[0], 'HORA_FIN' => $horaObj[1]
+                            ], 'ID');
+                        }
+                        
+                        DB::table('HORARIO_EN_BLOQUE')->insert([
+                            'HORARIO_ID' => $hId,
+                            'ID_BLOQUE_HORARIO' => $bloqueId,
+                            'CARGA_HORARIA' => '2'
+                        ]);
+                    }
+                }
+            }
+            if ($turno === 'MAÑANA') $bloquesMañana = $bloques;
+            if ($turno === 'TARDE') $bloquesTarde = $bloques;
+            if ($turno === 'NOCHE') $bloquesNoche = $bloques;
+        }
+
+        $bMañana = $bloquesMañana[0]; // Referencia original para las clases hardcodeadas del seeder
 
         // Asignación de competencias de docentes por materia base
         $teacherSubjects = [

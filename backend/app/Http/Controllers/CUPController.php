@@ -461,18 +461,18 @@ class CUPController extends Controller
                     'EST_MAX' => $estMax
                 ]);
 
-                // 2. Obtener bloque horario para el turno
-                $bloque = BloqueHorario::where('TURNO', $turnoNombre)->first();
-                if (!$bloque) {
-                    throw ValidationException::withMessages(['turnos' => "No se encontró el bloque horario para el turno: $turnoNombre."]);
+                // 2. Obtener bloques horarios para el turno
+                $bloques = BloqueHorario::where('TURNO', $turnoNombre)->get();
+                if ($bloques->count() < 4) {
+                    throw ValidationException::withMessages(['turnos' => "No hay suficientes bloques horarios (mínimo 4) para el turno: $turnoNombre."]);
                 }
 
-                // 3. Crear 4 clases para este grupo usando las materias obligatorias
+                // 3. Crear 4 clases para este grupo usando materias y bloques horarios distintos
                 for ($j = 0; $j < 4; $j++) {
                     Clase::create([
                         'ID_CUP' => $idCup,
                         'ID_MATERIA' => $materias[$j]->ID_MATERIA,
-                        'ID_BLOQUE_HORARIO' => $bloque->ID_BLOQUE_HORARIO,
+                        'ID_BLOQUE_HORARIO' => $bloques[$j]->ID_BLOQUE_HORARIO,
                         'ID_GRUPO' => $grupo->ID_GRUPO,
                         'DOCENTE_CUP_ID' => null,
                         'ID_AULA' => null,
