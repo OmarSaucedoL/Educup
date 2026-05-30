@@ -186,12 +186,36 @@ class CUPController extends Controller
                     'bloqueHorario.horariosEnBloque.horario',
                     'aula',
                     'docenteCup.docente.usuario',
+                    'estudianteCups.estudiante'
                 ])->withCount('estudianteCups');
             }
         ])->findOrFail($id);
 
         return inertia('cup/clases', [
             'cup' => $cup,
+        ]);
+    }
+
+    public function grupoDetalles(string $id, string $grupoId)
+    {
+        $cup = Cup::findOrFail($id);
+        $grupo = Grupo::findOrFail($grupoId);
+
+        $clases = Clase::where('ID_CUP', $id)
+            ->where('ID_GRUPO', $grupoId)
+            ->with([
+                'materia',
+                'bloqueHorario.horariosEnBloque.horario',
+                'aula',
+                'docenteCup.docente.usuario',
+                'estudianteCups.estudiante'
+            ])
+            ->get();
+
+        return inertia('cup/grupoDetalles', [
+            'cup' => $cup,
+            'grupo' => $grupo,
+            'clases' => $clases
         ]);
     }
 

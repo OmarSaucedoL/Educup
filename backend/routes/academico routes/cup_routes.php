@@ -12,6 +12,7 @@ Route::get('/cup/crearCUP', [CUPController::class, 'create']);
 // Obtener un CUP específico
 Route::get('/cup/{id}', [CUPController::class, 'show']);
 Route::get('/cup/{id}/clases', [CUPController::class, 'clases']);
+Route::get('/cup/{id}/grupos/{grupoId}', [CUPController::class, 'grupoDetalles']);
 
 // Crear un nuevo CUP
 Route::post('/cup', [CUPController::class, 'store']);
@@ -26,3 +27,15 @@ Route::post('/cup/{id}/docentes', [CUPController::class, 'asignarDocentes']);
 // Crear paquete de clases
 Route::get('/cup/{id}/clases/crear', [CUPController::class, 'crearClasesForm']);
 Route::post('/cup/{id}/clases', [CUPController::class, 'crearPaqueteClases']);
+
+// Redirección genérica para ver las clases del CUP actual/último
+Route::get('/clases', function() {
+    $cup = \App\Models\Cup::where('ESTADO', 'En curso')->orderBy('ID_CUP', 'desc')->first();
+    if (!$cup) {
+        $cup = \App\Models\Cup::orderBy('ID_CUP', 'desc')->first();
+    }
+    if (!$cup) {
+        return redirect('/cup')->withErrors(['error' => 'No hay ningún CUP registrado en el sistema para ver sus clases.']);
+    }
+    return redirect("/cup/{$cup->ID_CUP}/clases");
+});

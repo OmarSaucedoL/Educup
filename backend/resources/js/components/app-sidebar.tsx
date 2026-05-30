@@ -42,6 +42,10 @@ const mainNavItems: NavItem[] = [
                 title: 'Aulas',
                 url: '/aulas',
             },
+            {
+                title: 'Clases',
+                url: '/clases',
+            },
         ],
     },
 

@@ -233,8 +233,8 @@ export default function Informacion({ cup, docentesActivos }: CupInformacionProp
                     {[
                         { label: 'Cupos Totales', value: cup.CUPOS,        icon: Users,        color: 'text-blue-500' },
                         { label: 'Nota Mínima',   value: cup.NOTA_MINIMA,  icon: GraduationCap, color: 'text-violet-500' },
-                        { label: 'Fecha Inicio',  value: cup.FECHA_INICIO, icon: Calendar,      color: 'text-emerald-500' },
-                        { label: 'Fecha Fin',     value: cup.FECHA_FIN,    icon: Calendar,      color: 'text-rose-400' },
+                        { label: 'Fecha Inicio',  value: cup.FECHA_INICIO ? new Date(cup.FECHA_INICIO).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : null, icon: Calendar,      color: 'text-emerald-500' },
+                        { label: 'Fecha Fin',     value: cup.FECHA_FIN ? new Date(cup.FECHA_FIN).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : null,    icon: Calendar,      color: 'text-rose-400' },
                     ].map(({ label, value, icon: Icon, color }) => (
                         <div key={label} className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card p-4 shadow-sm flex flex-col gap-1">
                             <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
@@ -469,31 +469,36 @@ export default function Informacion({ cup, docentesActivos }: CupInformacionProp
                             </div>
                         </details>
 
-                        {/* Estudiantes */}
-                        <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden flex flex-col max-h-[500px]">
-                            <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3 shrink-0">
-                                <Users className="h-4 w-4 text-neutral-900 dark:text-neutral-100" />
-                                <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Estudiantes Inscritos</h2>
-                                <span className="ml-auto text-xs font-bold text-neutral-400">{estudianteCups.length}</span>
+                        {/* Estudiantes (Collapsible) */}
+                        <details className="group border-none bg-transparent" open>
+                            <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:bg-neutral-900 transition-colors list-none [&::-webkit-details-marker]:hidden group-open:mb-4">
+                                <div className="flex items-center gap-2">
+                                    <Users className="h-4 w-4" />
+                                    <span>Estudiantes Inscritos ({estudianteCups.length})</span>
+                                </div>
+                                <ChevronLeft className="h-4 w-4 transition-transform group-open:-rotate-90" />
+                            </summary>
+                            
+                            <div className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden flex flex-col max-h-[500px]">
+                                <div className="divide-y divide-neutral-100 dark:divide-neutral-800 overflow-y-auto">
+                                    {estudianteCups.length > 0 ? estudianteCups.map((ec: any) => {
+                                        const est = ec.estudiante;
+                                        return (
+                                            <div key={ec.ID} className="flex flex-col px-4 py-3 text-sm hover:bg-neutral-50/50 dark:hover:bg-neutral-900/20 transition-colors">
+                                                <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">
+                                                    {est ? `${est.NOMBRE} ${est.APELLIDO}` : `Estudiante #${ec.ID_ESTUDIANTE}`}
+                                                </span>
+                                                <span className="text-[11px] text-neutral-500 mt-0.5">
+                                                    CI: {est?.CARNET ?? '—'} <span className="mx-1">•</span> Estado: <span className="font-medium text-neutral-700 dark:text-neutral-300">{ec.ESTADO ?? '—'}</span>
+                                                </span>
+                                            </div>
+                                        )
+                                    }) : (
+                                        <p className="px-4 py-6 text-sm text-center text-neutral-400 italic">Sin estudiantes inscritos.</p>
+                                    )}
+                                </div>
                             </div>
-                            <div className="divide-y divide-neutral-100 dark:divide-neutral-800 overflow-y-auto">
-                                {estudianteCups.length > 0 ? estudianteCups.map((ec: any) => {
-                                    const est = ec.estudiante;
-                                    return (
-                                        <div key={ec.ID} className="flex flex-col px-4 py-3 text-sm">
-                                            <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                                                {est ? `${est.NOMBRE} ${est.APELLIDO}` : `Estudiante #${ec.ID_ESTUDIANTE}`}
-                                            </span>
-                                            <span className="text-[11px] text-neutral-500 mt-0.5">
-                                                CI: {est?.CARNET ?? '—'} <span className="mx-1">•</span> Estado: <span className="font-medium text-neutral-700 dark:text-neutral-300">{ec.ESTADO ?? '—'}</span>
-                                            </span>
-                                        </div>
-                                    )
-                                }) : (
-                                    <p className="px-4 py-3 text-xs text-neutral-400 italic">Sin estudiantes inscritos.</p>
-                                )}
-                            </div>
-                        </section>
+                        </details>
                     </div>
 
                 </div>
