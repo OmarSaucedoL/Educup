@@ -59,4 +59,9 @@ class Cup extends Model
     {
         return $this->belongsToMany(Materia::class, 'MATERIA_CUP', 'ID_CUP', 'ID_MATERIA');
     }
+
+    public function clases(): HasMany
+    {
+        return $this->hasMany(Clase::class, 'ID_CUP', 'ID_CUP');
+    }
 }

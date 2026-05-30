@@ -5,17 +5,7 @@ import { BookOpen, Users, Building2, Clock, User, ChevronLeft } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 
 export default function VerClasesPage({ cup }: { cup: any }) {
-    const docenteCups: any[] = cup.docente_cups ?? cup.docenteCups ?? [];
-    
-    const todasLasClases = docenteCups.flatMap((dc: any) => {
-        const clases: any[] = dc.clases ?? [];
-        const docente = dc.docente;
-        return clases.map(c => ({
-            ...c,
-            docenteAsignado: docente,
-            codigoDocente: dc.CODIGO_DOCENTE
-        }));
-    });
+    const todasLasClases: any[] = cup.clases ?? [];
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Gestión Académica', href: '#' },
@@ -60,7 +50,8 @@ export default function VerClasesPage({ cup }: { cup: any }) {
                             {todasLasClases.map((clase: any, i: number) => {
                                 const bloque = clase.bloque_horario ?? clase.bloqueHorario;
                                 const horariosEnBloque: any[] = bloque?.horarios_en_bloque ?? bloque?.horariosEnBloque ?? [];
-                                const docente = clase.docenteAsignado;
+                                const docente = clase.docente_cup?.docente ?? clase.docenteCup?.docente;
+                                const codigoDocente = clase.docente_cup?.CODIGO_DOCENTE ?? clase.docenteCup?.CODIGO_DOCENTE;
                                 
                                 return (
                                     <div key={`${clase.ID_CLASE}-${i}`} className="rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 p-4 shadow-sm flex flex-col gap-3">
@@ -75,7 +66,7 @@ export default function VerClasesPage({ cup }: { cup: any }) {
                                                 {clase.grupo && (
                                                     <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full border px-2 py-0.5 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-800">
                                                         <Users className="h-3 w-3" />
-                                                        Grupo #{clase.grupo.ID_GRUPO}
+                                                        Grupo {clase.grupo.NOMBRE ?? `#${clase.grupo.ID_GRUPO}`}
                                                     </span>
                                                 )}
                                                 {clase.aula && (
@@ -97,11 +88,11 @@ export default function VerClasesPage({ cup }: { cup: any }) {
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-xs text-neutral-800 dark:text-neutral-200">
-                                                        {docente?.usuario ? `${docente.usuario.NOMBRE} ${docente.usuario.APELLIDO}` : `Docente #${clase.codigoDocente}`}
+                                                        {docente?.usuario ? `${docente.usuario.NOMBRE} ${docente.usuario.APELLIDO}` : (codigoDocente ? `Docente #${codigoDocente}` : 'Sin asignar')}
                                                     </p>
                                                     <p className="text-[10px] text-neutral-500 flex items-center gap-1 mt-0.5">
                                                         <User className="h-3 w-3" />
-                                                        Docente
+                                                        {docente ? 'Docente' : 'Pendiente de asignación'}
                                                     </p>
                                                 </div>
                                             </div>

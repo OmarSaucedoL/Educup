@@ -106,8 +106,11 @@ export default function CrearClases({ cup, inscritos, turnos }: CrearClasesProps
                                     <input
                                         type="number"
                                         min="1"
-                                        value={data.EST_MIN}
-                                        onChange={e => setData('EST_MIN', parseInt(e.target.value))}
+                                        value={(data.EST_MIN as any) === '' || Number.isNaN(data.EST_MIN as any) ? '' : data.EST_MIN}
+                                        onChange={e => {
+                                            const val = parseInt(e.target.value);
+                                            setData('EST_MIN', Number.isNaN(val) ? ('' as any) : val);
+                                        }}
                                         className="block w-full rounded-md border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-sm shadow-sm focus:border-neutral-500 focus:ring-neutral-500"
                                         required
                                     />
@@ -119,9 +122,12 @@ export default function CrearClases({ cup, inscritos, turnos }: CrearClasesProps
                                     </label>
                                     <input
                                         type="number"
-                                        min={data.EST_MIN}
-                                        value={data.EST_MAX}
-                                        onChange={e => setData('EST_MAX', parseInt(e.target.value))}
+                                        min={(data.EST_MIN as any) === '' || Number.isNaN(data.EST_MIN as any) ? 1 : data.EST_MIN}
+                                        value={(data.EST_MAX as any) === '' || Number.isNaN(data.EST_MAX as any) ? '' : data.EST_MAX}
+                                        onChange={e => {
+                                            const val = parseInt(e.target.value);
+                                            setData('EST_MAX', Number.isNaN(val) ? ('' as any) : val);
+                                        }}
                                         className="block w-full rounded-md border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-sm shadow-sm focus:border-neutral-500 focus:ring-neutral-500"
                                         required
                                     />

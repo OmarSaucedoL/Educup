@@ -176,17 +176,14 @@ class CUPController extends Controller
         ]);
     }
 
-    /**
-     * Show the classes associated with a CUP.
-     */
     public function clases(string $id)
     {
         $cup = Cup::with([
-            'docenteCups.docente.usuario',
-            'docenteCups.clases.materia',
-            'docenteCups.clases.grupo',
-            'docenteCups.clases.bloqueHorario.horariosEnBloque.horario',
-            'docenteCups.clases.aula',
+            'clases.materia',
+            'clases.grupo',
+            'clases.bloqueHorario.horariosEnBloque.horario',
+            'clases.aula',
+            'clases.docenteCup.docente.usuario',
         ])->findOrFail($id);
 
         return inertia('cup/clases', [
@@ -452,25 +449,31 @@ class CUPController extends Controller
             for ($i = 0; $i < $totalGrupos; $i++) {
                 $turnoNombre = $turnosSeleccionados[$i % $numTurnos];
                 
+                // Generar nombre de grupo: años(2 dígitos) + semestre + número de grupo
+                $anioCorto = substr((string)$cup->ANIO, -2);
+                $nombreGrupo = $anioCorto . $cup->SEMESTRE . ($i + 1);
+
                 // 1. Crear el Grupo en la BD
                 $grupo = Grupo::create([
+                    'NOMBRE' => $nombreGrupo,
                     'EST_MIN' => $estMin,
                     'EST_MAX' => $estMax
                 ]);
 
-                // 2. Obtener bloques horarios para el turno
-                $bloques = BloqueHorario::where('TURNO', $turnoNombre)->get();
-                if ($bloques->count() < 4) {
-                    throw ValidationException::withMessages(['turnos' => "No hay suficientes bloques horarios (mínimo 4) para el turno: $turnoNombre."]);
+                // 2. Obtener bloque horario para el turno
+                $bloque = BloqueHorario::where('TURNO', $turnoNombre)->first();
+                if (!$bloque) {
+                    throw ValidationException::withMessages(['turnos' => "No se encontró el bloque horario para el turno: $turnoNombre."]);
                 }
 
-                // 3. Crear 4 clases para este grupo usando materias y bloques horarios intercalados
+                // 3. Crear 4 clases para este grupo usando las materias obligatorias
                 for ($j = 0; $j < 4; $j++) {
                     Clase::create([
+                        'ID_CUP' => $idCup,
                         'ID_MATERIA' => $materias[$j]->ID_MATERIA,
-                        'ID_BLOQUE_HORARIO' => $bloques[$j]->ID_BLOQUE_HORARIO,
+                        'ID_BLOQUE_HORARIO' => $bloque->ID_BLOQUE_HORARIO,
                         'ID_GRUPO' => $grupo->ID_GRUPO,
-                        'DOCENTE_CUP_ID' => null, // Ya es nullable en DB
+                        'DOCENTE_CUP_ID' => null,
                         'ID_AULA' => null,
                     ]);
                 }

@@ -13,12 +13,18 @@ class Clase extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'ID_CUP',
         'DOCENTE_CUP_ID',
         'ID_BLOQUE_HORARIO',
         'ID_MATERIA',
         'ID_GRUPO',
         'ID_AULA'
     ];
+
+    public function cup(): BelongsTo
+    {
+        return $this->belongsTo(Cup::class, 'ID_CUP', 'ID_CUP');
+    }
 
     public function docenteCup(): BelongsTo
     {

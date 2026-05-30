@@ -12,6 +12,7 @@ class Grupo extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'NOMBRE',
         'EST_MIN',
         'EST_MAX'
     ];

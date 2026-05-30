@@ -46,4 +46,9 @@ class EstudianteCup extends Model
                     ->using(EstudianteClase::class)
                     ->withPivot(['ID', 'NOTA_FINAL', 'ESTADO', 'FECHA_CREACION']);
     }
+
+    public function estudiantesClases(): HasMany
+    {
+        return $this->hasMany(EstudianteClase::class, 'ESTUDIANTE_CUP_ID', 'ID');
+    }
 }

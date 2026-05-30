@@ -109,10 +109,7 @@ class DatabaseSeeder extends Seeder
         $aula2 = DB::table('AULA')->insertGetId(['NOMBRE' => 'AULA 102', 'ESTADO' => 'ACTIVO'], 'ID_AULA');
         $aula3 = DB::table('AULA')->insertGetId(['NOMBRE' => 'AULA 103', 'ESTADO' => 'ACTIVO'], 'ID_AULA');
 
-        // Grupos
-        $grupoA = DB::table('GRUPO')->insertGetId(['EST_MIN' => 20, 'EST_MAX' => 80], 'ID_GRUPO');
-        $grupoB = DB::table('GRUPO')->insertGetId(['EST_MIN' => 20, 'EST_MAX' => 80], 'ID_GRUPO');
-
+        // Grupos son generados dinámicamente por cada CUP más abajo.
         // Colegios y Ciudades
         $ciudadId = DB::table('CIUDAD')->insertGetId(['NOMBRE' => 'SANTA CRUZ DE LA SIERRA', 'DEPARTAMENTO' => 'SANTA CRUZ'], 'ID');
         $colegioId = DB::table('COLEGIO')->insertGetId(['NOMBRE' => 'NACIONAL FLORIDA'], 'ID');
@@ -222,39 +219,50 @@ class DatabaseSeeder extends Seeder
             // Generación de clases operativas para cada materia de este CUP
             $clasesMap[$cupId] = [];
 
+            // Generar un nombre de grupo de ejemplo para el seeder
+            $anioCorto = substr((string)$cConf['ANIO'], -2);
+            $nroSem = str_contains(strtoupper($cConf['SEMESTRE']), 'PRIMER') ? '1' : '2';
+            
+            $grupoA_Id = DB::table('GRUPO')->insertGetId(['NOMBRE' => "{$anioCorto}{$nroSem}1", 'EST_MIN' => 20, 'EST_MAX' => 80], 'ID_GRUPO');
+            $grupoB_Id = DB::table('GRUPO')->insertGetId(['NOMBRE' => "{$anioCorto}{$nroSem}2", 'EST_MIN' => 20, 'EST_MAX' => 80], 'ID_GRUPO');
+
             // COMPUTACION (Docente 1, Aula 101, Grupo A)
             $clasesMap[$cupId][$materiaIds['COMPUTACION']] = DB::table('CLASE')->insertGetId([
+                'ID_CUP' => $cupId,
                 'DOCENTE_CUP_ID' => $docCupIds[0],
                 'ID_BLOQUE_HORARIO' => $bMañana,
                 'ID_MATERIA' => $materiaIds['COMPUTACION'],
-                'ID_GRUPO' => $grupoA,
+                'ID_GRUPO' => $grupoA_Id,
                 'ID_AULA' => $aula1
             ], 'ID_CLASE');
 
             // MATEMATICA (Docente 3, Aula 102, Grupo A)
             $clasesMap[$cupId][$materiaIds['MATEMATICA']] = DB::table('CLASE')->insertGetId([
+                'ID_CUP' => $cupId,
                 'DOCENTE_CUP_ID' => $docCupIds[2],
                 'ID_BLOQUE_HORARIO' => $bMañana,
                 'ID_MATERIA' => $materiaIds['MATEMATICA'],
-                'ID_GRUPO' => $grupoA,
+                'ID_GRUPO' => $grupoA_Id,
                 'ID_AULA' => $aula2
             ], 'ID_CLASE');
 
             // INGLES (Docente 5, Aula 103, Grupo B)
             $clasesMap[$cupId][$materiaIds['INGLES']] = DB::table('CLASE')->insertGetId([
+                'ID_CUP' => $cupId,
                 'DOCENTE_CUP_ID' => $docCupIds[4],
                 'ID_BLOQUE_HORARIO' => $bMañana,
                 'ID_MATERIA' => $materiaIds['INGLES'],
-                'ID_GRUPO' => $grupoB,
+                'ID_GRUPO' => $grupoB_Id,
                 'ID_AULA' => $aula3
             ], 'ID_CLASE');
 
             // FISICA (Docente 7, Aula 101, Grupo B)
             $clasesMap[$cupId][$materiaIds['FISICA']] = DB::table('CLASE')->insertGetId([
+                'ID_CUP' => $cupId,
                 'DOCENTE_CUP_ID' => $docCupIds[6],
                 'ID_BLOQUE_HORARIO' => $bMañana,
                 'ID_MATERIA' => $materiaIds['FISICA'],
-                'ID_GRUPO' => $grupoB,
+                'ID_GRUPO' => $grupoB_Id,
                 'ID_AULA' => $aula1
             ], 'ID_CLASE');
         }

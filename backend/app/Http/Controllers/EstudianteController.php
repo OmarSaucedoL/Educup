@@ -126,25 +126,35 @@ class EstudianteController extends Controller
             ->with([
                 'cup', 
                 'opcionesCarrera.carreraCup.carrera',
-                'calificaciones.clase.materia',
-                'calificaciones.clase.aula',
-                'calificaciones.clase.grupo',
-                'calificaciones.clase.bloqueHorario.horariosEnBloque.horario',
-                'calificaciones.clase.docenteCup.docente.usuario'
+                'estudiantesClases.clase.materia',
+                'estudiantesClases.clase.aula',
+                'estudiantesClases.clase.grupo',
+                'estudiantesClases.clase.bloqueHorario.horariosEnBloque.horario',
+                'estudiantesClases.clase.docenteCup.docente.usuario',
+                'estudiantesClases.calificaciones'
             ])
             ->orderBy('FECHA', 'desc')
             ->get();
 
         foreach ($historialCups as $hCup) {
-            foreach ($hCup->calificaciones as $calif) {
-                if ($calif->clase) {
+            $todasLasCalificaciones = collect();
+            foreach ($hCup->estudiantesClases as $estClase) {
+                if ($estClase->clase) {
                     $notaTotal = \Illuminate\Support\Facades\DB::selectOne(
                         'SELECT f_calcular_nota_materia(?, ?) AS nota',
-                        [$hCup->ID, $calif->ID_CLASE]
+                        [$hCup->ID, $estClase->ID_CLASE]
                     )->nota;
-                    $calif->clase->NOTA_TOTAL = $notaTotal;
+                    $estClase->clase->NOTA_TOTAL = $notaTotal;
+                }
+                
+                foreach ($estClase->calificaciones as $calif) {
+                    $calif->clase = $estClase->clase;
+                    $todasLasCalificaciones->push($calif);
                 }
             }
+            // Bind the flattened list so the frontend receives it exactly as before
+            $hCup->setRelation('calificaciones', $todasLasCalificaciones);
+            unset($hCup->estudiantesClases);
         }
 
         return Inertia::render('estudiantes/editarPostulante', [
