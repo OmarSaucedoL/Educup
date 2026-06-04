@@ -46,7 +46,98 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Registrar', href: '/estudiantes/crearEstudiante' },
 ];
 
-export default function CrearEstudiante({ colegios, ciudades, carreras = [], activeCup = null }: Props) {
+const EMPTY_CARRERAS: CarreraCup[] = [];
+
+interface PostulacionesCarreraSectionProps {
+    estado: string;
+    activeCup: Cup | null;
+    carreras: CarreraCup[];
+    opcion1: string;
+    onOpcion1Change: (val: string) => void;
+    opcion2: string;
+    onOpcion2Change: (val: string) => void;
+    errors: {
+        OPCION_1?: string;
+        OPCION_2?: string;
+    };
+    processing: boolean;
+}
+
+function PostulacionesCarreraSection({
+    estado,
+    activeCup,
+    carreras,
+    opcion1,
+    onOpcion1Change,
+    opcion2,
+    onOpcion2Change,
+    errors,
+    processing
+}: PostulacionesCarreraSectionProps) {
+    if (estado !== 'ACTIVO') return null;
+
+    return (
+        <div className="border-t border-sidebar-border/50 pt-6 grid gap-4">
+            <span className="block text-xs font-bold text-primary uppercase tracking-wider">
+                Postulaciones a Carrera
+            </span>
+            
+            {!activeCup ? (
+                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-4 flex items-start gap-3 shadow-xs">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                        <h4 className="font-bold text-sm text-amber-800 dark:text-amber-300">Convocatoria Cerrada / Concluida</h4>
+                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                            No existe una convocatoria de admisión CUP activa en este momento para recibir postulaciones.
+                        </p>
+                    </div>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* OPCION_1 */}
+                    <div className="grid gap-2">
+                        <Label htmlFor="OPCION_1" className="text-sm font-semibold">Opción 1 de Carrera</Label>
+                        <select
+                            id="OPCION_1"
+                            value={opcion1}
+                            onChange={e => onOpcion1Change(e.target.value)}
+                            className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                        >
+                            <option value="">— Ninguna carrera seleccionada —</option>
+                            {(carreras || []).map(cc => (
+                                <option key={cc.ID} value={cc.ID}>
+                                    {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                </option>
+                            ))}
+                        </select>
+                        <InputError message={errors.OPCION_1} />
+                    </div>
+
+                    {/* OPCION_2 */}
+                    <div className="grid gap-2">
+                        <Label htmlFor="OPCION_2" className="text-sm font-semibold">Opción 2 de Carrera</Label>
+                        <select
+                            id="OPCION_2"
+                            value={opcion2}
+                            onChange={e => onOpcion2Change(e.target.value)}
+                            className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
+                        >
+                            <option value="">— Ninguna carrera seleccionada —</option>
+                            {(carreras || []).map(cc => (
+                                <option key={cc.ID} value={cc.ID}>
+                                    {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
+                                </option>
+                            ))}
+                        </select>
+                        <InputError message={errors.OPCION_2} />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function CrearEstudiante({ colegios, ciudades, carreras = EMPTY_CARRERAS, activeCup = null }: Props) {
     const { data, setData, post, processing, errors } = useForm<CrearEstudianteForm>({
         CARNET: '',
         NOMBRE: '',
@@ -68,14 +159,14 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = [], act
         if (!activeCup && data.ESTADO === 'ACTIVO') {
             setData('ESTADO', 'INACTIVO');
         }
-    }, [activeCup, data.ESTADO]);
+    }, [activeCup, data.ESTADO, setData]);
 
     useEffect(() => {
         if (data.ESTADO !== 'ACTIVO') {
             setData('OPCION_1', '');
             setData('OPCION_2', '');
         }
-    }, [data.ESTADO]);
+    }, [data.ESTADO, setData]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -269,65 +360,17 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = [], act
                                 </div>
 
                                 {/* Postulaciones a Carrera (Condicional) */}
-                                {data.ESTADO === 'ACTIVO' && (
-                                    <div className="border-t border-sidebar-border/50 pt-6 grid gap-4">
-                                        <span className="block text-xs font-bold text-primary uppercase tracking-wider">
-                                            Postulaciones a Carrera
-                                        </span>
-                                        
-                                        {!activeCup ? (
-                                            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-4 flex items-start gap-3 shadow-xs">
-                                                <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
-                                                <div>
-                                                    <h4 className="font-bold text-sm text-amber-800 dark:text-amber-300">Convocatoria Cerrada / Concluida</h4>
-                                                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
-                                                        No existe una convocatoria de admisión CUP activa en este momento para recibir postulaciones.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {/* OPCION_1 */}
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="OPCION_1" className="text-sm font-semibold">Opción 1 de Carrera</Label>
-                                                    <select
-                                                        id="OPCION_1"
-                                                        value={data.OPCION_1}
-                                                        onChange={e => setData('OPCION_1', e.target.value)}
-                                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
-                                                    >
-                                                        <option value="">— Ninguna carrera seleccionada —</option>
-                                                        {(carreras || []).map(cc => (
-                                                            <option key={cc.ID} value={cc.ID}>
-                                                                {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <InputError message={errors.OPCION_1} />
-                                                </div>
-
-                                                {/* OPCION_2 */}
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="OPCION_2" className="text-sm font-semibold">Opción 2 de Carrera</Label>
-                                                    <select
-                                                        id="OPCION_2"
-                                                        value={data.OPCION_2}
-                                                        onChange={e => setData('OPCION_2', e.target.value)}
-                                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
-                                                    >
-                                                        <option value="">— Ninguna carrera seleccionada —</option>
-                                                        {(carreras || []).map(cc => (
-                                                            <option key={cc.ID} value={cc.ID}>
-                                                                {cc.carrera?.NOMBRE} (Cupos: {cc.CUPOS})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <InputError message={errors.OPCION_2} />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                <PostulacionesCarreraSection
+                                    estado={data.ESTADO}
+                                    activeCup={activeCup}
+                                    carreras={carreras}
+                                    opcion1={data.OPCION_1}
+                                    onOpcion1Change={val => setData('OPCION_1', val)}
+                                    opcion2={data.OPCION_2}
+                                    onOpcion2Change={val => setData('OPCION_2', val)}
+                                    errors={errors}
+                                    processing={processing}
+                                />
 
                                 <Button
                                     type="submit"

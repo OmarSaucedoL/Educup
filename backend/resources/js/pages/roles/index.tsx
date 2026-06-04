@@ -22,7 +22,9 @@ interface Rol {
     permisos: Permiso[];
 }
 
-export default function RolesIndex({ roles, permisos = [] }: { roles: Rol[], permisos: Permiso[] }) {
+const EMPTY_PERMISOS: Permiso[] = [];
+
+export default function RolesIndex({ roles, permisos = EMPTY_PERMISOS }: { roles: Rol[], permisos: Permiso[] }) {
     const [openCreate, setOpenCreate] = useState(false);
     const [editingRole, setEditingRole] = useState<Rol | null>(null);
     

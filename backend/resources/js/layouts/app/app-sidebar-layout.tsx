@@ -5,7 +5,9 @@ import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { type BreadcrumbItem } from '@/types';
 import { GlobalNotification } from '@/components/global-notification';
 
-export default function AppSidebarLayout({ children, breadcrumbs = [] }: { children: React.ReactNode; breadcrumbs?: BreadcrumbItem[] }) {
+const EMPTY_BREADCRUMBS: BreadcrumbItem[] = [];
+
+export default function AppSidebarLayout({ children, breadcrumbs = EMPTY_BREADCRUMBS }: { children: React.ReactNode; breadcrumbs?: BreadcrumbItem[] }) {
     return (
         <AppShell variant="sidebar">
             <GlobalNotification />

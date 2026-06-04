@@ -44,7 +44,7 @@ export function EditRoleModal({ role, permisos, onClose }: EditRoleModalProps) {
                 permisos: role.permisos.map(p => p.ID),
             });
         }
-    }, [role]);
+    }, [role, setData]);
 
     const handleOpenChange = (open: boolean) => {
         if (!open) {

@@ -51,6 +51,158 @@ const PRESET_CARGAS = [
     { label: '120 minutos', value: 120 },
 ];
 
+interface DiasSemanaSectionProps {
+    dias: string[];
+    toggleDia: (dia: string) => void;
+    selectGrupoDias: (grupo: string[]) => void;
+    processing: boolean;
+    error?: string;
+}
+
+function DiasSemanaSection({
+    dias,
+    toggleDia,
+    selectGrupoDias,
+    processing,
+    error
+}: DiasSemanaSectionProps) {
+    return (
+        <div className="grid gap-3">
+            <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Días de la Semana</Label>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        disabled={processing}
+                        onClick={() => selectGrupoDias(GRUPO_DIAS_1)}
+                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                    >
+                        Lun-Mie-Vie
+                    </button>
+                    <span className="text-muted-foreground/40 text-xs">|</span>
+                    <button
+                        type="button"
+                        disabled={processing}
+                        onClick={() => selectGrupoDias(GRUPO_DIAS_2)}
+                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                    >
+                        Mar-Jue-Sab
+                    </button>
+                </div>
+            </div>
+
+            {/* Grupo 1: Lun, Mie, Vie */}
+            <div className="grid gap-2">
+                <span className="text-xs text-muted-foreground font-medium">Grupo A:</span>
+                <div className="flex flex-wrap gap-2.5">
+                    {GRUPO_DIAS_1.map((dia) => {
+                        const active = dias.includes(dia);
+                        return (
+                            <button
+                                key={dia}
+                                type="button"
+                                disabled={processing}
+                                onClick={() => toggleDia(dia)}
+                                className={`h-9 px-4 rounded-full border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                    active
+                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                                        : 'border-sidebar-border hover:bg-muted text-muted-foreground'
+                                }`}
+                            >
+                                {active && <Check className="h-3 w-3" />}
+                                {dia}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Grupo 2: Mar, Jue, Sab */}
+            <div className="grid gap-2 mt-1">
+                <span className="text-xs text-muted-foreground font-medium">Grupo B:</span>
+                <div className="flex flex-wrap gap-2.5">
+                    {GRUPO_DIAS_2.map((dia) => {
+                        const active = dias.includes(dia);
+                        return (
+                            <button
+                                key={dia}
+                                type="button"
+                                disabled={processing}
+                                onClick={() => toggleDia(dia)}
+                                className={`h-9 px-4 rounded-full border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                    active
+                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                                        : 'border-sidebar-border hover:bg-muted text-muted-foreground'
+                                }`}
+                            >
+                                {active && <Check className="h-3 w-3" />}
+                                {dia}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+            <InputError message={error} />
+        </div>
+    );
+}
+
+interface CargaHorariaSectionProps {
+    cargaHoraria: number;
+    onChange: (val: number) => void;
+    processing: boolean;
+    error?: string;
+}
+
+function CargaHorariaSection({
+    cargaHoraria,
+    onChange,
+    processing,
+    error
+}: CargaHorariaSectionProps) {
+    return (
+        <div className="grid gap-2 border-t border-sidebar-border/50 pt-6">
+            <Label htmlFor="CARGA_HORARIA" className="text-sm font-semibold">Carga Horaria de cada Materia (minutos)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-1">
+                {PRESET_CARGAS.map((preset) => {
+                    const active = cargaHoraria === preset.value;
+                    return (
+                        <button
+                            key={preset.value}
+                            type="button"
+                            disabled={processing}
+                            onClick={() => onChange(preset.value)}
+                            className={`p-3 text-xs font-medium rounded-lg border text-center transition-all ${
+                                active
+                                    ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
+                                    : 'border-sidebar-border hover:bg-muted/50 text-muted-foreground'
+                            }`}
+                        >
+                            {preset.label}
+                        </button>
+                    );
+                })}
+            </div>
+            
+            <div className="flex items-center gap-3 mt-2 max-w-xs">
+                <Input
+                    id="CARGA_HORARIA"
+                    type="number"
+                    required
+                    disabled={processing}
+                    min="1"
+                    value={cargaHoraria}
+                    onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+                    className="h-9"
+                    placeholder="Carga horaria personalizada"
+                />
+                <span className="text-xs text-muted-foreground">minutos</span>
+            </div>
+            <InputError message={error} />
+        </div>
+    );
+}
+
 export default function EditarHorario({ bloque }: EditarHorarioProps) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     
@@ -238,124 +390,21 @@ export default function EditarHorario({ bloque }: EditarHorarioProps) {
                                 </div>
 
                                 {/* DÍAS DE LA SEMANA */}
-                                <div className="grid gap-3">
-                                    <div className="flex items-center justify-between">
-                                        <Label className="text-sm font-semibold">Días de la Semana</Label>
-                                        <div className="flex gap-2">
-                                            <button
-                                                type="button"
-                                                disabled={processing}
-                                                onClick={() => selectGrupoDias(GRUPO_DIAS_1)}
-                                                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-                                            >
-                                                Lun-Mie-Vie
-                                            </button>
-                                            <span className="text-muted-foreground/40 text-xs">|</span>
-                                            <button
-                                                type="button"
-                                                disabled={processing}
-                                                onClick={() => selectGrupoDias(GRUPO_DIAS_2)}
-                                                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-                                            >
-                                                Mar-Jue-Sab
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Grupo 1: Lun, Mie, Vie */}
-                                    <div className="grid gap-2">
-                                        <span className="text-xs text-muted-foreground font-medium">Grupo A:</span>
-                                        <div className="flex flex-wrap gap-2.5">
-                                            {GRUPO_DIAS_1.map((dia) => {
-                                                const active = data.DIAS.includes(dia);
-                                                return (
-                                                    <button
-                                                        key={dia}
-                                                        type="button"
-                                                        disabled={processing}
-                                                        onClick={() => toggleDia(dia)}
-                                                        className={`h-9 px-4 rounded-full border text-xs font-bold transition-all flex items-center gap-1.5 ${
-                                                            active
-                                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-                                                                : 'border-sidebar-border hover:bg-muted text-muted-foreground'
-                                                        }`}
-                                                    >
-                                                        {active && <Check className="h-3 w-3" />}
-                                                        {dia}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-
-                                    {/* Grupo 2: Mar, Jue, Sab */}
-                                    <div className="grid gap-2 mt-1">
-                                        <span className="text-xs text-muted-foreground font-medium">Grupo B:</span>
-                                        <div className="flex flex-wrap gap-2.5">
-                                            {GRUPO_DIAS_2.map((dia) => {
-                                                const active = data.DIAS.includes(dia);
-                                                return (
-                                                    <button
-                                                        key={dia}
-                                                        type="button"
-                                                        disabled={processing}
-                                                        onClick={() => toggleDia(dia)}
-                                                        className={`h-9 px-4 rounded-full border text-xs font-bold transition-all flex items-center gap-1.5 ${
-                                                            active
-                                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-                                                                : 'border-sidebar-border hover:bg-muted text-muted-foreground'
-                                                        }`}
-                                                    >
-                                                        {active && <Check className="h-3 w-3" />}
-                                                        {dia}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                    <InputError message={errors.DIAS} />
-                                </div>
+                                <DiasSemanaSection
+                                    dias={data.DIAS}
+                                    toggleDia={toggleDia}
+                                    selectGrupoDias={selectGrupoDias}
+                                    processing={processing}
+                                    error={errors.DIAS}
+                                />
 
                                 {/* CARGA HORARIA */}
-                                <div className="grid gap-2 border-t border-sidebar-border/50 pt-6">
-                                    <Label htmlFor="CARGA_HORARIA" className="text-sm font-semibold">Carga Horaria de cada Materia (minutos)</Label>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-1">
-                                        {PRESET_CARGAS.map((preset) => {
-                                            const active = data.CARGA_HORARIA === preset.value;
-                                            return (
-                                                <button
-                                                    key={preset.value}
-                                                    type="button"
-                                                    disabled={processing}
-                                                    onClick={() => setData('CARGA_HORARIA', preset.value)}
-                                                    className={`p-3 text-xs font-medium rounded-lg border text-center transition-all ${
-                                                        active
-                                                            ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
-                                                            : 'border-sidebar-border hover:bg-muted/50 text-muted-foreground'
-                                                    }`}
-                                                >
-                                                    {preset.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-3 mt-2 max-w-xs">
-                                        <Input
-                                            id="CARGA_HORARIA"
-                                            type="number"
-                                            required
-                                            disabled={processing}
-                                            min="1"
-                                            value={data.CARGA_HORARIA}
-                                            onChange={(e) => setData('CARGA_HORARIA', parseInt(e.target.value) || 0)}
-                                            className="h-9"
-                                            placeholder="Carga horaria personalizada"
-                                        />
-                                        <span className="text-xs text-muted-foreground">minutos</span>
-                                    </div>
-                                    <InputError message={errors.CARGA_HORARIA} />
-                                </div>
+                                <CargaHorariaSection
+                                    cargaHoraria={data.CARGA_HORARIA}
+                                    onChange={(val) => setData('CARGA_HORARIA', val)}
+                                    processing={processing}
+                                    error={errors.CARGA_HORARIA}
+                                />
 
                                 <div className="flex flex-col sm:flex-row gap-3 mt-4 border-t border-sidebar-border/50 pt-6">
                                     <Button 
@@ -378,7 +427,7 @@ export default function EditarHorario({ bloque }: EditarHorarioProps) {
                                     </Button>
                                 </div>
 
-                            </form>
+                             </form>
                         </div>
                     </div>
                 </div>

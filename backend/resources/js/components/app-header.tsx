@@ -47,7 +47,9 @@ interface AppHeaderProps {
     breadcrumbs?: BreadcrumbItem[];
 }
 
-export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
+const EMPTY_BREADCRUMBS: BreadcrumbItem[] = [];
+
+export function AppHeader({ breadcrumbs = EMPTY_BREADCRUMBS }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
     const getInitials = useInitials();

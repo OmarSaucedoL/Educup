@@ -1,5 +1,5 @@
 import { Head, useForm, Link } from '@inertiajs/react';
-import { LoaderCircle, ArrowLeft, GraduationCap, Save, Calendar, UserCheck, BookOpen, CheckSquare, Square, Info } from 'lucide-react';
+import { LoaderCircle, ArrowLeft, GraduationCap, Save, Calendar } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
 import InputError from '@/components/input-error';
@@ -9,21 +9,11 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
-export interface Usuario {
-    ID: number;
-    NOMBRE: string;
-    APELLIDO: string;
-}
+import { CarrerasSection, type CatalogCarrera } from './carreras-section';
+import { MateriasSection, type CatalogMateria } from './materias-section';
+import { AdminEstadoSection, type Usuario } from './admin-estado-section';
 
-export interface CatalogCarrera {
-    ID_CARRERA: number;
-    NOMBRE: string;
-}
-
-export interface CatalogMateria {
-    ID_MATERIA: number;
-    NOMBRE: string;
-}
+export type { Usuario, CatalogCarrera, CatalogMateria };
 
 export interface Cup {
     ID_CUP: number;
@@ -47,7 +37,17 @@ export interface CupFormProps {
     materias: CatalogMateria[];
 }
 
-export function CupForm({ mode, cup, usuarios = [], carreras = [], materias = [] }: CupFormProps) {
+const EMPTY_USUARIOS: Usuario[] = [];
+const EMPTY_CARRERAS: CatalogCarrera[] = [];
+const EMPTY_MATERIAS: CatalogMateria[] = [];
+
+export function CupForm({
+    mode,
+    cup,
+    usuarios = EMPTY_USUARIOS,
+    carreras = EMPTY_CARRERAS,
+    materias = EMPTY_MATERIAS
+}: CupFormProps) {
     const isEdit = mode === 'edit' && cup;
 
     const { data, setData, post, put, processing, errors } = useForm({
@@ -90,11 +90,11 @@ export function CupForm({ mode, cup, usuarios = [], carreras = [], materias = []
             carreras: selectedCarreras,
             CUPOS: sum
         }));
-    }, [selectedCarreras]);
+    }, [selectedCarreras, setData]);
 
     useEffect(() => {
         setData('materias', selectedMateriaIds);
-    }, [selectedMateriaIds]);
+    }, [selectedMateriaIds, setData]);
 
     const handleCareerToggle = (carreraId: number) => {
         setSelectedCarreras(prev => {
@@ -273,172 +273,38 @@ export function CupForm({ mode, cup, usuarios = [], carreras = [], materias = []
                                 </div>
 
                                 {/* SELECCIÓN DE CARRERAS CON SUS CUPOS */}
-                                <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6">
-                                    <span className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">
-                                        Carreras Ofertadas en el Periodo
-                                    </span>
-                                    <p className="text-xs text-muted-foreground mb-4">
-                                        Selecciona qué carreras participarán en este CUP y define su cupo/vacante de estudiantes.
-                                    </p>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {carreras.map(c => {
-                                            const isSelected = !!selectedCarreras.find(sc => sc.ID_CARRERA === c.ID_CARRERA);
-                                            const scValue = selectedCarreras.find(sc => sc.ID_CARRERA === c.ID_CARRERA);
-                                            
-                                            return (
-                                                <div 
-                                                    key={c.ID_CARRERA} 
-                                                    className={`flex flex-col p-4 rounded-xl border transition-all ${
-                                                        isSelected
-                                                            ? 'border-primary bg-primary/5 shadow-sm'
-                                                            : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleCareerToggle(c.ID_CARRERA)}
-                                                            className="flex items-center gap-2.5 text-left focus:outline-none"
-                                                            disabled={processing || isLocked}
-                                                        >
-                                                            {isSelected ? (
-                                                                <CheckSquare className="h-5 w-5 text-primary shrink-0" />
-                                                            ) : (
-                                                                <Square className="h-5 w-5 text-neutral-400 dark:text-neutral-600 shrink-0" />
-                                                            )}
-                                                            <span className="font-semibold text-sm text-neutral-800 dark:text-neutral-200">
-                                                                {c.NOMBRE}
-                                                            </span>
-                                                        </button>
-                                                    </div>
-
-                                                    {isSelected && (
-                                                        <div className="mt-2 pl-7 flex items-center gap-3 animate-in fade-in duration-200">
-                                                            <Label htmlFor={`quota-${c.ID_CARRERA}`} className="text-xs font-semibold text-neutral-500 shrink-0">
-                                                                Cupo Específico:
-                                                            </Label>
-                                                            <Input
-                                                                id={`quota-${c.ID_CARRERA}`}
-                                                                type="number"
-                                                                min="1"
-                                                                required
-                                                                value={scValue?.CUPOS || ''}
-                                                                onChange={e => handleCareerQuotaChange(c.ID_CARRERA, parseInt(e.target.value) || 0)}
-                                                                className="h-8 max-w-[120px] font-bold text-xs"
-                                                                disabled={processing || isLocked}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <InputError message={errors.carreras} />
-                                </div>
+                                <CarrerasSection
+                                    carreras={carreras}
+                                    selectedCarreras={selectedCarreras}
+                                    handleCareerToggle={handleCareerToggle}
+                                    handleCareerQuotaChange={handleCareerQuotaChange}
+                                    processing={processing}
+                                    isLocked={isLocked}
+                                    error={errors.carreras}
+                                />
 
                                 {/* SELECCIÓN DE MATERIAS (MAX 4) */}
-                                <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="block text-xs font-bold text-primary uppercase tracking-wider">
-                                            Materias Asignadas al CUP (Máx. 4)
-                                        </span>
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                            selectedMateriaIds.length === 4
-                                                ? 'bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400'
-                                                : 'bg-primary/10 text-primary border border-primary/20'
-                                        }`}>
-                                            Seleccionadas: {selectedMateriaIds.length} / 4
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
-                                        <Info className="h-4 w-4 text-primary" />
-                                        Selecciona un máximo de 4 materias académicas que formarán parte de la malla de evaluaciones de este periodo pre-facultativo.
-                                    </p>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                        {materias.map(m => {
-                                            const isSelected = selectedMateriaIds.includes(m.ID_MATERIA);
-                                            const isLimitReached = selectedMateriaIds.length >= 4;
-                                            const isDisabled = isLimitReached && !isSelected;
-
-                                            return (
-                                                <button
-                                                    key={m.ID_MATERIA}
-                                                    type="button"
-                                                    disabled={isDisabled || processing || isLocked}
-                                                    onClick={() => handleMateriaToggle(m.ID_MATERIA)}
-                                                    className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
-                                                        isSelected
-                                                            ? 'border-primary bg-primary/5 shadow-xs'
-                                                            : isDisabled
-                                                            ? 'opacity-40 cursor-not-allowed border-neutral-200 dark:border-neutral-800'
-                                                            : 'border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/50'
-                                                    }`}
-                                                >
-                                                    <div className="shrink-0">
-                                                        {isSelected ? (
-                                                            <CheckSquare className="h-5 w-5 text-primary" />
-                                                        ) : (
-                                                            <Square className="h-5 w-5 text-neutral-400 dark:text-neutral-600" />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
-                                                            <BookOpen className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
-                                                            {m.NOMBRE}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                    <InputError message={errors.materias} />
-                                </div>
+                                <MateriasSection
+                                    materias={materias}
+                                    selectedMateriaIds={selectedMateriaIds}
+                                    handleMateriaToggle={handleMateriaToggle}
+                                    processing={processing}
+                                    isLocked={isLocked}
+                                    error={errors.materias}
+                                />
 
                                 {/* ADMINISTRADOR ENCARGADO & ESTADO DE GESTIÓN */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-neutral-100 dark:border-neutral-800 pt-6">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="USUARIO_ID" className="text-sm font-semibold flex items-center gap-1.5">
-                                            <UserCheck className="h-4 w-4 text-neutral-500" /> Administrador Encargado *
-                                        </Label>
-                                        <select
-                                            id="USUARIO_ID"
-                                            required
-                                            value={data.USUARIO_ID}
-                                            onChange={e => setData('USUARIO_ID', e.target.value)}
-                                            disabled={processing || isLocked}
-                                            className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
-                                        >
-                                            <option value="">— Seleccionar Administrador —</option>
-                                            {usuarios.map(u => (
-                                                <option key={u.ID} value={u.ID}>
-                                                    {u.NOMBRE} {u.APELLIDO}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <InputError message={errors.USUARIO_ID} />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="ESTADO" className="text-sm font-semibold flex items-center gap-1.5">
-                                            <Info className="h-4 w-4 text-neutral-500" /> Estado del CUP *
-                                        </Label>
-                                        <select
-                                            id="ESTADO"
-                                            required
-                                            value={data.ESTADO}
-                                            onChange={e => setData('ESTADO', e.target.value)}
-                                            disabled={processing}
-                                            className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
-                                        >
-                                            <option value="Inscripciones">Inscripciones</option>
-                                            <option value="En curso">En curso</option>
-                                            <option value="Concluido">Concluido</option>
-                                        </select>
-                                        <InputError message={errors.ESTADO} />
-                                    </div>
-                                </div>
+                                <AdminEstadoSection
+                                    usuarios={usuarios}
+                                    usuarioId={data.USUARIO_ID}
+                                    onUsuarioChange={val => setData('USUARIO_ID', val)}
+                                    estado={data.ESTADO}
+                                    onEstadoChange={val => setData('ESTADO', val)}
+                                    processing={processing}
+                                    isLocked={isLocked}
+                                    usuarioError={errors.USUARIO_ID}
+                                    estadoError={errors.ESTADO}
+                                />
 
                                 {/* Actions */}
                                 <div className="flex gap-3 mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-6">

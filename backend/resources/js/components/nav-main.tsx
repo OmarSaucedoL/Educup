@@ -4,7 +4,9 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+const EMPTY_ITEMS: NavItem[] = [];
+
+export function NavMain({ items = EMPTY_ITEMS }: { items: NavItem[] }) {
     const page = usePage();
     const { state, setOpen } = useSidebar();
 

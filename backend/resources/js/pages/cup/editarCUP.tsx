@@ -7,7 +7,11 @@ interface EditarCUPProps {
     materias: CatalogMateria[];
 }
 
-export default function EditarCUP({ cup, usuarios = [], carreras = [], materias = [] }: EditarCUPProps) {
+const EMPTY_USUARIOS: Usuario[] = [];
+const EMPTY_CARRERAS: CatalogCarrera[] = [];
+const EMPTY_MATERIAS: CatalogMateria[] = [];
+
+export default function EditarCUP({ cup, usuarios = EMPTY_USUARIOS, carreras = EMPTY_CARRERAS, materias = EMPTY_MATERIAS }: EditarCUPProps) {
     return (
         <CupForm 
             mode="edit"

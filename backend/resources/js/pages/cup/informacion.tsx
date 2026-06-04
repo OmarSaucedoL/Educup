@@ -173,6 +173,111 @@ function AsignarDocentesModal({ cup, docentesActivos, open, onOpenChange }: { cu
     );
 }
 
+/* ── Summary Cards Section ── */
+interface SummaryCardsSectionProps {
+    cup: any;
+}
+
+function SummaryCardsSection({ cup }: SummaryCardsSectionProps) {
+    return (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+                { label: 'Cupos Totales', value: cup.CUPOS,        icon: Users,        color: 'text-blue-500' },
+                { label: 'Nota Mínima',   value: cup.NOTA_MINIMA,  icon: GraduationCap, color: 'text-violet-500' },
+                { label: 'Fecha Inicio',  value: cup.FECHA_INICIO ? new Date(cup.FECHA_INICIO).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : null, icon: Calendar,      color: 'text-emerald-500' },
+                { label: 'Fecha Fin',     value: cup.FECHA_FIN ? new Date(cup.FECHA_FIN).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : null,    icon: Calendar,      color: 'text-rose-400' },
+            ].map(({ label, value, icon: Icon, color }) => (
+                <div key={label} className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card p-4 shadow-sm flex flex-col gap-1">
+                    <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+                        <Icon className={`h-3.5 w-3.5 ${color}`} /> {label}
+                    </span>
+                    <span className="text-base font-extrabold text-neutral-800 dark:text-neutral-100">{value ?? '—'}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+/* ── Left Column Section ── */
+interface LeftColumnSectionProps {
+    carreraCups: any[];
+    materias: any[];
+    cup: any;
+}
+
+function LeftColumnSection({ carreraCups, materias, cup }: LeftColumnSectionProps) {
+    return (
+        <div className="flex flex-col gap-6">
+            {/* Carreras */}
+            <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
+                    <Layers className="h-4 w-4 text-neutral-900 dark:text-neutral-100" />
+                    <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Carreras</h2>
+                    <span className="ml-auto text-xs font-bold text-neutral-400">{carreraCups.length}</span>
+                </div>
+                <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    {carreraCups.length > 0 ? carreraCups.map((cc: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between px-4 py-3 text-sm">
+                            <span className="font-semibold text-neutral-700 dark:text-neutral-300 truncate">
+                                {cc.carrera?.NOMBRE ?? `Carrera #${cc.ID_CARRERA}`}
+                            </span>
+                            <span className="shrink-0 ml-3 inline-flex items-center rounded-full border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800 px-2 py-0.5 text-[10px] font-bold">
+                                {cc.CUPOS} cupos
+                            </span>
+                        </div>
+                    )) : (
+                        <p className="px-4 py-3 text-xs text-neutral-400 italic">Sin carreras asignadas.</p>
+                    )}
+                </div>
+            </section>
+
+            {/* Materias */}
+            <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
+                    <BookOpen className="h-4 w-4 text-violet-500" />
+                    <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Materias del CUP</h2>
+                    <span className="ml-auto text-xs font-bold text-neutral-400">{materias.length}</span>
+                </div>
+                <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    {materias.length > 0 ? materias.map((m: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 px-4 py-3 text-sm">
+                            <BookOpen className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+                            <span className="font-semibold text-neutral-700 dark:text-neutral-300">{m.NOMBRE}</span>
+                        </div>
+                    )) : (
+                        <p className="px-4 py-3 text-xs text-neutral-400 italic">Sin materias asignadas.</p>
+                    )}
+                </div>
+            </section>
+
+            {/* Administrador */}
+            <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
+                    <User className="h-4 w-4 text-amber-500" />
+                    <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Administrador</h2>
+                </div>
+                <div className="px-4 py-3 text-sm">
+                    {cup.usuario ? (
+                        <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 flex items-center justify-center shrink-0">
+                                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                                    {cup.usuario.NOMBRE?.substring(0, 1)}{cup.usuario.APELLIDO?.substring(0, 1)}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="font-bold text-neutral-800 dark:text-neutral-200">{cup.usuario.NOMBRE} {cup.usuario.APELLIDO}</p>
+                                <p className="text-xs text-neutral-400">{cup.usuario.CORREO}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-xs text-neutral-400 italic">Sin administrador asignado.</p>
+                    )}
+                </div>
+            </section>
+        </div>
+    );
+}
+
 export default function Informacion({ cup, docentesActivos }: CupInformacionProps) {
     const { props } = usePage<any>();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -229,94 +334,12 @@ export default function Informacion({ cup, docentesActivos }: CupInformacionProp
                 </div>
 
                 {/* ── Summary Cards ── */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {[
-                        { label: 'Cupos Totales', value: cup.CUPOS,        icon: Users,        color: 'text-blue-500' },
-                        { label: 'Nota Mínima',   value: cup.NOTA_MINIMA,  icon: GraduationCap, color: 'text-violet-500' },
-                        { label: 'Fecha Inicio',  value: cup.FECHA_INICIO ? new Date(cup.FECHA_INICIO).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : null, icon: Calendar,      color: 'text-emerald-500' },
-                        { label: 'Fecha Fin',     value: cup.FECHA_FIN ? new Date(cup.FECHA_FIN).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : null,    icon: Calendar,      color: 'text-rose-400' },
-                    ].map(({ label, value, icon: Icon, color }) => (
-                        <div key={label} className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card p-4 shadow-sm flex flex-col gap-1">
-                            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
-                                <Icon className={`h-3.5 w-3.5 ${color}`} /> {label}
-                            </span>
-                            <span className="text-base font-extrabold text-neutral-800 dark:text-neutral-100">{value ?? '—'}</span>
-                        </div>
-                    ))}
-                </div>
+                <SummaryCardsSection cup={cup} />
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
                     {/* ── Left column ── */}
-                    <div className="flex flex-col gap-6">
-
-                        {/* Carreras */}
-                        <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
-                            <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
-                                <Layers className="h-4 w-4 text-neutral-900 dark:text-neutral-100" />
-                                <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Carreras</h2>
-                                <span className="ml-auto text-xs font-bold text-neutral-400">{carreraCups.length}</span>
-                            </div>
-                            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {carreraCups.length > 0 ? carreraCups.map((cc: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between px-4 py-3 text-sm">
-                                        <span className="font-semibold text-neutral-700 dark:text-neutral-300 truncate">
-                                            {cc.carrera?.NOMBRE ?? `Carrera #${cc.ID_CARRERA}`}
-                                        </span>
-                                        <span className="shrink-0 ml-3 inline-flex items-center rounded-full border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800 px-2 py-0.5 text-[10px] font-bold">
-                                            {cc.CUPOS} cupos
-                                        </span>
-                                    </div>
-                                )) : (
-                                    <p className="px-4 py-3 text-xs text-neutral-400 italic">Sin carreras asignadas.</p>
-                                )}
-                            </div>
-                        </section>
-
-                        {/* Materias */}
-                        <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
-                            <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
-                                <BookOpen className="h-4 w-4 text-violet-500" />
-                                <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Materias del CUP</h2>
-                                <span className="ml-auto text-xs font-bold text-neutral-400">{materias.length}</span>
-                            </div>
-                            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {materias.length > 0 ? materias.map((m: any, i: number) => (
-                                    <div key={i} className="flex items-center gap-2 px-4 py-3 text-sm">
-                                        <BookOpen className="h-3.5 w-3.5 text-violet-400 shrink-0" />
-                                        <span className="font-semibold text-neutral-700 dark:text-neutral-300">{m.NOMBRE}</span>
-                                    </div>
-                                )) : (
-                                    <p className="px-4 py-3 text-xs text-neutral-400 italic">Sin materias asignadas.</p>
-                                )}
-                            </div>
-                        </section>
-
-                        {/* Administrador */}
-                        <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
-                            <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
-                                <User className="h-4 w-4 text-amber-500" />
-                                <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Administrador</h2>
-                            </div>
-                            <div className="px-4 py-3 text-sm">
-                                {cup.usuario ? (
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-9 w-9 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 flex items-center justify-center shrink-0">
-                                            <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                                                {cup.usuario.NOMBRE?.substring(0, 1)}{cup.usuario.APELLIDO?.substring(0, 1)}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-neutral-800 dark:text-neutral-200">{cup.usuario.NOMBRE} {cup.usuario.APELLIDO}</p>
-                                            <p className="text-xs text-neutral-400">{cup.usuario.CORREO}</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-neutral-400 italic">Sin administrador asignado.</p>
-                                )}
-                            </div>
-                        </section>
-                    </div>
+                    <LeftColumnSection carreraCups={carreraCups} materias={materias} cup={cup} />
 
                     {/* ── Right column: Docentes ── */}
                     <div className="lg:col-span-2 flex flex-col gap-4">
@@ -376,90 +399,90 @@ export default function Informacion({ cup, docentesActivos }: CupInformacionProp
                             <div className="flex flex-col gap-4">
                                 {docenteCups.length > 0 ? docenteCups.map((dc: any) => {
                                     const docente = dc.docente;
-                            const clases: any[] = dc.clases ?? [];
-                            const materiasDc: any[] = (dc.docente_cup_mats ?? dc.docenteCupMats ?? []).map((m: any) => m.materia);
+                                    const clases: any[] = dc.clases ?? [];
+                                    const materiasDc: any[] = (dc.docente_cup_mats ?? dc.docenteCupMats ?? []).map((m: any) => m.materia);
 
-                            return (
-                                <div key={dc.ID} className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
-                                    {/* Docente Header */}
-                                    <div className="flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
-                                        <div className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center shrink-0">
-                                            <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                                                {docente?.usuario?.NOMBRE?.substring(0, 1)}
-                                                {docente?.usuario?.APELLIDO?.substring(0, 1)}
-                                            </span>
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="font-bold text-sm text-neutral-900 dark:text-neutral-100 truncate">
-                                                {docente?.usuario
-                                                    ? `${docente.usuario.NOMBRE} ${docente.usuario.APELLIDO}`
-                                                    : `Docente #${dc.CODIGO_DOCENTE}`}
-                                            </p>
-                                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                                                Código: {dc.CODIGO_DOCENTE}
-                                            </p>
-                                        </div>
-                                        {/* Materias assigned to this docente */}
-                                        <div className="ml-auto flex flex-wrap gap-1 justify-end">
-                                            {materiasDc.map((m: any, i: number) => (
-                                                <span key={i} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/20 dark:text-violet-300 dark:border-violet-800">
-                                                    <BookOpen className="h-2.5 w-2.5" />
-                                                    {m?.NOMBRE ?? '—'}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Clases */}
-                                    <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                        {clases.length > 0 ? clases.map((clase: any) => {
-                                            const bloque = clase.bloque_horario ?? clase.bloqueHorario;
-                                            const horariosEnBloque: any[] = bloque?.horarios_en_bloque ?? bloque?.horariosEnBloque ?? [];
-                                            return (
-                                                <div key={clase.ID_CLASE} className="px-4 py-3 space-y-2">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <BookOpen className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-                                                        <span className="text-xs font-extrabold text-neutral-800 dark:text-neutral-200">
-                                                            {clase.materia?.NOMBRE ?? `Clase #${clase.ID_CLASE}`}
-                                                        </span>
-                                                        {clase.grupo && (
-                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full border px-2 py-0.5 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-800">
-                                                                <Users className="h-2.5 w-2.5" />
-                                                                Grupo #{clase.grupo.ID_GRUPO}
-                                                            </span>
-                                                        )}
-                                                        {clase.aula && (
-                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full border px-2 py-0.5 bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:text-sky-300 dark:border-sky-800">
-                                                                <Building2 className="h-2.5 w-2.5" />
-                                                                {clase.aula.NOMBRE ?? `Aula #${clase.aula.ID_AULA}`}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {bloque?.TURNO && (
-                                                        <div className="flex items-center gap-1 text-[11px] text-neutral-400">
-                                                            <Clock className="h-3 w-3" /> Turno: {bloque.TURNO}
-                                                        </div>
-                                                    )}
-                                                    {horariosEnBloque.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {horariosEnBloque.map((heb: any, i: number) => {
-                                                                const h = heb.horario;
-                                                                return (
-                                                                    <span key={i} className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 text-[10px] font-bold text-neutral-600 dark:text-neutral-300">
-                                                                        {h?.DIA} {h?.HORA_INI} – {h?.HORA_FIN}
-                                                                    </span>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    )}
+                                    return (
+                                        <div key={dc.ID} className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
+                                            {/* Docente Header */}
+                                            <div className="flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
+                                                <div className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center shrink-0">
+                                                    <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                                                        {docente?.usuario?.NOMBRE?.substring(0, 1)}
+                                                        {docente?.usuario?.APELLIDO?.substring(0, 1)}
+                                                    </span>
                                                 </div>
-                                            );
-                                        }) : (
-                                            <p className="px-4 py-3 text-xs text-neutral-400 italic">Sin clases asignadas todavía.</p>
-                                        )}
-                                    </div>
-                                </div>
-                            );
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-sm text-neutral-900 dark:text-neutral-100 truncate">
+                                                        {docente?.usuario
+                                                            ? `${docente.usuario.NOMBRE} ${docente.usuario.APELLIDO}`
+                                                            : `Docente #${dc.CODIGO_DOCENTE}`}
+                                                    </p>
+                                                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                                                        Código: {dc.CODIGO_DOCENTE}
+                                                    </p>
+                                                </div>
+                                                {/* Materias assigned to this docente */}
+                                                <div className="ml-auto flex flex-wrap gap-1 justify-end">
+                                                    {materiasDc.map((m: any, i: number) => (
+                                                        <span key={i} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/20 dark:text-violet-300 dark:border-violet-800">
+                                                            <BookOpen className="h-2.5 w-2.5" />
+                                                            {m?.NOMBRE ?? '—'}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Clases */}
+                                            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                                                {clases.length > 0 ? clases.map((clase: any) => {
+                                                    const bloque = clase.bloque_horario ?? clase.bloqueHorario;
+                                                    const horariosEnBloque: any[] = bloque?.horarios_en_bloque ?? bloque?.horariosEnBloque ?? [];
+                                                    return (
+                                                        <div key={clase.ID_CLASE} className="px-4 py-3 space-y-2">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <BookOpen className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+                                                                <span className="text-xs font-extrabold text-neutral-800 dark:text-neutral-200">
+                                                                    {clase.materia?.NOMBRE ?? `Clase #${clase.ID_CLASE}`}
+                                                                </span>
+                                                                {clase.grupo && (
+                                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full border px-2 py-0.5 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-800">
+                                                                        <Users className="h-2.5 w-2.5" />
+                                                                        Grupo #{clase.grupo.ID_GRUPO}
+                                                                    </span>
+                                                                )}
+                                                                {clase.aula && (
+                                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-full border px-2 py-0.5 bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:text-sky-300 dark:border-sky-800">
+                                                                        <Building2 className="h-2.5 w-2.5" />
+                                                                        {clase.aula.NOMBRE ?? `Aula #${clase.aula.ID_AULA}`}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {bloque?.TURNO && (
+                                                                <div className="flex items-center gap-1 text-[11px] text-neutral-400">
+                                                                    <Clock className="h-3 w-3" /> Turno: {bloque.TURNO}
+                                                                </div>
+                                                            )}
+                                                            {horariosEnBloque.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1.5">
+                                                                    {horariosEnBloque.map((heb: any, i: number) => {
+                                                                        const h = heb.horario;
+                                                                        return (
+                                                                            <span key={i} className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 text-[10px] font-bold text-neutral-600 dark:text-neutral-300">
+                                                                                {h?.DIA} {h?.HORA_INI} – {h?.HORA_FIN}
+                                                                            </span>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                }) : (
+                                                    <p className="px-4 py-3 text-xs text-neutral-400 italic">Sin clases asignadas todavía.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
                                 }) : (
                                     <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 p-8 text-center">
                                         <User className="h-8 w-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
