@@ -5,3 +5,6 @@ use App\Http\Controllers\NotasController;
 
 // Listado de clases para el módulo de notas
 Route::get('/notas/clases', [NotasController::class, 'clases']);
+Route::get('/notas/clases/{id_clase}', [NotasController::class, 'gestionar']);
+Route::post('/notas/clases/{id_clase}', [NotasController::class, 'guardarNotas']);
+

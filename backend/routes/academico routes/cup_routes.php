@@ -24,6 +24,9 @@ Route::put('/cup/{id}', [CUPController::class, 'update']);
 // Ver docentes asignados a un CUP
 Route::get('/cup/{id}/docentes', [CUPController::class, 'docentes']);
 
+// Ver estudiantes inscritos en un CUP
+Route::get('/cup/{id}/estudiantes', [CUPController::class, 'estudiantes']);
+
 // Asignar docentes (con materias) a un CUP
 Route::post('/cup/{id}/docentes', [CUPController::class, 'asignarDocentes']);
 

@@ -163,8 +163,9 @@ class CUPController extends Controller
             'docenteCups.clases.bloqueHorario.horariosEnBloque.horario',
             'docenteCups.clases.aula',
             'docenteCups.docenteCupMats.materia',
-            'estudianteCups.estudiante',
-        ])->findOrFail($id);
+        ])
+        ->withCount('estudianteCups')
+        ->findOrFail($id);
 
         // All active docentes (even those already assigned)
         $docentesActivos = Docente::with('usuario')
@@ -193,6 +194,41 @@ class CUPController extends Controller
 
         return inertia('cup/docentesCup', [
             'cup' => $cup,
+        ]);
+    }
+
+    public function estudiantes(\Illuminate\Http\Request $request, string $id)
+    {
+        $cup = Cup::findOrFail($id);
+        $search = $request->input('search');
+
+        $query = \App\Models\EstudianteCup::query()
+            ->join('ESTUDIANTE', 'ESTUDIANTE_CUP.ID_ESTUDIANTE', '=', 'ESTUDIANTE.ID_ESTUDIANTE')
+            ->select('ESTUDIANTE_CUP.*')
+            ->with('estudiante')
+            ->where('ESTUDIANTE_CUP.ID_CUP', $id);
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                if (is_numeric($search)) {
+                    $q->where('ESTUDIANTE.CARNET', $search);
+                } else {
+                    $q->where('ESTUDIANTE.NOMBRE', 'ILIKE', '%' . $search . '%')
+                      ->orWhere('ESTUDIANTE.APELLIDO', 'ILIKE', '%' . $search . '%');
+                }
+            });
+        }
+
+        // Orden alfabético por APELLIDO, NOMBRE
+        $query->orderBy('ESTUDIANTE.APELLIDO', 'asc')
+              ->orderBy('ESTUDIANTE.NOMBRE', 'asc');
+
+        $estudianteCups = $query->paginate(15)->withQueryString();
+
+        return inertia('cup/estudiantesCup', [
+            'cup' => $cup,
+            'estudianteCups' => $estudianteCups,
+            'filters' => $request->only(['search']),
         ]);
     }
 

@@ -368,7 +368,6 @@ export default function Informacion({ cup, docentesActivos, requerimientoDocente
     const carreraCups: any[] = cup.carrera_cups ?? cup.carreraCups ?? [];
     const materias: any[] = cup.materias ?? [];
     const docenteCups: any[] = cup.docente_cups ?? cup.docenteCups ?? [];
-    const estudianteCups: any[] = cup.estudiante_cups ?? cup.estudianteCups ?? [];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -555,42 +554,17 @@ export default function Informacion({ cup, docentesActivos, requerimientoDocente
                             </Link>
                         </Button>
 
-                        {/* Estudiantes (Collapsible) */}
-                        <details className="group border-none bg-transparent" open>
-                            <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 shadow-sm transition-colors select-none group-open:mb-4 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:bg-neutral-900 [&::-webkit-details-marker]:hidden">
-                                <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4" />
-                                    <span>Estudiantes Inscritos ({estudianteCups.length})</span>
-                                </div>
-                                <ChevronLeft className="h-4 w-4 transition-transform group-open:-rotate-90" />
-                            </summary>
-
-                            <div className="bg-card flex max-h-[500px] flex-col overflow-hidden rounded-xl border border-neutral-100 shadow-sm dark:border-neutral-800">
-                                <div className="divide-y divide-neutral-100 overflow-y-auto dark:divide-neutral-800">
-                                    {estudianteCups.length > 0 ? (
-                                        estudianteCups.map((ec: any) => {
-                                            const est = ec.estudiante;
-                                            return (
-                                                <div
-                                                    key={ec.ID}
-                                                    className="flex flex-col px-4 py-3 text-sm transition-colors hover:bg-neutral-50/50 dark:hover:bg-neutral-900/20"
-                                                >
-                                                    <span className="truncate font-semibold text-neutral-800 dark:text-neutral-200">
-                                                        {est ? `${est.NOMBRE} ${est.APELLIDO}` : `Estudiante #${ec.ID_ESTUDIANTE}`}
-                                                    </span>
-                                                    <span className="mt-0.5 text-[11px] text-neutral-500">
-                                                        CI: {est?.CARNET ?? '—'} <span className="mx-1">•</span> Estado:{' '}
-                                                        <span className="font-medium text-neutral-700 dark:text-neutral-300">{ec.ESTADO ?? '—'}</span>
-                                                    </span>
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        <p className="px-4 py-6 text-center text-sm text-neutral-400 italic">Sin estudiantes inscritos.</p>
-                                    )}
-                                </div>
-                            </div>
-                        </details>
+                        {/* Botón para navegar a la lista independiente de estudiantes */}
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="h-11 w-full gap-2 rounded-xl border-neutral-200 bg-white font-semibold text-neutral-900 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900"
+                        >
+                            <Link href={`/cup/${cup.ID_CUP}/estudiantes`}>
+                                <Users className="h-4 w-4 shrink-0 text-neutral-500" />
+                                Ver Lista de Estudiantes Inscritos ({cup.estudiante_cups_count ?? 0})
+                            </Link>
+                        </Button>
                     </div>
                 </div>
             </div>
