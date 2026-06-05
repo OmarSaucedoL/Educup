@@ -569,5 +569,212 @@ class DatabaseSeeder extends Seeder
             $gradesList = $generateSubjectGrades($notaFinal, 4);
             $seedGradesForEnrollment($eCupId, $cupId, $gradesList);
         }
+
+        // ==========================================
+        // 6. CUP DE PRUEBA ACTIVO ("En curso")
+        // ==========================================
+        $cupPruebaId = DB::table('CUP')->insertGetId([
+            'ANIO' => 2026,
+            'SEMESTRE' => 1,
+            'NOTA_MINIMA' => 60.00,
+            'CUPOS' => 7, // Total cupos
+            'FECHA_INICIO' => '2026-01-15',
+            'FECHA_FIN' => '2026-06-20',
+            'USUARIO_ID' => $uAdminId,
+            'ESTADO' => 'En curso' // Activo para que se pueda ejecutar el Cierre
+        ], 'ID_CUP');
+
+        // Oferta de carreras con cupos muy limitados para forzar el comportamiento de llenado y rebotado
+        $carrerasCupPrueba = [
+            'INGENIERIA EN SISTEMAS' => 2,
+            'INGENIERIA INFORMATICA' => 2,
+            'INGENIERIA EN REDES' => 1,
+            'INGENIERIA ROBOTICA' => 1,
+        ];
+        $ccPruebaIds = [];
+        foreach ($carrerasCupPrueba as $cName => $cuposCant) {
+            $ccPruebaIds[$cName] = DB::table('CARRERA_CUP')->insertGetId([
+                'ID_CARRERA' => $carreraIds[$cName],
+                'ID_CUP' => $cupPruebaId,
+                'CUPOS' => $cuposCant
+            ], 'ID');
+        }
+
+        // Vincular materias a este CUP de prueba
+        foreach ($materiaIds as $mId) {
+            DB::table('MATERIA_CUP')->insert([
+                'ID_CUP' => $cupPruebaId,
+                'ID_MATERIA' => $mId
+            ]);
+        }
+
+        // Generar un grupo de clases para el CUP de prueba para poder sembrar notas
+        $grupoPruebaId = DB::table('GRUPO')->insertGetId([
+            'NOMBRE' => '2611',
+            'EST_MIN' => 5,
+            'EST_MAX' => 30
+        ], 'ID_GRUPO');
+
+        // Vincular docentes y crear clases para el CUP de prueba
+        $clasesPruebaMap = [];
+        $materiasKeys = ['COMPUTACION', 'MATEMATICA', 'INGLES', 'FISICA'];
+        
+        // Vincular docentes disponibles a la convocatoria del CUP 4
+        $docCupPruebaIds = [];
+        foreach ($docenteUserIds as $index => $uDocId) {
+            $docCupId = DB::table('DOCENTE_CUP')->insertGetId([
+                'CODIGO_DOCENTE' => $uDocId,
+                'ID_CUP' => $cupPruebaId,
+                'FECHA_CREACION' => Carbon::now()
+            ], 'ID');
+            $docCupPruebaIds[$index] = $docCupId;
+
+            DB::table('DOCENTE_CUP_MAT')->insert([
+                'DOCENTE_CUP_ID' => $docCupId,
+                'MATERIA_ID' => $teacherSubjects[$index]
+            ]);
+        }
+
+        // Crear clases
+        $clasesPruebaMap[$materiaIds['COMPUTACION']] = DB::table('CLASE')->insertGetId([
+            'ID_CUP' => $cupPruebaId,
+            'DOCENTE_CUP_ID' => $docCupPruebaIds[0],
+            'ID_BLOQUE_HORARIO' => $bMañana,
+            'ID_MATERIA' => $materiaIds['COMPUTACION'],
+            'ID_GRUPO' => $grupoPruebaId,
+            'ID_AULA' => $aula1
+        ], 'ID_CLASE');
+
+        $clasesPruebaMap[$materiaIds['MATEMATICA']] = DB::table('CLASE')->insertGetId([
+            'ID_CUP' => $cupPruebaId,
+            'DOCENTE_CUP_ID' => $docCupPruebaIds[2],
+            'ID_BLOQUE_HORARIO' => $bMañana,
+            'ID_MATERIA' => $materiaIds['MATEMATICA'],
+            'ID_GRUPO' => $grupoPruebaId,
+            'ID_AULA' => $aula2
+        ], 'ID_CLASE');
+
+        $clasesPruebaMap[$materiaIds['INGLES']] = DB::table('CLASE')->insertGetId([
+            'ID_CUP' => $cupPruebaId,
+            'DOCENTE_CUP_ID' => $docCupPruebaIds[4],
+            'ID_BLOQUE_HORARIO' => $bMañana,
+            'ID_MATERIA' => $materiaIds['INGLES'],
+            'ID_GRUPO' => $grupoPruebaId,
+            'ID_AULA' => $aula3
+        ], 'ID_CLASE');
+
+        $clasesPruebaMap[$materiaIds['FISICA']] = DB::table('CLASE')->insertGetId([
+            'ID_CUP' => $cupPruebaId,
+            'DOCENTE_CUP_ID' => $docCupPruebaIds[6],
+            'ID_BLOQUE_HORARIO' => $bMañana,
+            'ID_MATERIA' => $materiaIds['FISICA'],
+            'ID_GRUPO' => $grupoPruebaId,
+            'ID_AULA' => $aula1
+        ], 'ID_CLASE');
+
+        // Estudiantes de prueba para CUP 4
+        // Queremos probar orden de mérito, opciones cruzadas y tiebreakers con notas exactas
+        $estudiantesCUP4 = [
+            // Estudiante 1: Nota 95. Opción 1: Sistemas, Opción 2: Informatica.
+            ['nombre' => 'ANDRES', 'apellido' => 'VILLAGOMEZ', 'nota' => 95.00, 'grades' => [95, 95, 95, 95], 'opciones' => ['INGENIERIA EN SISTEMAS', 'INGENIERIA INFORMATICA']],
+            // Estudiante 2: Nota 90. Opción 1: Sistemas, Opción 2: Informatica.
+            ['nombre' => 'BEATRIZ', 'apellido' => 'JUSTINIANO', 'nota' => 90.00, 'grades' => [90, 90, 90, 90], 'opciones' => ['INGENIERIA EN SISTEMAS', 'INGENIERIA INFORMATICA']],
+            // Estudiante 3: Nota 85. Opción 1: Sistemas, Opción 2: Informatica.
+            ['nombre' => 'CARLOS', 'apellido' => 'PINTO', 'nota' => 85.00, 'grades' => [85, 85, 85, 85], 'opciones' => ['INGENIERIA EN SISTEMAS', 'INGENIERIA INFORMATICA']],
+            
+            // Estudiantes 4 y 5: Empate de Nota 80.00. 
+            // Estudiante 4 (T2): Grades [65, 75, 90, 90]. Mínima es 65.
+            ['nombre' => 'DANIEL', 'apellido' => 'SUAREZ', 'nota' => 80.00, 'grades' => [65, 75, 90, 90], 'opciones' => ['INGENIERIA EN SISTEMAS', 'INGENIERIA INFORMATICA']],
+            // Estudiante 5 (T1): Grades [60, 80, 90, 90]. Mínima es 60.
+            ['nombre' => 'EDUARDO', 'apellido' => 'GUTIERREZ', 'nota' => 80.00, 'grades' => [60, 80, 90, 90], 'opciones' => ['INGENIERIA EN SISTEMAS', 'INGENIERIA INFORMATICA']],
+            
+            // Estudiantes 6 y 7: Empate de Nota 75.00. 
+            // Ambos tienen nota mínima 70.
+            // Estudiante 6 (T4): Grades [70, 72, 78, 80]. Segunda mínima es 72.
+            ['nombre' => 'FERNANDA', 'apellido' => 'MENDIZABAL', 'nota' => 75.00, 'grades' => [70, 72, 78, 80], 'opciones' => ['INGENIERIA INFORMATICA', 'INGENIERIA EN REDES']],
+            // Estudiante 7 (T3): Grades [70, 70, 80, 80]. Segunda mínima es 70.
+            ['nombre' => 'GUSTAVO', 'apellido' => 'SANDOVAL', 'nota' => 75.00, 'grades' => [70, 70, 80, 80], 'opciones' => ['INGENIERIA INFORMATICA', 'INGENIERIA EN REDES']],
+            
+            // Estudiante 8: Nota 70. Opción 1: Redes, Opción 2: Robotica.
+            ['nombre' => 'HUGO', 'apellido' => 'MORALES', 'nota' => 70.00, 'grades' => [70, 70, 70, 70], 'opciones' => ['INGENIERIA EN REDES', 'INGENIERIA ROBOTICA']],
+            // Estudiante 9: Nota 65. Opción 1: Redes, Opción 2: Robotica.
+            ['nombre' => 'IRENE', 'apellido' => 'VALVERDE', 'nota' => 65.00, 'grades' => [65, 65, 65, 65], 'opciones' => ['INGENIERIA EN REDES', 'INGENIERIA ROBOTICA']],
+            // Estudiante 10: Nota 60. Opción 1: Robotica, Opción 2: Sistemas.
+            ['nombre' => 'JORGE', 'apellido' => 'CHAVEZ', 'nota' => 60.00, 'grades' => [60, 60, 60, 60], 'opciones' => ['INGENIERIA ROBOTICA', 'INGENIERIA EN SISTEMAS']],
+        ];
+
+        foreach ($estudiantesCUP4 as $key => $estData) {
+            $carnet = 7000000 + $key;
+            $correo = strtolower("cup4_{$key}@mail.com");
+            $titulo = "TIT-BACH-2026-{$carnet}";
+
+            $estId = DB::table('ESTUDIANTE')->insertGetId([
+                'CARNET' => $carnet,
+                'NOMBRE' => $estData['nombre'],
+                'APELLIDO' => $estData['apellido'],
+                'FECHA_NAC' => '2007-05-15',
+                'DIRECCION' => 'AV. BUSCH',
+                'TELEFONO' => '7891234' . $key,
+                'CORREO' => $correo,
+                'TITULO_BACHILLER' => $titulo,
+                'SEXO' => ($key % 2 === 0) ? 'M' : 'F',
+                'ESTADO' => 'APROBADO', // Debe ser aprobado en general
+                'COLEGIO_ID' => $colegioId,
+                'CIUDAD_ID' => $ciudadId
+            ], 'ID_ESTUDIANTE');
+
+            // Crear el registro de postulación CUP en estado APROBADO pero sin CARRERA asignada
+            $eCupId = DB::table('ESTUDIANTE_CUP')->insertGetId([
+                'ID_ESTUDIANTE' => $estId,
+                'ID_CUP' => $cupPruebaId,
+                'FECHA' => Carbon::now(),
+                'ESTADO' => 'APROBADO', // Solo los aprobados entran en la asignación de plazas
+                'NOTA_FINAL' => $estData['nota'],
+                'CARRERA' => null // Inicialmente null para que lo asigne el procedimiento
+            ], 'ID');
+
+            // Registrar las dos opciones de carrera elegidas
+            foreach ($estData['opciones'] as $opIdx => $cName) {
+                DB::table('OPCION_CARRERA')->insert([
+                    'ESTUDIANTE_CUP_ID' => $eCupId,
+                    'CARRERA_CUP_ID' => $ccPruebaIds[$cName],
+                    'OPCION' => $opIdx + 1
+                ]);
+            }
+
+            // Registrar las notas individuales de las 4 materias
+            foreach ($materiasKeys as $mIdx => $mName) {
+                $mId = $materiaIds[$mName];
+                $claseId = $clasesPruebaMap[$mId];
+                $subGrade = $estData['grades'][$mIdx];
+
+                $estClaseId = DB::table('ESTUDIANTES_CLASE')->insertGetId([
+                    'ESTUDIANTE_CUP_ID' => $eCupId,
+                    'ID_CLASE' => $claseId,
+                    'NOTA_FINAL' => $subGrade,
+                    'ESTADO' => ($subGrade >= 60.00) ? 'APROBADO' : 'REPROBADO',
+                ], 'ID');
+
+                // Calificaciones parciales correspondientes
+                DB::table('CALIFICACIONES')->insert([
+                    'NOMBRE' => 'PRIMER PARCIAL',
+                    'CALIFICACION' => $subGrade,
+                    'PONDERACION' => 30.00,
+                    'ESTUDIANTE_CLASE_ID' => $estClaseId
+                ]);
+                DB::table('CALIFICACIONES')->insert([
+                    'NOMBRE' => 'SEGUNDO PARCIAL',
+                    'CALIFICACION' => $subGrade,
+                    'PONDERACION' => 30.00,
+                    'ESTUDIANTE_CLASE_ID' => $estClaseId
+                ]);
+                DB::table('CALIFICACIONES')->insert([
+                    'NOMBRE' => 'EXAMEN FINAL',
+                    'CALIFICACION' => $subGrade,
+                    'PONDERACION' => 40.00,
+                    'ESTUDIANTE_CLASE_ID' => $estClaseId
+                ]);
+            }
+        }
     }
 }

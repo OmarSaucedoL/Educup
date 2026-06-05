@@ -27,6 +27,10 @@ Route::get('/cup/{id}/docentes', [CUPController::class, 'docentes']);
 // Ver estudiantes inscritos en un CUP
 Route::get('/cup/{id}/estudiantes', [CUPController::class, 'estudiantes']);
 
+// Cierre de gestión del CUP (Vista de estado y ejecución)
+Route::get('/cup/{id}/cierre', [CUPController::class, 'cierreForm']);
+Route::post('/cup/{id}/cierre', [CUPController::class, 'ejecutarCierre']);
+
 // Asignar docentes (con materias) a un CUP
 Route::post('/cup/{id}/docentes', [CUPController::class, 'asignarDocentes']);
 

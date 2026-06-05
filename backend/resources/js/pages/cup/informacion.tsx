@@ -565,6 +565,17 @@ export default function Informacion({ cup, docentesActivos, requerimientoDocente
                                 Ver Lista de Estudiantes Inscritos ({cup.estudiante_cups_count ?? 0})
                             </Link>
                         </Button>
+
+                        {/* Botón para navegar al cierre de gestión */}
+                        <Button
+                            asChild
+                            className="h-11 w-full gap-2 rounded-xl bg-neutral-900 font-bold text-white shadow-sm hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+                        >
+                            <Link href={`/cup/${cup.ID_CUP}/cierre`}>
+                                <CheckSquare className="h-4 w-4 shrink-0" />
+                                Cierre de Gestión / Asignación de Plazas
+                            </Link>
+                        </Button>
                     </div>
                 </div>
             </div>

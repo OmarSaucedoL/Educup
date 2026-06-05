@@ -232,6 +232,108 @@ class CUPController extends Controller
         ]);
     }
 
+    public function cierreForm(string $id)
+    {
+        $cup = Cup::with([
+            'carreraCups.carrera',
+        ])->findOrFail($id);
+
+        // Ocupación en tiempo real por carrera
+        $ocupacion = [];
+        foreach ($cup->carreraCups as $cc) {
+            $carreraNombre = $cc->carrera->NOMBRE;
+            // Contar estudiantes asignados a esta carrera en este CUP
+            $ocupados = \App\Models\EstudianteCup::where('ID_CUP', $id)
+                ->where('CARRERA', $carreraNombre)
+                ->count();
+            
+            $ocupacion[] = [
+                'carrera_cup_id' => $cc->ID,
+                'nombre' => $carreraNombre,
+                'cupos_totales' => $cc->CUPOS,
+                'cupos_ocupados' => $ocupados,
+                'porcentaje' => $cc->CUPOS > 0 ? round(($ocupados / $cc->CUPOS) * 100, 1) : 0,
+            ];
+        }
+
+        // Obtener estudiantes aprobados para mostrar los resultados de la asignación
+        // Los ordenamos por orden de mérito
+        $query = \App\Models\EstudianteCup::query()
+            ->join('ESTUDIANTE', 'ESTUDIANTE_CUP.ID_ESTUDIANTE', '=', 'ESTUDIANTE.ID_ESTUDIANTE')
+            ->select('ESTUDIANTE_CUP.*')
+            ->with(['estudiante', 'opcionesCarrera.carreraCup.carrera'])
+            ->where('ESTUDIANTE_CUP.ID_CUP', $id)
+            ->where('ESTUDIANTE_CUP.ESTADO', 'APROBADO');
+
+        // Búsqueda opcional
+        $search = request()->input('search');
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                if (is_numeric($search)) {
+                    $q->where('ESTUDIANTE.CARNET', $search);
+                } else {
+                    $q->where('ESTUDIANTE.NOMBRE', 'ILIKE', '%' . $search . '%')
+                      ->orWhere('ESTUDIANTE.APELLIDO', 'ILIKE', '%' . $search . '%');
+                }
+            });
+        }
+
+        // Orden de mérito para la lista visual: Nota final DESC, APELLIDO ASC, NOMBRE ASC
+        $query->orderBy('ESTUDIANTE_CUP.NOTA_FINAL', 'desc')
+              ->orderBy('ESTUDIANTE.APELLIDO', 'asc')
+              ->orderBy('ESTUDIANTE.NOMBRE', 'asc');
+
+        $estudianteCups = $query->paginate(15)->withQueryString();
+
+        // Para cada estudiante en la página, calculamos de qué opción (1 o 2) fue asignado
+        $estudianteCups->getCollection()->transform(function ($ec) {
+            $ec->preferencia_asignada = null;
+            if (!empty($ec->CARRERA)) {
+                // Buscar cuál de sus opciones coincide con la carrera asignada
+                foreach ($ec->opcionesCarrera as $opcion) {
+                    if ($opcion->carreraCup?->carrera?->NOMBRE === $ec->CARRERA) {
+                        $ec->preferencia_asignada = $opcion->OPCION;
+                        break;
+                    }
+                }
+            }
+            return $ec;
+        });
+
+        return inertia('cup/cierreCup', [
+            'cup' => $cup,
+            'ocupacion' => $ocupacion,
+            'estudianteCups' => $estudianteCups,
+            'filters' => request()->only(['search']),
+        ]);
+    }
+
+    public function ejecutarCierre(string $id)
+    {
+        $cup = Cup::findOrFail($id);
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($cup) {
+            // 1. Ejecutar el procedimiento de cierre
+            \Illuminate\Support\Facades\DB::statement('CALL public.p_cerrar_gestion_cup(?)', [$cup->ID_CUP]);
+
+            // 2. Cambiar el estado del CUP a Concluido
+            $cup->update(['ESTADO' => 'Concluido']);
+
+            // 3. Registrar en Bitácora
+            \App\Models\Bitacora::create([
+                'USUARIO_ID' => \Illuminate\Support\Facades\Auth::id(),
+                'ACCION' => 'ACTUALIZAR',
+                'TABLA' => 'CUP',
+                'REGISTRO_ID' => $cup->ID_CUP,
+                'DESCRIPCION' => "Se cerró la gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó el procedimiento p_cerrar_gestion_cup para la distribución meritocrática de cupos por carreras.",
+                'IP_DIRECCION' => request()->ip(),
+                'FECHA_REGISTRO' => now(),
+            ]);
+        });
+
+        return redirect("/cup/{$cup->ID_CUP}/cierre")->with('success', 'El cierre de gestión del CUP y la asignación de plazas se ejecutó correctamente.');
+    }
+
     public function clases(string $id)
     {
         $cup = Cup::with([
