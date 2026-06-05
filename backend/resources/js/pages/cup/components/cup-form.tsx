@@ -18,7 +18,7 @@ export type { Usuario, CatalogCarrera, CatalogMateria };
 export interface Cup {
     ID_CUP: number;
     ANIO: number;
-    SEMESTRE: string;
+    SEMESTRE: number;
     NOTA_MINIMA: number | string;
     CUPOS: number;
     FECHA_INICIO: string | null;
@@ -52,7 +52,7 @@ export function CupForm({
 
     const { data, setData, post, put, processing, errors } = useForm({
         ANIO: isEdit ? (cup.ANIO || new Date().getFullYear()) : new Date().getFullYear(),
-        SEMESTRE: isEdit ? (cup.SEMESTRE || 'I') : 'I',
+        SEMESTRE: isEdit ? (cup.SEMESTRE || 1) : 1,
         NOTA_MINIMA: isEdit ? (cup.NOTA_MINIMA || 51) : 51,
         CUPOS: isEdit ? (cup.CUPOS || 0) : 0,
         FECHA_INICIO: isEdit ? (cup.FECHA_INICIO || '') : '',
@@ -192,13 +192,12 @@ export function CupForm({
                                             id="SEMESTRE"
                                             required
                                             value={data.SEMESTRE}
-                                            onChange={e => setData('SEMESTRE', e.target.value)}
+                                            onChange={e => setData('SEMESTRE', parseInt(e.target.value) || 1)}
                                             disabled={processing || isLocked}
                                             className="flex h-10 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-neutral-800 dark:text-neutral-200"
                                         >
-                                            <option value="I">I (Primer Semestre)</option>
-                                            <option value="II">II (Segundo Semestre)</option>
-                                            <option value="ANUAL">ANUAL</option>
+                                            <option value={1}>Primer Semestre (1)</option>
+                                            <option value={2}>Segundo Semestre (2)</option>
                                         </select>
                                         <InputError message={errors.SEMESTRE} />
                                     </div>

@@ -91,7 +91,7 @@ class CUPController extends Controller
     {
         $validated = $request->validate([
             'ANIO' => 'required|integer',
-            'SEMESTRE' => 'required|string|max:20',
+            'SEMESTRE' => 'required|integer|in:1,2',
             'NOTA_MINIMA' => 'required|numeric',
             'FECHA_INICIO' => 'required|date',
             'FECHA_FIN' => 'required|date|after_or_equal:FECHA_INICIO',
@@ -170,9 +170,12 @@ class CUPController extends Controller
             ->whereHas('usuario', fn($q) => $q->where('ESTADO', 'ACTIVO'))
             ->get();
 
+        $requerimientoDocentes = DB::select('SELECT * FROM public.f_control_requerimiento_docentes(?)', [$id]);
+
         return inertia('cup/informacion', [
-            'cup'             => $cup,
-            'docentesActivos' => $docentesActivos,
+            'cup'                   => $cup,
+            'docentesActivos'       => $docentesActivos,
+            'requerimientoDocentes' => $requerimientoDocentes,
         ]);
     }
 
@@ -332,7 +335,7 @@ class CUPController extends Controller
 
         $validated = $request->validate([
             'ANIO' => 'required|integer',
-            'SEMESTRE' => 'required|string|max:20',
+            'SEMESTRE' => 'required|integer|in:1,2',
             'NOTA_MINIMA' => 'required|numeric',
             'FECHA_INICIO' => 'required|date',
             'FECHA_FIN' => 'required|date|after_or_equal:FECHA_INICIO',
@@ -489,7 +492,7 @@ class CUPController extends Controller
 
             // Determinar prefijo y offset de grupos existentes para evitar nombres duplicados
             $anioCorto = substr((string)$cup->ANIO, -2);
-            $nroSemestre = str_contains(strtoupper($cup->SEMESTRE), 'PRIMER') ? '1' : '2';
+            $nroSemestre = (string)$cup->SEMESTRE;
             $prefijoGrupo = $anioCorto . $nroSemestre;
             $gruposExistentes = \App\Models\Grupo::where('NOMBRE', 'LIKE', $prefijoGrupo . '%')->count();
 

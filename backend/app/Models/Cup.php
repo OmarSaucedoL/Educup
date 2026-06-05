@@ -27,7 +27,8 @@ class Cup extends Model
     protected $casts = [
         'FECHA_INICIO' => 'date',
         'FECHA_FIN' => 'date',
-        'NOTA_MINIMA' => 'decimal:2'
+        'NOTA_MINIMA' => 'decimal:2',
+        'SEMESTRE' => 'integer'
     ];
 
     public function usuario(): BelongsTo

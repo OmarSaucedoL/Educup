@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('CUP', function (Blueprint $table) {
             $table->id('ID_CUP');
             $table->integer('ANIO');
-            $table->string('SEMESTRE');
+            $table->integer('SEMESTRE');
             $table->decimal('NOTA_MINIMA', 8, 2);
             $table->integer('CUPOS');
             $table->date('FECHA_INICIO');

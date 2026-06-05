@@ -217,19 +217,19 @@ class DatabaseSeeder extends Seeder
         $cupsConfig = [
             [
                 'ANIO' => 2024,
-                'SEMESTRE' => 'PRIMER SEMESTRE',
+                'SEMESTRE' => 1,
                 'FECHA_INICIO' => '2024-01-15',
                 'FECHA_FIN' => '2024-06-20',
             ],
             [
                 'ANIO' => 2024,
-                'SEMESTRE' => 'SEGUNDO SEMESTRE',
+                'SEMESTRE' => 2,
                 'FECHA_INICIO' => '2024-07-15',
                 'FECHA_FIN' => '2024-12-20',
             ],
             [
                 'ANIO' => 2025,
-                'SEMESTRE' => 'PRIMER SEMESTRE',
+                'SEMESTRE' => 1,
                 'FECHA_INICIO' => '2025-01-15',
                 'FECHA_FIN' => '2025-06-20',
             ],
@@ -290,7 +290,7 @@ class DatabaseSeeder extends Seeder
 
             // Generar un nombre de grupo de ejemplo para el seeder
             $anioCorto = substr((string)$cConf['ANIO'], -2);
-            $nroSem = str_contains(strtoupper($cConf['SEMESTRE']), 'PRIMER') ? '1' : '2';
+            $nroSem = $cConf['SEMESTRE'];
             
             $grupoA_Id = DB::table('GRUPO')->insertGetId(['NOMBRE' => "{$anioCorto}{$nroSem}1", 'EST_MIN' => 20, 'EST_MAX' => 80], 'ID_GRUPO');
             $grupoB_Id = DB::table('GRUPO')->insertGetId(['NOMBRE' => "{$anioCorto}{$nroSem}2", 'EST_MIN' => 20, 'EST_MAX' => 80], 'ID_GRUPO');

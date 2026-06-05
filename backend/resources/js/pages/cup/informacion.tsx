@@ -10,9 +10,20 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
+interface RequerimientoDocente {
+    materia_id: number;
+    materia_nombre: string;
+    docentes_necesitados: number;
+    docentes_disponibles_perfil: number;
+    docentes_asignados_actuales: number;
+    docentes_faltantes_perfil: number;
+    docentes_faltantes_asignacion: number;
+}
+
 interface CupInformacionProps {
     cup: any;
     docentesActivos: any[];
+    requerimientoDocentes: RequerimientoDocente[];
 }
 
 function estadoBadge(estado: string) {
@@ -278,7 +289,7 @@ function LeftColumnSection({ carreraCups, materias, cup }: LeftColumnSectionProp
     );
 }
 
-export default function Informacion({ cup, docentesActivos }: CupInformacionProps) {
+export default function Informacion({ cup, docentesActivos, requerimientoDocentes = [] }: CupInformacionProps) {
     const { props } = usePage<any>();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const flash = props.flash as { success?: string } | undefined;
@@ -342,7 +353,79 @@ export default function Informacion({ cup, docentesActivos }: CupInformacionProp
                     <LeftColumnSection carreraCups={carreraCups} materias={materias} cup={cup} />
 
                     {/* ── Right column: Docentes ── */}
-                    <div className="lg:col-span-2 flex flex-col gap-4">
+                    <div className="lg:col-span-2 flex flex-col gap-6">
+
+                        {/* ── Tarjeta de Control de Requerimiento de Docentes ── */}
+                        <section className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-card shadow-xs overflow-hidden">
+                            <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 px-4 py-3">
+                                <Clock className="h-4 w-4 text-neutral-900 dark:text-neutral-100" />
+                                <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">
+                                    Requerimiento de Docentes por Materia
+                                </h2>
+                                <span className="ml-auto text-[10px] font-extrabold uppercase bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 px-2 py-0.5 rounded-md">
+                                    Control Operativo
+                                </span>
+                            </div>
+                            
+                            <div className="w-full overflow-auto">
+                                <table className="w-full caption-bottom text-xs">
+                                    <thead className="[&_tr]:border-b bg-neutral-50/50 dark:bg-neutral-900/20">
+                                        <tr className="border-b border-neutral-100 dark:border-neutral-800 transition-colors">
+                                            <th className="text-muted-foreground h-10 px-4 text-left align-middle font-semibold">Materia</th>
+                                            <th className="text-muted-foreground h-10 px-4 text-center align-middle font-semibold">Docentes Necesitados</th>
+                                            <th className="text-muted-foreground h-10 px-4 text-center align-middle font-semibold">Docentes Disponibles</th>
+                                            <th className="text-muted-foreground h-10 px-4 text-center align-middle font-semibold">Docentes Asignados</th>
+                                            <th className="text-muted-foreground h-10 px-4 text-center align-middle font-semibold">Docentes Faltantes</th>
+                                            <th className="text-muted-foreground h-10 px-4 text-center align-middle font-semibold">Docentes Sin Asignar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="[&_tr:last-child]:border-0 divide-y divide-neutral-100 dark:divide-neutral-800">
+                                        {requerimientoDocentes.length > 0 ? (
+                                            requerimientoDocentes.map((req) => (
+                                                <tr key={req.materia_id} className="hover:bg-neutral-50/30 dark:hover:bg-neutral-900/10 transition-colors">
+                                                    <td className="p-4 align-middle font-bold text-neutral-900 dark:text-neutral-100">
+                                                        {req.materia_nombre}
+                                                    </td>
+                                                    <td className="p-4 align-middle text-center font-medium text-neutral-800 dark:text-neutral-200">
+                                                        {req.docentes_necesitados}
+                                                    </td>
+                                                    <td className="p-4 align-middle text-center font-medium text-neutral-800 dark:text-neutral-200">
+                                                        {req.docentes_disponibles_perfil}
+                                                    </td>
+                                                    <td className="p-4 align-middle text-center font-medium text-neutral-800 dark:text-neutral-200">
+                                                        {req.docentes_asignados_actuales}
+                                                    </td>
+                                                    <td className="p-4 align-middle text-center">
+                                                        {req.docentes_faltantes_perfil > 0 ? (
+                                                            <span className="inline-flex items-center justify-center rounded-lg bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 px-2 py-0.5 text-[10px] font-bold shadow-xs">
+                                                                {req.docentes_faltantes_perfil}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-neutral-400 dark:text-neutral-600 font-medium">—</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-4 align-middle text-center">
+                                                        {req.docentes_faltantes_asignacion > 0 ? (
+                                                            <span className="inline-flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-800 border border-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-700 px-2 py-0.5 text-[10px] font-bold shadow-xs">
+                                                                {req.docentes_faltantes_asignacion}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-neutral-400 dark:text-neutral-600 font-medium">—</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={6} className="text-muted-foreground p-8 text-center align-middle">
+                                                    No hay clases programadas en este CUP.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
 
                         <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-neutral-900 dark:text-neutral-100" />
