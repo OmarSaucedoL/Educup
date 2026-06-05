@@ -21,8 +21,17 @@ Route::post('/cup', [CUPController::class, 'store']);
 Route::get('/cup/{id}/editar', [CUPController::class, 'edit']);
 Route::put('/cup/{id}', [CUPController::class, 'update']);
 
+// Ver docentes asignados a un CUP
+Route::get('/cup/{id}/docentes', [CUPController::class, 'docentes']);
+
 // Asignar docentes (con materias) a un CUP
 Route::post('/cup/{id}/docentes', [CUPController::class, 'asignarDocentes']);
+
+// Asignación automática de docentes
+Route::post('/cup/{id}/asignar-docentes-auto', [CUPController::class, 'asignacionAutomatica']);
+
+// Remover todos los docentes de las clases de un CUP
+Route::delete('/cup/{id}/remover-docentes', [CUPController::class, 'removerDocentes']);
 
 // Crear paquete de clases
 Route::get('/cup/{id}/clases/crear', [CUPController::class, 'crearClasesForm']);

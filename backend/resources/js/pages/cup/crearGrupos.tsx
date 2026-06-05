@@ -9,13 +9,13 @@ import {
 } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
-interface CrearClasesProps {
+interface CrearGruposProps {
     cup: any;
     inscritos: number;
     turnos: { nombre: string; horarios: string[] }[];
 }
 
-export default function CrearClases({ cup, inscritos, turnos }: CrearClasesProps) {
+export default function CrearGrupos({ cup, inscritos, turnos }: CrearGruposProps) {
     const { data, setData, post, processing, errors, reset } = useForm({
         EST_MIN: 20,
         EST_MAX: 40,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bitacora;
 use App\Models\Cup;
 use App\Models\Carrera;
 use App\Models\Materia;
@@ -179,6 +180,22 @@ class CUPController extends Controller
         ]);
     }
 
+    public function docentes(string $id)
+    {
+        $cup = Cup::with([
+            'docenteCups.docente.usuario',
+            'docenteCups.clases.materia',
+            'docenteCups.clases.grupo',
+            'docenteCups.clases.bloqueHorario.horariosEnBloque.horario',
+            'docenteCups.clases.aula',
+            'docenteCups.docenteCupMats.materia',
+        ])->findOrFail($id);
+
+        return inertia('cup/docentesCup', [
+            'cup' => $cup,
+        ]);
+    }
+
     public function clases(string $id)
     {
         $cup = Cup::with([
@@ -194,7 +211,7 @@ class CUPController extends Controller
             }
         ])->findOrFail($id);
 
-        return inertia('cup/clases', [
+        return inertia('cup/grupos', [
             'cup' => $cup,
         ]);
     }
@@ -424,7 +441,7 @@ class CUPController extends Controller
             ];
         }
 
-        return inertia('cup/crearClases', [
+        return inertia('cup/crearGrupos', [
             'cup' => $cup,
             'inscritos' => $inscritos,
             'turnos' => $turnos,
@@ -560,6 +577,61 @@ class CUPController extends Controller
             DB::rollBack();
             \Log::error('Error creating clases: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             throw ValidationException::withMessages(['error' => 'Error en base de datos: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Llama al procedimiento de asignación automática de docentes para el CUP.
+     */
+    public function asignacionAutomatica(string $idCup)
+    {
+        try {
+            DB::statement('CALL public.p_asignacion_automatica_docentes_cup(?)', [(int)$idCup]);
+
+            Bitacora::create([
+                'USUARIO_ID'     => \Auth::id(),
+                'SESSION_ID'     => request()->session()->getId(),
+                'ACCION'         => 'ASIGNAR',
+                'TABLA'          => 'CLASE',
+                'REGISTRO_ID'    => (int)$idCup,
+                'DESCRIPCION'    => "Asignación automática de docentes ejecutada para el CUP ID {$idCup}.",
+                'IP_DIRECCION'   => request()->ip(),
+                'FECHA_REGISTRO' => now(),
+            ]);
+
+            return redirect("/cup/{$idCup}/clases")->with('success', 'Asignación automática de docentes completada correctamente.');
+        } catch (\Exception $e) {
+            \Log::error('Error en asignacion automatica de docentes: ' . $e->getMessage());
+            return redirect("/cup/{$idCup}/clases")->withErrors(['error' => 'Error al ejecutar la asignación automática: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Remueve todos los docentes asignados a las clases de un CUP.
+     */
+    public function removerDocentes(string $idCup)
+    {
+        try {
+            $affected = DB::table('CLASE')
+                ->where('ID_CUP', (int)$idCup)
+                ->whereNotNull('DOCENTE_CUP_ID')
+                ->update(['DOCENTE_CUP_ID' => null]);
+
+            Bitacora::create([
+                'USUARIO_ID'     => \Auth::id(),
+                'SESSION_ID'     => request()->session()->getId(),
+                'ACCION'         => 'ELIMINAR',
+                'TABLA'          => 'CLASE',
+                'REGISTRO_ID'    => (int)$idCup,
+                'DESCRIPCION'    => "Se removieron los docentes de {$affected} clase(s) del CUP ID {$idCup}.",
+                'IP_DIRECCION'   => request()->ip(),
+                'FECHA_REGISTRO' => now(),
+            ]);
+
+            return redirect("/cup/{$idCup}/clases")->with('success', "Se removieron los docentes de {$affected} clase(s) correctamente.");
+        } catch (\Exception $e) {
+            \Log::error('Error al remover docentes: ' . $e->getMessage());
+            return redirect("/cup/{$idCup}/clases")->withErrors(['error' => 'Error al remover los docentes: ' . $e->getMessage()]);
         }
     }
 }

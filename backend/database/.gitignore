@@ -1,1 +1,24 @@
+# Bases de datos SQLite (local/testing)
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
 *.sqlite*
+
+# Dumps y backups de base de datos
+*.sql
+*.dump
+*.bak
+*.backup
+*.pg_dump
+
+# Archivos de exportación de datos sensibles
+*.csv
+*.json.bak
+
+# Archivos temporales de seeds/factories locales
+/seeders/local/
+/seeders/*.local.php
+
+# Logs de migraciones locales
+*.log
