@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { BookMarked, Users, BookOpen, UserCheck, ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import { BookMarked, Users, BookOpen, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
@@ -139,7 +139,6 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                                     const bloque = gClases[0]?.bloque_horario ?? gClases[0]?.bloqueHorario;
                                     const turno = bloque?.TURNO ?? 'No definido';
                                     const totalEstudiantes = gClases[0]?.estudiante_cups_count ?? gClases[0]?.estudianteCupsCount ?? 0;
-                                    const docentesAsignados = gClases.filter((c: any) => c.docente_cup || c.docenteCup).length;
 
                                     return (
                                         <div
@@ -163,9 +162,6 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                                                             <span className="inline-flex items-center rounded-md border border-neutral-200/60 bg-neutral-50 px-2 py-0.5 text-[11px] font-semibold text-neutral-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
                                                                 Turno: {turno}
                                                             </span>
-                                                            <span className="inline-flex items-center rounded-md border border-neutral-200/60 bg-neutral-50 px-2 py-0.5 text-[11px] font-semibold text-neutral-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
-                                                                {gClases.length} {gClases.length === 1 ? 'Materia' : 'Materias'}
-                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -175,14 +171,6 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                                                         <span className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-100/60 px-2.5 py-0.5 text-xs font-semibold text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800/40 dark:text-neutral-300">
                                                             <Users className="h-3 w-3 opacity-70" />
                                                             {totalEstudiantes} Alumnos
-                                                        </span>
-                                                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                                            docentesAsignados === gClases.length 
-                                                                ? 'border border-green-200 bg-green-50 text-green-700 dark:border-green-900/60 dark:bg-green-950/20 dark:text-green-400' 
-                                                                : 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-400'
-                                                        }`}>
-                                                            <UserCheck className="h-3 w-3" />
-                                                            {docentesAsignados}/{gClases.length} Docentes
                                                         </span>
                                                     </div>
 

@@ -11,6 +11,7 @@ interface GestionarNotasProps {
 }
 
 export default function GestionarNotas({ clase, estudiantesClase }: GestionarNotasProps) {
+    const isCupEnCurso = clase.cup?.ESTADO === 'En curso';
     const [searchQuery, setSearchQuery] = useState('');
     const [showConfig, setShowConfig] = useState(false);
     const [commaWarning, setCommaWarning] = useState(false);
@@ -286,6 +287,19 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                     </div>
                 </div>
 
+                {!isCupEnCurso && (
+                    <div className="flex items-start gap-3 rounded-xl border border-amber-250 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/20 p-4 text-amber-800 dark:text-amber-400 shadow-xs">
+                        <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                        <div>
+                            <h4 className="text-sm font-semibold">Modo de Solo Lectura</h4>
+                            <p className="text-xs mt-0.5 leading-relaxed">
+                                Esta convocatoria del CUP se encuentra en estado <strong>"{clase.cup?.ESTADO ?? 'Finalizado'}"</strong>.
+                                Solo se pueden asignar o modificar notas cuando el CUP se encuentra en estado <strong>"En curso"</strong>.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Configuración de Ponderaciones ── */}
                 <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
                     <div
@@ -333,37 +347,43 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                         <input
                                             type="text"
                                             value={comp.nombre}
+                                            disabled={!isCupEnCurso}
                                             onChange={(e) => updateComponent(idx, e.target.value, comp.ponderacion)}
-                                            className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 shadow-xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-neutral-100"
+                                            className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 shadow-xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-neutral-100 disabled:opacity-60 disabled:cursor-not-allowed"
                                             placeholder="Nombre de la evaluación"
                                         />
                                         <div className="flex w-32 shrink-0 items-center gap-1.5">
                                             <input
                                                 type="number"
                                                 value={comp.ponderacion === 0 ? '' : comp.ponderacion}
+                                                disabled={!isCupEnCurso}
                                                 onChange={(e) => updateComponent(idx, comp.nombre, Number(e.target.value))}
-                                                className="w-20 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-center text-sm font-medium text-neutral-900 shadow-xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-neutral-100"
+                                                className="w-20 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-center text-sm font-medium text-neutral-900 shadow-xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-neutral-100 disabled:opacity-60 disabled:cursor-not-allowed"
                                                 placeholder="0"
                                             />
                                             <span className="text-sm font-semibold text-neutral-500">%</span>
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => removeComponent(idx)}
-                                            className="border-red-200 text-red-500 hover:bg-red-50 dark:border-red-950 dark:text-red-400 dark:hover:bg-red-950/20"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        {isCupEnCurso && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => removeComponent(idx)}
+                                                className="border-red-200 text-red-500 hover:bg-red-50 dark:border-red-950 dark:text-red-400 dark:hover:bg-red-950/20"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="flex justify-start">
-                                <Button variant="outline" size="sm" onClick={addComponent} className="h-8 gap-1.5 text-xs font-semibold">
-                                    <Plus className="h-4.5 w-4.5" /> Agregar Evaluación
-                                </Button>
-                            </div>
+                            {isCupEnCurso && (
+                                <div className="flex justify-start">
+                                    <Button variant="outline" size="sm" onClick={addComponent} className="h-8 gap-1.5 text-xs font-semibold">
+                                        <Plus className="h-4.5 w-4.5" /> Agregar Evaluación
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -439,8 +459,9 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                                     <input
                                                                         type="text"
                                                                         value={currentVal}
+                                                                        disabled={!isCupEnCurso}
                                                                         onChange={(e) => handleGradeChange(ec.ID, comp.nombre, e.target.value)}
-                                                                        className="w-20 rounded-md border border-neutral-200 bg-white px-1 py-1.5 text-center text-sm font-semibold text-neutral-900 shadow-2xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-neutral-100"
+                                                                        className="w-20 rounded-md border border-neutral-200 bg-white px-1 py-1.5 text-center text-sm font-semibold text-neutral-900 shadow-2xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-neutral-100 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral-50 dark:disabled:bg-neutral-950"
                                                                         placeholder="0.0"
                                                                     />
                                                                 </div>
@@ -486,7 +507,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                         </div>
 
                         {/* Botón Guardar */}
-                        {filteredStudents.length > 0 && (
+                        {filteredStudents.length > 0 && isCupEnCurso && (
                             <div className="flex items-center justify-between border-t border-neutral-100 bg-neutral-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-900/30">
                                 <span className="text-xs text-neutral-500">
                                     Asegúrate de que la ponderación total sea de 100% para poder procesar la planilla.

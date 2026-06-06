@@ -43,12 +43,22 @@ const mainNavItems: NavItem[] = [
                 url: '/aulas',
             },
             {
-                title: 'Clases',
+                title: 'Grupos',
                 url: '/clases',
             },
         ],
     },
-
+    {
+        title: 'Módulo Notas',
+        url: '#',
+        icon: BookMarked,
+        items: [
+            {
+                title: 'Clases',
+                url: '/notas/clases',
+            },
+        ],
+    },
     {
         title: 'Modulo Administrativo',
         url: '#',
@@ -65,17 +75,6 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Bitácora',
                 url: '/bitacora',
-            },
-        ],
-    },
-    {
-        title: 'Módulo Notas',
-        url: '#',
-        icon: BookMarked,
-        items: [
-            {
-                title: 'Clases',
-                url: '/notas/clases',
             },
         ],
     },

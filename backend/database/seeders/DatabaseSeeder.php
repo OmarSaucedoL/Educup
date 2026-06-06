@@ -178,6 +178,17 @@ class DatabaseSeeder extends Seeder
             'ROL_ID' => $rolAdmin
         ], 'ID');
 
+        // Seed direct permissions for admin
+        $allPermisos = DB::table('PERMISOS')->pluck('ID');
+        foreach ($allPermisos as $permId) {
+            DB::table('PERMISOS_USUARIO')->insert([
+                'USUARIO_ID' => $uAdminId,
+                'PERMISOS_ID' => $permId,
+                'ESTADO' => 'ACTIVO',
+                'FECHA_MOD' => Carbon::now()
+            ]);
+        }
+
         // Generación de 10 Docentes con la estructura de cuentas DOCENTE_1 a DOCENTE_10
         $docenteUserIds = [];
         for ($i = 1; $i <= 10; $i++) {
@@ -187,7 +198,7 @@ class DatabaseSeeder extends Seeder
                 'CARNET' => 4567890 + $i,
                 'NOMBRE' => "DOCENTE {$i}",
                 'APELLIDO' => "APELLIDO {$i}",
-                'CORREO' => "docente{$i}cup.edu",
+                'CORREO' => "docente{$i}@cup.edu",
                 'ESTADO' => 'ACTIVO',
                 'FECHA_CREACION' => Carbon::now(),
                 'ROL_ID' => $rolDocente
@@ -196,6 +207,20 @@ class DatabaseSeeder extends Seeder
 
             // Extensión a la tabla semántica DOCENTE
             DB::table('DOCENTE')->insert(['CODIGO_DOCENTE' => $uDocId]);
+
+            // Seed direct permissions for docente based on ROL_ID
+            $rolPermisosIds = DB::table('PERMISO_ROL')
+                ->where('ROL_ID', $rolDocente)
+                ->where('ESTADO', 'ACTIVO')
+                ->pluck('PERMISOS_ID');
+            foreach ($rolPermisosIds as $permId) {
+                DB::table('PERMISOS_USUARIO')->insert([
+                    'USUARIO_ID' => $uDocId,
+                    'PERMISOS_ID' => $permId,
+                    'ESTADO' => 'ACTIVO',
+                    'FECHA_MOD' => Carbon::now()
+                ]);
+            }
         }
 
         // ==========================================

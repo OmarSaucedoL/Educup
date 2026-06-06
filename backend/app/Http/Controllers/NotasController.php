@@ -29,15 +29,25 @@ class NotasController extends Controller
 
         $clases = [];
         if ($cup) {
-            $clases = Clase::where('ID_CUP', $cup->ID_CUP)
+            $clasesQuery = Clase::where('ID_CUP', $cup->ID_CUP)
                 ->with([
                     'materia',
                     'grupo',
                     'bloqueHorario',
                     'docenteCup.docente.usuario',
                 ])
-                ->withCount('estudianteCups')
-                ->get();
+                ->withCount('estudianteCups');
+
+            // Si el usuario tiene rol de docente, restringimos las clases a las que tiene asignadas
+            $user = auth()->user()->load('rol');
+            $rolNombre = strtoupper($user->rol?->NOMBRE ?? '');
+            if (str_contains($rolNombre, 'DOCENTE')) {
+                $clasesQuery->whereHas('docenteCup', function ($query) use ($user) {
+                    $query->where('CODIGO_DOCENTE', $user->ID);
+                });
+            }
+
+            $clases = $clasesQuery->get();
         }
 
         return inertia('notas/clases', [
@@ -59,6 +69,15 @@ class NotasController extends Controller
             'docenteCup.docente.usuario',
             'cup'
         ])->findOrFail($id_clase);
+
+        // Si el usuario tiene rol de docente, verificar que la clase esté asignada a él
+        $user = auth()->user()->load('rol');
+        $rolNombre = strtoupper($user->rol?->NOMBRE ?? '');
+        if (str_contains($rolNombre, 'DOCENTE')) {
+            if (!$clase->docenteCup || $clase->docenteCup->CODIGO_DOCENTE !== $user->ID) {
+                return redirect()->route('dashboard')->with('forbidden', 'No tienes permiso para gestionar las notas de esta clase.');
+            }
+        }
 
         $estudiantesClase = EstudianteClase::where('ID_CLASE', $id_clase)
             ->with([
@@ -87,7 +106,21 @@ class NotasController extends Controller
             'calificaciones.*.grades.*.ponderacion' => 'required|numeric|min:0|max:100',
         ]);
 
-        $clase = Clase::with('cup')->findOrFail($id_clase);
+        $clase = Clase::with(['cup', 'docenteCup'])->findOrFail($id_clase);
+
+        // Las notas solo se pueden asignar/guardar cuando el CUP se encuentra en curso
+        if (($clase->cup?->ESTADO ?? '') !== 'En curso') {
+            return redirect()->back()->with('error', 'Solo se pueden guardar calificaciones cuando el CUP se encuentra en estado "En curso".');
+        }
+
+        // Si el usuario tiene rol de docente, verificar que la clase esté asignada a él
+        $user = auth()->user()->load('rol');
+        $rolNombre = strtoupper($user->rol?->NOMBRE ?? '');
+        if (str_contains($rolNombre, 'DOCENTE')) {
+            if (!$clase->docenteCup || $clase->docenteCup->CODIGO_DOCENTE !== $user->ID) {
+                return redirect()->route('dashboard')->with('forbidden', 'No tienes permiso para guardar las notas de esta clase.');
+            }
+        }
 
         // Cargamos los datos de inscripción con estudiantes para poder comparar y armar la descripción
         $estudiantesClase = EstudianteClase::where('ID_CLASE', $id_clase)

@@ -33,8 +33,8 @@ class CheckPermiso
             ->exists();
 
         if (!$tienePermiso) {
-            if ($request->wantsJson() || $request->header('X-Inertia')) {
-                return redirect()->intended('/dashboard')
+            if ($request->header('X-Inertia')) {
+                return redirect()->back()
                     ->with('forbidden', 'No tienes los permisos necesarios para acceder a esta sección.');
             }
             return redirect('/dashboard')

@@ -13,7 +13,24 @@ Route::middleware(['auth'])->group(function () {
         $rolNombre = strtoupper($user->rol?->NOMBRE ?? '');
 
         if (str_contains($rolNombre, 'DOCENTE')) {
-            return Inertia::render('dashboard-docente');
+            $cup = \App\Models\Cup::where('ESTADO', 'En curso')->orderBy('ID_CUP', 'desc')->first()
+                ?? \App\Models\Cup::orderBy('ID_CUP', 'desc')->first();
+
+            $clases = [];
+            if ($cup) {
+                $clases = \App\Models\Clase::where('ID_CUP', $cup->ID_CUP)
+                    ->whereHas('docenteCup', function ($query) use ($user) {
+                        $query->where('CODIGO_DOCENTE', $user->ID);
+                    })
+                    ->with(['materia', 'grupo', 'bloqueHorario.horariosEnBloque.horario', 'aula'])
+                    ->withCount('estudianteCups')
+                    ->get();
+            }
+
+            return Inertia::render('dashboard-docente', [
+                'cup' => $cup,
+                'clases' => $clases
+            ]);
         }
 
         return Inertia::render('dashboard');
