@@ -3,32 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EstudianteController;
 
-// Listar todos los estudiantes
-Route::get('/estudiantes', [EstudianteController::class, 'index']);
-
-// Mostrar formulario para crear un estudiante
-Route::get('/estudiantes/crearEstudiante', [EstudianteController::class, 'create']);
-
-// Vista de importación masiva
+Route::get('/estudiantes', [EstudianteController::class, 'index'])->middleware('permiso:VER_ESTUDIANTES');
+Route::get('/estudiantes/crearEstudiante', [EstudianteController::class, 'create'])->middleware('permiso:VER_ESTUDIANTES');
 Route::get('/estudiantes/importar', function () {
     $periodos = \App\Models\Cup::orderBy('FECHA_INICIO', 'desc')->get(['ID_CUP', 'ANIO', 'SEMESTRE']);
-    return inertia('estudiantes/ImportarEstudiantes', [
-        'periodos' => $periodos
-    ]);
-});
-
-// Importar estudiantes masivamente
-Route::post('/estudiantes/importar', [EstudianteController::class, 'importExcel']);
-
-// Crear un nuevo estudiante
-Route::post('/estudiantes', [EstudianteController::class, 'store']);
-
-// Mostrar formulario para editar un estudiante
-Route::get('/estudiantes/{id}/editar', [EstudianteController::class, 'edit']);
-
-// Actualizar un estudiante
-Route::put('/estudiantes/{id}', [EstudianteController::class, 'update']);
-
-// Eliminar un estudiante
-Route::delete('/estudiantes/{id}', [EstudianteController::class, 'destroy']);
-
+    return inertia('estudiantes/ImportarEstudiantes', ['periodos' => $periodos]);
+})->middleware('permiso:CREAR_ESTUDIANTES');
+Route::post('/estudiantes/importar', [EstudianteController::class, 'importExcel'])->middleware('permiso:CREAR_ESTUDIANTES');
+Route::post('/estudiantes', [EstudianteController::class, 'store'])->middleware('permiso:CREAR_ESTUDIANTES');
+Route::get('/estudiantes/{id}/editar', [EstudianteController::class, 'edit'])->middleware('permiso:VER_ESTUDIANTES');
+Route::put('/estudiantes/{id}', [EstudianteController::class, 'update'])->middleware('permiso:EDITAR_ESTUDIANTES');
+Route::delete('/estudiantes/{id}', [EstudianteController::class, 'destroy'])->middleware('permiso:ELIMINAR_ESTUDIANTES');

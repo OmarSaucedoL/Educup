@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -38,16 +39,29 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        // Load the authenticated user's active permission names once per request
+        $permisos = [];
+        if ($user = $request->user()) {
+            $permisos = DB::table('PERMISOS_USUARIO as pu')
+                ->join('PERMISOS as p', 'pu.PERMISOS_ID', '=', 'p.ID')
+                ->where('pu.USUARIO_ID', $user->ID)
+                ->where('pu.ESTADO', 'ACTIVO')
+                ->pluck('p.NOMBRE')
+                ->toArray();
+        }
+
         return array_merge(parent::share($request), [
             ...parent::share($request),
-            'name' => config('app.name'),
+            'name'  => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
-            'auth' => [
-                'user' => $request->user(),
+            'auth'  => [
+                'user'     => $request->user(),
+                'permisos' => $permisos,
             ],
             'flash' => [
-                'success' => $request->session()->get('success'),
-                'error' => $request->session()->get('error'),
+                'success'   => $request->session()->get('success'),
+                'error'     => $request->session()->get('error'),
+                'forbidden' => $request->session()->get('forbidden'),
             ],
         ]);
     }

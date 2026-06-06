@@ -15,23 +15,37 @@ class UsuarioController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $usuarios = Usuario::with(['rol.permisos', 'permisos' => function ($query) {
-            $query->where('PERMISOS_USUARIO.ESTADO', 'ACTIVO');
-        }])->get();
-        
+        $search = $request->input('search', '');
+
+        $query = Usuario::with(['rol.permisos', 'permisos' => function ($q) {
+            $q->where('PERMISOS_USUARIO.ESTADO', 'ACTIVO');
+        }]);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('UPPER("USERNAME") LIKE ?', ['%' . strtoupper($search) . '%'])
+                  ->orWhereRaw('UPPER("NOMBRE") LIKE ?', ['%' . strtoupper($search) . '%'])
+                  ->orWhereRaw('UPPER("APELLIDO") LIKE ?', ['%' . strtoupper($search) . '%'])
+                  ->orWhereRaw('LOWER("CORREO") LIKE ?', ['%' . strtolower($search) . '%']);
+            });
+        }
+
+        $usuarios = $query->orderBy('APELLIDO')->orderBy('NOMBRE')->paginate(15)->withQueryString();
+
         foreach ($usuarios as $usuario) {
             $usuario->has_custom_permissions = DB::table('PERMISOS_USUARIO')
                 ->where('USUARIO_ID', $usuario->ID)
                 ->exists();
         }
-        
+
         $todosLosPermisos = \App\Models\Permiso::with('modulo')->get();
 
         return inertia('usuarios/index', [
-            'usuarios' => $usuarios,
-            'permisos' => $todosLosPermisos
+            'usuarios'  => $usuarios,
+            'permisos'  => $todosLosPermisos,
+            'filters'   => ['search' => $search],
         ]);
     }
 

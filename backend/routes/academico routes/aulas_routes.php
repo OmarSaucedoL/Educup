@@ -3,23 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AulaController;
 
-// Obtener todas las aulas
-Route::get('/aulas', [AulaController::class, 'index']);
-
-// Mostrar formulario para crear una aula (Inertia)
-Route::get('/aulas/crearAula', [AulaController::class, 'create']);
-
-// Crear una nueva aula
-Route::post('/aulas', [AulaController::class, 'store']);
-
-// Eliminar una aula
-Route::delete('/aulas/{id}', [AulaController::class, 'destroy']);
-
-// Alternar estado de una aula
-Route::patch('/aulas/{id}/toggle-status', [AulaController::class, 'toggleStatus']);
-
-// Mostrar formulario para editar una aula (Inertia)
-Route::get('/aulas/{id}/editar', [AulaController::class, 'edit']);
-
-// Actualizar una aula existente
-Route::put('/aulas/{id}', [AulaController::class, 'update']);
+Route::get('/aulas', [AulaController::class, 'index'])->middleware('permiso:VER_AULAS');
+Route::get('/aulas/crearAula', [AulaController::class, 'create'])->middleware('permiso:VER_AULAS');
+Route::post('/aulas', [AulaController::class, 'store'])->middleware('permiso:CREAR_AULAS');
+Route::delete('/aulas/{id}', [AulaController::class, 'destroy'])->middleware('permiso:ELIMINAR_AULAS');
+Route::patch('/aulas/{id}/toggle-status', [AulaController::class, 'toggleStatus'])->middleware('permiso:EDITAR_AULAS');
+Route::get('/aulas/{id}/editar', [AulaController::class, 'edit'])->middleware('permiso:VER_AULAS');
+Route::put('/aulas/{id}', [AulaController::class, 'update'])->middleware('permiso:EDITAR_AULAS');

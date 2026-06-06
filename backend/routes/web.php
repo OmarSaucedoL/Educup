@@ -9,6 +9,13 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', function () {
+        $user = auth()->user()->load('rol');
+        $rolNombre = strtoupper($user->rol?->NOMBRE ?? '');
+
+        if (str_contains($rolNombre, 'DOCENTE')) {
+            return Inertia::render('dashboard-docente');
+        }
+
         return Inertia::render('dashboard');
     })->name('dashboard');
 

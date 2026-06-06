@@ -3,8 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotasController;
 
-// Listado de clases para el módulo de notas
-Route::get('/notas/clases', [NotasController::class, 'clases']);
-Route::get('/notas/clases/{id_clase}', [NotasController::class, 'gestionar']);
-Route::post('/notas/clases/{id_clase}', [NotasController::class, 'guardarNotas']);
-
+Route::get('/notas/clases', [NotasController::class, 'clases'])->middleware('permiso:VER_CALIFICACIONES');
+Route::get('/notas/clases/{id_clase}', [NotasController::class, 'gestionar'])->middleware('permiso:VER_CALIFICACIONES');
+Route::post('/notas/clases/{id_clase}', [NotasController::class, 'guardarNotas'])->middleware('permiso:REGISTRAR_NOTAS');
