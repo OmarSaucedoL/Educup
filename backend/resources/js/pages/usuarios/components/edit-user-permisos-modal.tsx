@@ -1,7 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -19,39 +18,42 @@ interface Permiso {
     MODULO_ID?: number;
 }
 
-interface Rol {
+interface Usuario {
     ID: number;
+    USERNAME: string;
     NOMBRE: string;
+    APELLIDO: string;
     permisos: Permiso[];
+    rol?: {
+        ID: number;
+        NOMBRE: string;
+        permisos?: Permiso[];
+    };
+    has_custom_permissions?: boolean;
 }
 
-interface EditRoleModalProps {
-    role: Rol | null;
+interface EditUserPermisosModalProps {
+    user: Usuario | null;
     permisos: Permiso[];
     onClose: () => void;
 }
 
-export function EditRoleModal({ role, permisos, onClose }: EditRoleModalProps) {
-    const submitTypeRef = useRef(false);
-
-    const { data, setData, put, processing, errors, reset, clearErrors, transform } = useForm({
-        nombre: '',
+export function EditUserPermisosModal({ user, permisos, onClose }: EditUserPermisosModalProps) {
+    const { data, setData, put, processing, errors, reset, clearErrors } = useForm({
         permisos: [] as number[],
     });
 
-    transform((data) => ({
-        ...data,
-        aplicarATodos: submitTypeRef.current,
-    }));
-
     useEffect(() => {
-        if (role) {
+        if (user) {
+            const initialPermisos = user.has_custom_permissions
+                ? user.permisos.map(p => p.ID)
+                : (user.rol?.permisos?.map(p => p.ID) || []);
+
             setData({
-                nombre: role.NOMBRE,
-                permisos: role.permisos.map(p => p.ID),
+                permisos: initialPermisos,
             });
         }
-    }, [role, setData]);
+    }, [user, setData]);
 
     const handleOpenChange = (open: boolean) => {
         if (!open) {
@@ -60,10 +62,10 @@ export function EditRoleModal({ role, permisos, onClose }: EditRoleModalProps) {
         }
     };
 
-    const submit = (aplicar: boolean) => {
-        if (!role) return;
-        submitTypeRef.current = aplicar;
-        put(`/roles/${role.ID}`, {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!user) return;
+        put(`/usuarios/${user.ID}/permisos`, {
             onSuccess: () => {
                 onClose();
                 reset();
@@ -79,7 +81,7 @@ export function EditRoleModal({ role, permisos, onClose }: EditRoleModalProps) {
         }
     };
 
-    // Group permisos by module
+    // Group permissions by module
     const groupedPermisos = permisos.reduce((acc, p) => {
         const modName = p.modulo?.NOMBRE || 'Otros';
         if (!acc[modName]) acc[modName] = [];
@@ -88,30 +90,17 @@ export function EditRoleModal({ role, permisos, onClose }: EditRoleModalProps) {
     }, {} as Record<string, Permiso[]>);
 
     return (
-        <Dialog open={!!role} onOpenChange={handleOpenChange}>
+        <Dialog open={!!user} onOpenChange={handleOpenChange}>
             <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col sm:max-w-xl">
                 <DialogHeader>
-                    <DialogTitle>Modificar Rol</DialogTitle>
+                    <DialogTitle>Gestionar Permisos Especiales</DialogTitle>
                     <DialogDescription>
-                        Actualiza el nombre o los permisos del rol.
+                        Asigna o remueve permisos directamente para el usuario: <span className="font-bold text-foreground">{user?.NOMBRE} {user?.APELLIDO} ({user?.USERNAME})</span>.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex flex-col gap-4 overflow-hidden mt-2 flex-1">
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="edit-nombre">Nombre del Rol</Label>
-                        <Input
-                            id="edit-nombre"
-                            value={data.nombre}
-                            onChange={e => setData('nombre', e.target.value)}
-                            className="uppercase"
-                            autoComplete="off"
-                        />
-                        {errors.nombre && <span className="text-xs text-destructive">{errors.nombre}</span>}
-                    </div>
-                    
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-hidden mt-2 flex-1">
                     <div className="flex flex-col gap-2 overflow-hidden flex-1">
-                        <Label>Permisos del Rol</Label>
-                        <div className="flex-1 overflow-y-auto pr-2 max-h-[50vh] p-3 border rounded-lg bg-muted/10 space-y-4">
+                        <div className="flex-1 overflow-y-auto pr-2 max-h-[55vh] p-3 border rounded-lg bg-muted/10 space-y-4">
                             {Object.entries(groupedPermisos).map(([modName, modPermisos]) => (
                                 <div key={modName} className="space-y-2">
                                     <h4 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-1.5 uppercase tracking-wider">
@@ -121,13 +110,13 @@ export function EditRoleModal({ role, permisos, onClose }: EditRoleModalProps) {
                                         {modPermisos.map(p => (
                                             <div key={p.ID} className="flex items-start space-x-2.5">
                                                 <Checkbox 
-                                                    id={`edit-permiso-${p.ID}`}
+                                                    id={`user-permiso-${p.ID}`}
                                                     checked={data.permisos.includes(p.ID)}
                                                     onCheckedChange={(checked) => handlePermisoToggle(p.ID, checked as boolean)}
                                                     className="mt-0.5"
                                                 />
                                                 <Label 
-                                                    htmlFor={`edit-permiso-${p.ID}`} 
+                                                    htmlFor={`user-permiso-${p.ID}`} 
                                                     className="text-xs leading-normal font-normal cursor-pointer select-none text-neutral-700 dark:text-neutral-300"
                                                 >
                                                     {p.NOMBRE.replace(/_/g, ' ')}
@@ -138,35 +127,20 @@ export function EditRoleModal({ role, permisos, onClose }: EditRoleModalProps) {
                                 </div>
                             ))}
                             {permisos.length === 0 && (
-                                <span className="text-sm text-muted-foreground col-span-full">No hay permisos disponibles.</span>
+                                <span className="text-sm text-neutral-500 col-span-full">No hay permisos disponibles.</span>
                             )}
                         </div>
                         {errors.permisos && <span className="text-xs text-destructive">{errors.permisos}</span>}
                     </div>
 
-                    <DialogFooter className="mt-4 pt-4 border-t flex flex-col sm:flex-row gap-2 sm:gap-0 sm:justify-between shrink-0">
+                    <DialogFooter className="mt-4 pt-4 border-t shrink-0">
                         <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                disabled={processing}
-                                onClick={() => submit(false)}
-                            >
-                                {processing && !submitTypeRef.current && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Guardar Cambios
-                            </Button>
-                            <Button
-                                type="button"
-                                disabled={processing}
-                                onClick={() => submit(true)}
-                            >
-                                {processing && submitTypeRef.current && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Aplicar a todos
-                            </Button>
-                        </div>
+                        <Button type="submit" disabled={processing}>
+                            {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Guardar Permisos
+                        </Button>
                     </DialogFooter>
-                </div>
+                </form>
             </DialogContent>
         </Dialog>
     );

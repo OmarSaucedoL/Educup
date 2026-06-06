@@ -28,3 +28,6 @@ Route::get('/usuarios/{id}/editar', [UsuarioController::class, 'edit']);
 
 // Modificar un usuario existente
 Route::put('/usuarios/{id}', [UsuarioController::class, 'update']);
+
+// Modificar permisos de un usuario
+Route::put('/usuarios/{id}/permisos', [UsuarioController::class, 'updatePermisos']);

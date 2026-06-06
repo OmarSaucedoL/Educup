@@ -47,6 +47,23 @@ class UsuariosImport implements ToModel, WithHeadingRow
             ]);
         }
 
+        // Fase 4: Inicialización de Permisos desde el Rol
+        if ($usuario->ROL_ID) {
+            $rolPermisosIds = \Illuminate\Support\Facades\DB::table('PERMISO_ROL')
+                ->where('ROL_ID', $usuario->ROL_ID)
+                ->where('ESTADO', 'ACTIVO')
+                ->pluck('PERMISOS_ID');
+            
+            foreach ($rolPermisosIds as $permId) {
+                \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')->insert([
+                    'USUARIO_ID' => $usuario->ID,
+                    'PERMISOS_ID' => $permId,
+                    'ESTADO' => 'ACTIVO',
+                    'FECHA_MOD' => now()
+                ]);
+            }
+        }
+
         return $usuario;
     }
 }

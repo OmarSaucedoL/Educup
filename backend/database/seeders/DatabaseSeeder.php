@@ -41,29 +41,100 @@ class DatabaseSeeder extends Seeder
         DB::table('PERMISO_ROL')->truncate();
         DB::table('USUARIO')->truncate();
         DB::table('PERMISOS')->truncate();
+        DB::table('MODULO')->truncate();
         DB::table('ROL')->truncate();
 
         Schema::enableForeignKeyConstraints();
 
         // ==========================================
-        // 1. CONTROL DE ACCESO, ROLES Y SEGURIDAD
+        // 1. CONTROL DE ACCESO, ROLES, MÓDULOS Y SEGURIDAD
         // ==========================================
         $rolAdmin = DB::table('ROL')->insertGetId(['NOMBRE' => 'ADMINISTRADOR'], 'ID');
         $rolDocente = DB::table('ROL')->insertGetId(['NOMBRE' => 'DOCENTE'], 'ID');
 
-        // Permisos básicos del sistema
-        $permisosData = [
-            'VER_USUARIOS', 'CREAR_USUARIOS', 'EDITAR_USUARIOS', 'ELIMINAR_USUARIOS',
-            'VER_ROLES_PERMISOS', 'VER_BITACORA',
-            'VER_CUP', 'GESTIONAR_CUP',
-            'VER_MATERIAS', 'GESTIONAR_MATERIAS',
-            'VER_AULAS', 'VER_HORARIOS',
-            'VER_CALIFICACIONES', 'GESTIONAR_CALIFICACIONES'
+        // Módulos del sistema
+        $modulos = [
+            'USUARIOS'        => DB::table('MODULO')->insertGetId(['NOMBRE' => 'USUARIOS'], 'ID'),
+            'ROLES_PERMISOS' => DB::table('MODULO')->insertGetId(['NOMBRE' => 'ROLES_PERMISOS'], 'ID'),
+            'CUP'             => DB::table('MODULO')->insertGetId(['NOMBRE' => 'CUP'], 'ID'),
+            'DOCENTES'        => DB::table('MODULO')->insertGetId(['NOMBRE' => 'DOCENTES'], 'ID'),
+            'ESTUDIANTES'     => DB::table('MODULO')->insertGetId(['NOMBRE' => 'ESTUDIANTES'], 'ID'),
+            'MATERIAS'        => DB::table('MODULO')->insertGetId(['NOMBRE' => 'MATERIAS'], 'ID'),
+            'INFRAESTRUCTURA' => DB::table('MODULO')->insertGetId(['NOMBRE' => 'INFRAESTRUCTURA'], 'ID'),
+            'CALIFICACIONES'  => DB::table('MODULO')->insertGetId(['NOMBRE' => 'CALIFICACIONES'], 'ID'),
+            'BITACORA'        => DB::table('MODULO')->insertGetId(['NOMBRE' => 'BITACORA'], 'ID'),
+        ];
+
+        // Mapeo de permisos a sus módulos correspondientes
+        $permisosModuloMap = [
+            // Módulo USUARIOS
+            'VER_USUARIOS'              => 'USUARIOS',
+            'CREAR_USUARIOS'            => 'USUARIOS',
+            'EDITAR_USUARIOS'           => 'USUARIOS',
+            'ELIMINAR_USUARIOS'         => 'USUARIOS',
+
+            // Módulo ROLES_PERMISOS
+            'VER_ROLES'                 => 'ROLES_PERMISOS',
+            'CREAR_ROLES'               => 'ROLES_PERMISOS',
+            'EDITAR_ROLES'              => 'ROLES_PERMISOS',
+            'ELIMINAR_ROLES'            => 'ROLES_PERMISOS',
+            'ASIGNAR_PERMISOS'          => 'ROLES_PERMISOS',
+            'VER_ROLES_PERMISOS'        => 'ROLES_PERMISOS',
+
+            // Módulo CUP
+            'VER_CUP'                   => 'CUP',
+            'CREAR_CUP'                 => 'CUP',
+            'EDITAR_CUP'                => 'CUP',
+            'ELIMINAR_CUP'              => 'CUP',
+            'CERRAR_GESTION_CUP'        => 'CUP',
+            'GESTIONAR_GRUPOS_CLASES'   => 'CUP',
+            'GESTIONAR_CUP'             => 'CUP',
+
+            // Módulo DOCENTES
+            'VER_DOCENTES'              => 'DOCENTES',
+            'CREAR_DOCENTES'            => 'DOCENTES',
+            'EDITAR_DOCENTES'           => 'DOCENTES',
+            'ELIMINAR_DOCENTES'         => 'DOCENTES',
+            'ASIGNAR_DOCENTES_CUP'      => 'DOCENTES',
+
+            // Módulo ESTUDIANTES
+            'VER_ESTUDIANTES'           => 'ESTUDIANTES',
+            'CREAR_ESTUDIANTES'         => 'ESTUDIANTES',
+            'EDITAR_ESTUDIANTES'        => 'ESTUDIANTES',
+            'ELIMINAR_ESTUDIANTES'      => 'ESTUDIANTES',
+
+            // Módulo MATERIAS
+            'VER_MATERIAS'              => 'MATERIAS',
+            'CREAR_MATERIAS'            => 'MATERIAS',
+            'EDITAR_MATERIAS'           => 'MATERIAS',
+            'ELIMINAR_MATERIAS'         => 'MATERIAS',
+            'GESTIONAR_MATERIAS'        => 'MATERIAS',
+
+            // Módulo INFRAESTRUCTURA
+            'VER_AULAS'                 => 'INFRAESTRUCTURA',
+            'CREAR_AULAS'               => 'INFRAESTRUCTURA',
+            'EDITAR_AULAS'              => 'INFRAESTRUCTURA',
+            'ELIMINAR_AULAS'            => 'INFRAESTRUCTURA',
+            'VER_HORARIOS'              => 'INFRAESTRUCTURA',
+            'CREAR_HORARIOS'            => 'INFRAESTRUCTURA',
+            'EDITAR_HORARIOS'           => 'INFRAESTRUCTURA',
+            'ELIMINAR_HORARIOS'         => 'INFRAESTRUCTURA',
+
+            // Módulo CALIFICACIONES
+            'VER_CALIFICACIONES'        => 'CALIFICACIONES',
+            'REGISTRAR_NOTAS'           => 'CALIFICACIONES',
+            'GESTIONAR_CALIFICACIONES'  => 'CALIFICACIONES',
+
+            // Módulo BITACORA
+            'VER_BITACORA'              => 'BITACORA',
         ];
 
         $permisosIds = [];
-        foreach ($permisosData as $pNombre) {
-            $permisosIds[$pNombre] = DB::table('PERMISOS')->insertGetId(['NOMBRE' => $pNombre], 'ID');
+        foreach ($permisosModuloMap as $pNombre => $moduloNombre) {
+            $permisosIds[$pNombre] = DB::table('PERMISOS')->insertGetId([
+                'NOMBRE' => $pNombre,
+                'MODULO_ID' => $modulos[$moduloNombre]
+            ], 'ID');
             
             // Asignar todos los permisos al Administrador
             DB::table('PERMISO_ROL')->insert([
@@ -74,15 +145,24 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // Permisos específicos para Docentes
-        $permisosDocente = ['VER_MATERIAS', 'VER_AULAS', 'VER_HORARIOS', 'VER_CALIFICACIONES', 'GESTIONAR_CALIFICACIONES'];
+        // Permisos específicos para Docentes (Ver materias, aulas, horarios, calificaciones y registrar notas)
+        $permisosDocente = [
+            'VER_MATERIAS', 
+            'VER_AULAS', 
+            'VER_HORARIOS', 
+            'VER_CALIFICACIONES', 
+            'REGISTRAR_NOTAS', 
+            'GESTIONAR_CALIFICACIONES'
+        ];
         foreach ($permisosDocente as $pDoc) {
-            DB::table('PERMISO_ROL')->insert([
-                'ROL_ID' => $rolDocente,
-                'PERMISOS_ID' => $permisosIds[$pDoc],
-                'ESTADO' => 'ACTIVO',
-                'FECHA_MOD' => Carbon::now()
-            ]);
+            if (isset($permisosIds[$pDoc])) {
+                DB::table('PERMISO_ROL')->insert([
+                    'ROL_ID' => $rolDocente,
+                    'PERMISOS_ID' => $permisosIds[$pDoc],
+                    'ESTADO' => 'ACTIVO',
+                    'FECHA_MOD' => Carbon::now()
+                ]);
+            }
         }
 
         // Administrador Principal del Sistema (OMAR.ADMIN)

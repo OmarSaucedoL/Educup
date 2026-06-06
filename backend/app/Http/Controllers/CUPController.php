@@ -519,23 +519,95 @@ class CUPController extends Controller
                 'ESTADO' => $validated['ESTADO'],
             ]);
 
-            // Sync CarreraCup
-            CarreraCup::where('ID_CUP', $cup->ID_CUP)->delete();
-            foreach ($validated['carreras'] as $carreraData) {
-                CarreraCup::create([
-                    'ID_CUP' => $cup->ID_CUP,
-                    'ID_CARRERA' => $carreraData['ID_CARRERA'],
-                    'CUPOS' => $carreraData['CUPOS']
-                ]);
+            // Recalculate student approval status in this CUP if the minimum grade changed
+            $newNotaMinima = (float)$validated['NOTA_MINIMA'];
+            $claseIds = Clase::where('ID_CUP', $cup->ID_CUP)->pluck('ID_CLASE');
+            
+            // 1. Recalculate ESTUDIANTES_CLASE grades status
+            $estClases = \App\Models\EstudianteClase::whereIn('ID_CLASE', $claseIds)->get();
+            foreach ($estClases as $ec) {
+                if (!is_null($ec->NOTA_FINAL)) {
+                    $nuevoEstado = (float)$ec->NOTA_FINAL >= $newNotaMinima ? 'APROBADO' : 'REPROBADO';
+                    if ($ec->ESTADO !== $nuevoEstado) {
+                        $ec->update(['ESTADO' => $nuevoEstado]);
+                    }
+                }
+            }
+            
+            // 2. Recalculate ESTUDIANTE_CUP overall status
+            $estudianteCups = \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)->get();
+            foreach ($estudianteCups as $eCup) {
+                $estClasesStudent = \App\Models\EstudianteClase::where('ESTUDIANTE_CUP_ID', $eCup->ID)->get();
+                
+                if ($estClasesStudent->isEmpty()) {
+                    if (!is_null($eCup->NOTA_FINAL)) {
+                        $nuevoEstadoCup = (float)$eCup->NOTA_FINAL >= $newNotaMinima ? 'APROBADO' : 'REPROBADO';
+                        if ($eCup->ESTADO !== $nuevoEstadoCup) {
+                            $eCup->update(['ESTADO' => $nuevoEstadoCup]);
+                        }
+                    }
+                    continue;
+                }
+                
+                $hasFailed = $estClasesStudent->contains('ESTADO', 'REPROBADO');
+                $hasPending = $estClasesStudent->contains(fn($c) => is_null($c->NOTA_FINAL));
+                
+                if ($hasFailed) {
+                    $nuevoEstadoCup = 'REPROBADO';
+                } elseif ($hasPending) {
+                    $nuevoEstadoCup = 'INSCRITO';
+                } else {
+                    $nuevoEstadoCup = 'APROBADO';
+                }
+                
+                if ($eCup->ESTADO !== $nuevoEstadoCup) {
+                    $eCup->update(['ESTADO' => $nuevoEstadoCup]);
+                }
             }
 
-            // Sync MateriaCup
-            MateriaCup::where('ID_CUP', $cup->ID_CUP)->delete();
-            foreach ($validated['materias'] as $materiaId) {
-                MateriaCup::create([
-                    'ID_CUP' => $cup->ID_CUP,
-                    'ID_MATERIA' => $materiaId
-                ]);
+            // Sync CarreraCup keeping existing IDs to prevent deleting student options due to cascade deletes
+            $existingCarreras = CarreraCup::where('ID_CUP', $cup->ID_CUP)->get()->keyBy('ID_CARRERA');
+            $newCarrerasInput = collect($validated['carreras'])->keyBy('ID_CARRERA');
+
+            // 1. Delete careers that are no longer offered
+            foreach ($existingCarreras as $idCarrera => $cc) {
+                if (!$newCarrerasInput->has($idCarrera)) {
+                    $cc->delete();
+                }
+            }
+
+            // 2. Update or Create careers
+            foreach ($newCarrerasInput as $idCarrera => $carreraData) {
+                if ($existingCarreras->has($idCarrera)) {
+                    $existingCarreras[$idCarrera]->update([
+                        'CUPOS' => $carreraData['CUPOS']
+                    ]);
+                } else {
+                    CarreraCup::create([
+                        'ID_CUP' => $cup->ID_CUP,
+                        'ID_CARRERA' => $idCarrera,
+                        'CUPOS' => $carreraData['CUPOS']
+                    ]);
+                }
+            }
+
+            // Sync MateriaCup keeping existing IDs
+            $existingMaterias = MateriaCup::where('ID_CUP', $cup->ID_CUP)->get()->keyBy('ID_MATERIA');
+            $newMateriasInput = collect($validated['materias']);
+
+            foreach ($existingMaterias as $idMateria => $mc) {
+                if (!$newMateriasInput->contains($idMateria)) {
+                    $mc->delete();
+                }
+            }
+
+            foreach ($newMateriasInput as $materiaId) {
+                if (!$existingMaterias->has($materiaId)) {
+                    MateriaCup::create([
+                        'ID_CUP' => $cup->ID_CUP,
+                        'ID_MATERIA' => $materiaId
+                    ]);
+                }
             }
 
             DB::commit();

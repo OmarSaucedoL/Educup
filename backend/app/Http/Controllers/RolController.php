@@ -9,8 +9,8 @@ class RolController extends Controller
 {
     public function index()
     {
-        $roles = Rol::with('permisos')->get();
-        $todosLosPermisos = \App\Models\Permiso::all();
+        $roles = Rol::with('permisos.modulo')->get();
+        $todosLosPermisos = \App\Models\Permiso::with('modulo')->get();
 
         return Inertia::render('roles/index', [
             'roles' => $roles,
@@ -105,36 +105,32 @@ class RolController extends Controller
             $usuariosDelRol = \App\Models\Usuario::where('ROL_ID', $rol->ID)->pluck('ID')->toArray();
             
             if (count($usuariosDelRol) > 0) {
-                // Desactivar a los usuarios los permisos que se le quitaron al rol
-                if (count($toDeactivate) > 0) {
-                    \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')
-                        ->whereIn('USUARIO_ID', $usuariosDelRol)
-                        ->whereIn('PERMISOS_ID', $toDeactivate)
-                        ->update(['ESTADO' => 'INACTIVO', 'FECHA_MOD' => \Carbon\Carbon::now()]);
-                }
+                foreach ($usuariosDelRol as $userId) {
+                    $todosPermisosHistoricosUser = \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')
+                        ->where('USUARIO_ID', $userId)
+                        ->pluck('PERMISOS_ID')
+                        ->toArray();
 
-                // Agregar a los usuarios los permisos que se le agregaron al rol
-                if (count($newlyAdded) > 0) {
-                    foreach ($usuariosDelRol as $userId) {
-                        foreach ($newlyAdded as $permId) {
-                            $existe = \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')
+                    // Deactivate permissions that are no longer in the role
+                    \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')
+                        ->where('USUARIO_ID', $userId)
+                        ->whereNotIn('PERMISOS_ID', $permisosSolicitados)
+                        ->update(['ESTADO' => 'INACTIVO', 'FECHA_MOD' => \Carbon\Carbon::now()]);
+
+                    // Activate or insert permissions from the role
+                    foreach ($permisosSolicitados as $permId) {
+                        if (in_array($permId, $todosPermisosHistoricosUser)) {
+                            \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')
                                 ->where('USUARIO_ID', $userId)
                                 ->where('PERMISOS_ID', $permId)
-                                ->first();
-                                
-                            if ($existe) {
-                                \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')
-                                    ->where('USUARIO_ID', $userId)
-                                    ->where('PERMISOS_ID', $permId)
-                                    ->update(['ESTADO' => 'ACTIVO', 'FECHA_MOD' => \Carbon\Carbon::now()]);
-                            } else {
-                                \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')->insert([
-                                    'USUARIO_ID' => $userId,
-                                    'PERMISOS_ID' => $permId,
-                                    'ESTADO' => 'ACTIVO',
-                                    'FECHA_MOD' => \Carbon\Carbon::now()
-                                ]);
-                            }
+                                ->update(['ESTADO' => 'ACTIVO', 'FECHA_MOD' => \Carbon\Carbon::now()]);
+                        } else {
+                            \Illuminate\Support\Facades\DB::table('PERMISOS_USUARIO')->insert([
+                                'USUARIO_ID' => $userId,
+                                'PERMISOS_ID' => $permId,
+                                'ESTADO' => 'ACTIVO',
+                                'FECHA_MOD' => \Carbon\Carbon::now()
+                            ]);
                         }
                     }
                 }

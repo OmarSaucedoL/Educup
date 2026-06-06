@@ -17,9 +17,21 @@ class UsuarioController extends Controller
      */
     public function index()
     {
-        $usuarios = Usuario::with('rol')->get();
+        $usuarios = Usuario::with(['rol.permisos', 'permisos' => function ($query) {
+            $query->where('PERMISOS_USUARIO.ESTADO', 'ACTIVO');
+        }])->get();
+        
+        foreach ($usuarios as $usuario) {
+            $usuario->has_custom_permissions = DB::table('PERMISOS_USUARIO')
+                ->where('USUARIO_ID', $usuario->ID)
+                ->exists();
+        }
+        
+        $todosLosPermisos = \App\Models\Permiso::with('modulo')->get();
+
         return inertia('usuarios/index', [
-            'usuarios' => $usuarios
+            'usuarios' => $usuarios,
+            'permisos' => $todosLosPermisos
         ]);
     }
 
@@ -95,6 +107,23 @@ class UsuarioController extends Controller
 
         $usuario = Usuario::create($validated);
 
+        // Seed role's permissions as initial direct permissions
+        if ($usuario->ROL_ID) {
+            $rolPermisosIds = DB::table('PERMISO_ROL')
+                ->where('ROL_ID', $usuario->ROL_ID)
+                ->where('ESTADO', 'ACTIVO')
+                ->pluck('PERMISOS_ID');
+            
+            foreach ($rolPermisosIds as $permId) {
+                DB::table('PERMISOS_USUARIO')->insert([
+                    'USUARIO_ID' => $usuario->ID,
+                    'PERMISOS_ID' => $permId,
+                    'ESTADO' => 'ACTIVO',
+                    'FECHA_MOD' => now()
+                ]);
+            }
+        }
+
         return redirect('/usuarios')->with('success', 'Usuario creado correctamente.');
     }
 
@@ -153,5 +182,50 @@ class UsuarioController extends Controller
         $usuario->update($validated);
 
         return redirect('/usuarios')->with('success', 'Usuario actualizado correctamente.');
+    }
+
+    /**
+     * Update user specific permissions.
+     */
+    public function updatePermisos(Request $request, string $id)
+    {
+        $request->validate([
+            'permisos' => 'array',
+            'permisos.*' => 'exists:PERMISOS,ID'
+        ]);
+
+        $usuario = Usuario::findOrFail($id);
+        $permisosSolicitados = $request->permisos ?? [];
+
+        // Fetch historical permissions for this user to decide update vs insert
+        $todosPermisosHistoricos = DB::table('PERMISOS_USUARIO')
+            ->where('USUARIO_ID', $usuario->ID)
+            ->pluck('PERMISOS_ID')
+            ->toArray();
+
+        // Deactivate permissions that are no longer requested
+        DB::table('PERMISOS_USUARIO')
+            ->where('USUARIO_ID', $usuario->ID)
+            ->whereNotIn('PERMISOS_ID', $permisosSolicitados)
+            ->update(['ESTADO' => 'INACTIVO', 'FECHA_MOD' => now()]);
+
+        // Activate or insert requested permissions
+        foreach ($permisosSolicitados as $permId) {
+            if (in_array($permId, $todosPermisosHistoricos)) {
+                DB::table('PERMISOS_USUARIO')
+                    ->where('USUARIO_ID', $usuario->ID)
+                    ->where('PERMISOS_ID', $permId)
+                    ->update(['ESTADO' => 'ACTIVO', 'FECHA_MOD' => now()]);
+            } else {
+                DB::table('PERMISOS_USUARIO')->insert([
+                    'USUARIO_ID' => $usuario->ID,
+                    'PERMISOS_ID' => $permId,
+                    'ESTADO' => 'ACTIVO',
+                    'FECHA_MOD' => now()
+                ]);
+            }
+        }
+
+        return redirect('/usuarios')->with('success', 'Permisos del usuario actualizados correctamente.');
     }
 }

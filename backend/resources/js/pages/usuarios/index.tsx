@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, Key } from 'lucide-react';
+import { EditUserPermisosModal } from './components/edit-user-permisos-modal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -11,7 +13,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Index({ usuarios }: { usuarios: any[] }) {
+export default function Index({ usuarios, permisos = [] }: { usuarios: any[], permisos: any[] }) {
+    const [editingUser, setEditingUser] = useState<any | null>(null);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Usuarios" />
@@ -63,11 +67,22 @@ export default function Index({ usuarios }: { usuarios: any[] }) {
                                                 </div>
                                             </td>
                                             <td className="p-4 align-middle text-right">
-                                                <Button variant="outline" size="sm" asChild className="h-8 text-xs font-semibold">
-                                                    <Link href={`/usuarios/${usuario.ID}/editar`}>
-                                                        Modificar
-                                                    </Link>
-                                                </Button>
+                                                <div className="flex gap-2 justify-end">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        onClick={() => setEditingUser(usuario)} 
+                                                        className="h-8 text-xs font-semibold gap-1.5"
+                                                    >
+                                                        <Key className="h-3.5 w-3.5 text-neutral-500" /> 
+                                                        Permisos
+                                                    </Button>
+                                                    <Button variant="outline" size="sm" asChild className="h-8 text-xs font-semibold">
+                                                        <Link href={`/usuarios/${usuario.ID}/editar`}>
+                                                            Modificar
+                                                        </Link>
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -82,6 +97,12 @@ export default function Index({ usuarios }: { usuarios: any[] }) {
                         </table>
                     </div>
                 </div>
+
+                <EditUserPermisosModal 
+                    user={editingUser} 
+                    permisos={permisos} 
+                    onClose={() => setEditingUser(null)} 
+                />
             </div>
         </AppLayout>
     );

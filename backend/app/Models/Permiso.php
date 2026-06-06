@@ -12,7 +12,8 @@ class Permiso extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'NOMBRE'
+        'NOMBRE',
+        'MODULO_ID'
     ];
 
     public function usuarios(): BelongsToMany
@@ -25,5 +26,10 @@ class Permiso extends Model
     {
         return $this->belongsToMany(Rol::class, 'PERMISO_ROL', 'PERMISOS_ID', 'ROL_ID')
                     ->withPivot('ESTADO', 'FECHA_MOD');
+    }
+
+    public function modulo(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Modulo::class, 'MODULO_ID', 'ID');
     }
 }

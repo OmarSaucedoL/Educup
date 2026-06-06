@@ -8,15 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('PERMISOS', function (Blueprint $table) {
+        Schema::create('MODULO', function (Blueprint $table) {
             $table->id('ID');
-            $table->string('NOMBRE');
-            $table->foreignId('MODULO_ID')->constrained('MODULO', 'ID')->onDelete('cascade');
+            $table->string('NOMBRE')->unique();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('PERMISOS');
+        Schema::dropIfExists('MODULO');
     }
 };
