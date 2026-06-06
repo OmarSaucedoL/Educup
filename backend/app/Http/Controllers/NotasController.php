@@ -81,7 +81,8 @@ class NotasController extends Controller
 
         $estudiantesClase = EstudianteClase::where('ID_CLASE', $id_clase)
             ->with([
-                'estudianteCup.estudiante',
+                'estudianteCup.estudiante.colegio',
+                'estudianteCup.estudiante.ciudad',
                 'calificaciones'
             ])
             ->get();

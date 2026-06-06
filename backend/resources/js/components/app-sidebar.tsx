@@ -31,18 +31,6 @@ const mainNavItems: NavItem[] = [
                 url: '/estudiantes',
             },
             {
-                title: 'Materias',
-                url: '/materias',
-            },
-            {
-                title: 'Horarios',
-                url: '/horarios',
-            },
-            {
-                title: 'Aulas',
-                url: '/aulas',
-            },
-            {
                 title: 'Grupos',
                 url: '/clases',
             },
@@ -54,8 +42,31 @@ const mainNavItems: NavItem[] = [
         icon: BookMarked,
         items: [
             {
-                title: 'Clases',
+                title: 'Registrar Notas',
                 url: '/notas/clases',
+            },
+            {
+                title: 'Reportes',
+                url: '/reportes',
+            },
+        ],
+    },
+    {
+        title: 'Módulo Infraestructura',
+        url: '#',
+        icon: Folder,
+        items: [
+            {
+                title: 'Materias',
+                url: '/materias',
+            },
+            {
+                title: 'Horarios',
+                url: '/horarios',
+            },
+            {
+                title: 'Aulas',
+                url: '/aulas',
             },
         ],
     },

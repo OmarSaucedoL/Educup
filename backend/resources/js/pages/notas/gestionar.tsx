@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { AlertTriangle, BookMarked, BookOpen, CheckCircle2, ChevronLeft, Plus, Save, Search, Sliders, Trash2, User, Users } from 'lucide-react';
+import { AlertTriangle, BookMarked, BookOpen, CheckCircle2, ChevronLeft, Plus, Save, Search, Sliders, Trash2, User, Users, FileSpreadsheet, Printer } from 'lucide-react';
 import { useState } from 'react';
 
 interface GestionarNotasProps {
@@ -197,6 +197,70 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
             return String(studentA.NOMBRE || '').localeCompare(String(studentB.NOMBRE || ''), undefined, { sensitivity: 'base' });
         });
 
+    const exportEstudiantes = () => {
+        let csvContent = "\uFEFF"; // UTF-8 BOM
+        const headers = ["Carnet (CI)", "Apellidos y Nombres"];
+        csvContent += headers.join(";") + "\r\n";
+        
+        filteredStudents.forEach(ec => {
+            const student = ec.estudiante_cup?.estudiante || ec.estudianteCup?.estudiante;
+            if (student) {
+                const row = [
+                    student.CARNET,
+                    `${student.APELLIDO} ${student.NOMBRE}`
+                ];
+                csvContent += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(";") + "\r\n";
+            }
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `estudiantes_materia_${clase.materia?.SIGLA ?? 'materia'}_grupo_${clase.grupo?.NOMBRE ?? 'grupo'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    const exportNotasExcel = () => {
+        let csvContent = "\uFEFF"; // UTF-8 BOM
+        const compHeaders = components.map(c => `${c.nombre} (${c.ponderacion}%)`);
+        const headers = ["Carnet (CI)", "Postulante", ...compHeaders, "Nota Final", "Estado"];
+        csvContent += headers.join(";") + "\r\n";
+        
+        filteredStudents.forEach(ec => {
+            const student = ec.estudiante_cup?.estudiante || ec.estudianteCup?.estudiante;
+            if (student) {
+                const finalGrade = calculateFinalGrade(ec.ID);
+                const isApproved = finalGrade >= 51;
+                const studentGrades = grades[ec.ID] || {};
+                
+                const row = [
+                    student.CARNET,
+                    `${student.APELLIDO} ${student.NOMBRE}`,
+                    ...components.map(c => studentGrades[c.nombre] || '0'),
+                    finalGrade.toFixed(1),
+                    isApproved ? 'Aprobado' : 'Reprobado'
+                ];
+                csvContent += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(";") + "\r\n";
+            }
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `notas_materia_${clase.materia?.SIGLA ?? 'materia'}_grupo_${clase.grupo?.NOMBRE ?? 'grupo'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!isWeightBalanced) {
@@ -239,6 +303,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
             <Head title={`Gestionar Notas — ${clase.materia?.NOMBRE}`} />
 
             <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col gap-6 rounded-xl p-4">
+
                 {/* ── Header ── */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-4">
@@ -288,7 +353,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                 </div>
 
                 {!isCupEnCurso && (
-                    <div className="flex items-start gap-3 rounded-xl border border-amber-250 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/20 p-4 text-amber-800 dark:text-amber-400 shadow-xs">
+                    <div className="flex items-start gap-3 rounded-xl border border-amber-250 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/20 p-4 text-amber-800 dark:text-amber-400 shadow-xs print:hidden">
                         <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
                         <div>
                             <h4 className="text-sm font-semibold">Modo de Solo Lectura</h4>
@@ -301,7 +366,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                 )}
 
                 {/* ── Configuración de Ponderaciones ── */}
-                <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
+                <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50 print:hidden">
                     <div
                         onClick={() => setShowConfig(!showConfig)}
                         className="flex cursor-pointer items-center justify-between border-b border-neutral-100 p-4 transition-colors select-none hover:bg-neutral-50 dark:border-neutral-800/80 dark:hover:bg-neutral-900/30"
@@ -390,18 +455,48 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
 
                 {/* ── Planilla de Calificaciones ── */}
                 <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
-                    {/* Filtros de Planilla */}
-                    <div className="flex flex-col justify-between gap-3 border-b border-neutral-100 p-4 sm:flex-row sm:items-center dark:border-neutral-800/80">
+                    {/* Filtros de Planilla y Exportación */}
+                    <div className="flex flex-col gap-3 border-b border-neutral-100 p-4 md:flex-row md:items-center md:justify-between dark:border-neutral-800/80">
                         <span className="text-sm font-bold text-neutral-800 dark:text-neutral-200">Planilla de Notas</span>
-                        <div className="relative w-full sm:w-64">
-                            <Search className="absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
-                            <input
-                                type="text"
-                                placeholder="Buscar postulante..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full rounded-lg border border-neutral-200 bg-white py-1.5 pr-3 pl-9 text-sm text-neutral-900 shadow-xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-neutral-100"
-                            />
+                        
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Buscar */}
+                            <div className="relative w-full sm:w-64">
+                                <Search className="absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar postulante..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full rounded-lg border border-neutral-200 bg-white py-1.5 pr-3 pl-9 text-sm text-neutral-900 shadow-xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-neutral-100"
+                                />
+                            </div>
+
+                            {/* Exportar Lista de Estudiantes (Excel) */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={exportEstudiantes}
+                                className="flex items-center gap-1.5 h-8 font-semibold text-xs border-neutral-200 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                            >
+                                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                                Excel Lista
+                            </Button>
+
+                            {/* Exportar Planilla de Notas (Excel) */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={exportNotasExcel}
+                                className="flex items-center gap-1.5 h-8 font-semibold text-xs border-neutral-200 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                            >
+                                <FileSpreadsheet className="h-4 w-4 text-blue-600" />
+                                Excel Notas
+                            </Button>
+
+
                         </div>
                     </div>
 
@@ -433,7 +528,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                             const student = ec.estudiante_cup?.estudiante || ec.estudianteCup?.estudiante;
                                             const finalGrade = calculateFinalGrade(ec.ID);
                                             const isApproved = finalGrade >= 51;
-
+ 
                                             return (
                                                 <tr key={ec.ID} className="transition-colors hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10">
                                                     <td className="p-4 align-middle font-medium text-neutral-600 dark:text-neutral-400">
@@ -444,12 +539,9 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                             <span className="font-bold text-neutral-800 dark:text-neutral-200">
                                                                 {student ? `${student.APELLIDO} ${student.NOMBRE}` : 'Estudiante Desconocido'}
                                                             </span>
-                                                            <span className="mt-0.5 text-[10px] tracking-wide text-neutral-400 uppercase">
-                                                                Inscripción #{ec.ID}
-                                                            </span>
                                                         </div>
                                                     </td>
-
+ 
                                                     {/* Notas individuales de evaluación */}
                                                     {components.map((comp, idx) => {
                                                         const currentVal = grades[ec.ID]?.[comp.nombre] ?? '';
@@ -463,12 +555,12 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                                         onChange={(e) => handleGradeChange(ec.ID, comp.nombre, e.target.value)}
                                                                         className="w-20 rounded-md border border-neutral-200 bg-white px-1 py-1.5 text-center text-sm font-semibold text-neutral-900 shadow-2xs focus:ring-1 focus:ring-neutral-900 focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-neutral-100 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral-50 dark:disabled:bg-neutral-950"
                                                                         placeholder="0.0"
-                                                                    />
-                                                                </div>
+                                                                     />
+                                                                 </div>
                                                             </td>
                                                         );
                                                     })}
-
+ 
                                                     {/* Nota Final */}
                                                     <td className="p-4 text-center align-middle text-base font-bold">
                                                         <span
@@ -479,7 +571,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                             {finalGrade.toFixed(1)}
                                                         </span>
                                                     </td>
-
+ 
                                                     {/* Estado */}
                                                     <td className="p-4 text-center align-middle">
                                                         <span
