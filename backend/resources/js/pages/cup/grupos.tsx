@@ -13,8 +13,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
-export default function VerClasesPage({ cup }: { cup: any }) {
+export default function VerClasesPage({ cup, cupsList = [] }: { cup: any, cupsList?: any[] }) {
     const todasLasClases: any[] = cup.clases ?? [];
     const [isProcessing, setIsProcessing] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -92,18 +99,38 @@ export default function VerClasesPage({ cup }: { cup: any }) {
                         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900/60">
                             <BookOpen className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
                         </div>
-                        <div>
+                        <div className="flex flex-col justify-center">
                             <h1 className="text-2xl font-bold tracking-tight">Grupos del CUP</h1>
-                            <p className="text-muted-foreground mt-0.5 text-sm">
-                                Periodo: {cup.ANIO} - {cup.SEMESTRE}
-                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-muted-foreground text-sm">Periodo:</span>
+                                {cupsList && cupsList.length > 0 ? (
+                                    <Select 
+                                        value={cup.ID_CUP.toString()} 
+                                        onValueChange={(val) => router.get(`/cup/${val}/clases`)}
+                                    >
+                                        <SelectTrigger className="h-7 border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 text-sm py-0 w-[200px]">
+                                            <SelectValue placeholder="Seleccionar CUP" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {cupsList.map((c: any) => (
+                                                <SelectItem key={c.ID_CUP} value={c.ID_CUP.toString()}>
+                                                    {c.ANIO} - {c.SEMESTRE} {c.ESTADO === 'Concluido' ? '(Concluido)' : ''}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <span className="text-sm font-medium">{cup.ANIO} - {cup.SEMESTRE}</span>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <Button 
                             variant="default" 
                             onClick={() => setShowConfirmDialog(true)} 
-                            disabled={isProcessing}
+                            disabled={isProcessing || cup.ESTADO === 'Concluido'}
+                            title={cup.ESTADO === 'Concluido' ? 'Acción no permitida en CUP concluido' : ''}
                             className="gap-1.5 text-sm font-semibold bg-neutral-900 text-neutral-50 hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
                         >
                             <UserCheck className="h-4 w-4" /> 
@@ -112,7 +139,8 @@ export default function VerClasesPage({ cup }: { cup: any }) {
                         <Button 
                             variant="outline"
                             onClick={() => setShowRemoverDialog(true)}
-                            disabled={isProcessing}
+                            disabled={isProcessing || cup.ESTADO === 'Concluido'}
+                            title={cup.ESTADO === 'Concluido' ? 'Acción no permitida en CUP concluido' : ''}
                             className="gap-1.5 text-sm font-semibold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-950/40"
                         >
                             <UserX className="h-4 w-4" />

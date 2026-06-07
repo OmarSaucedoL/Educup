@@ -368,8 +368,13 @@ class CUPController extends Controller
             }
         ])->findOrFail($id);
 
+        $cupsList = Cup::select('ID_CUP', 'ANIO', 'SEMESTRE', 'ESTADO')
+            ->orderBy('ID_CUP', 'desc')
+            ->get();
+
         return inertia('cup/grupos', [
             'cup' => $cup,
+            'cupsList' => $cupsList,
         ]);
     }
 
@@ -389,11 +394,136 @@ class CUPController extends Controller
             ])
             ->get();
 
+        // Obtener estudiantes inscritos en el CUP que no tienen ningún grupo asignado
+        $estudiantesSinGrupo = \App\Models\EstudianteCup::where('ID_CUP', $id)
+            ->where('ESTADO', 'INSCRITO')
+            ->whereDoesntHave('clases')
+            ->with('estudiante')
+            ->get();
+
+        // Obtener docentes disponibles (solo los que pertenecen a este CUP y tienen materias autorizadas)
+        $docentesAutorizados = \App\Models\DocenteCupMat::whereHas('docenteCup', function($q) use ($id) {
+            $q->where('ID_CUP', $id);
+        })
+        ->with('docenteCup.docente.usuario')
+        ->get();
+
+        $docentesPorMateria = $docentesAutorizados->groupBy('MATERIA_ID')->map(function ($items) {
+            return $items->map(function ($item) {
+                return $item->docenteCup;
+            });
+        });
+
         return inertia('cup/grupoDetalles', [
             'cup' => $cup,
             'grupo' => $grupo,
-            'clases' => $clases
+            'clases' => $clases,
+            'estudiantesSinGrupo' => $estudiantesSinGrupo,
+            'docentesPorMateria' => $docentesPorMateria
         ]);
+    }
+
+    public function asignarDocenteClase(Request $request, string $id, string $claseId)
+    {
+        if (Cup::findOrFail($id)->ESTADO === 'Concluido') {
+            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        }
+
+        $validated = $request->validate([
+            'docente_cup_id' => 'required|integer|exists:DOCENTE_CUP,ID'
+        ]);
+
+        try {
+            DB::statement('CALL public.p_asignar_docente_clase(?, ?, ?)', [
+                (int)$id,
+                (int)$claseId,
+                (int)$validated['docente_cup_id']
+            ]);
+            return back()->with('success', 'Docente asignado correctamente a la clase.');
+        } catch (\Exception $e) {
+            // Formatear mensaje de error omitiendo los códigos internos de SQL
+            $mensaje = preg_replace('/SQLSTATE\[\w+\]: [^:]+: \d+ ERROR:  /', '', $e->getMessage());
+            $mensaje = explode("\n", $mensaje)[0]; // Obtener solo la primera línea del error
+            return back()->withErrors(['error' => $mensaje]);
+        }
+    }
+
+    public function removerDocenteClase(string $id, string $claseId)
+    {
+        if (Cup::findOrFail($id)->ESTADO === 'Concluido') {
+            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        }
+
+        $clase = Clase::where('ID_CUP', $id)->findOrFail($claseId);
+        $clase->update(['DOCENTE_CUP_ID' => null]);
+        
+        return back()->with('success', 'Docente removido de la clase correctamente.');
+    }
+
+    public function agregarEstudianteGrupo(Request $request, string $id, string $grupoId)
+    {
+        if (Cup::findOrFail($id)->ESTADO === 'Concluido') {
+            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        }
+
+        $validated = $request->validate([
+            'estudiante_cup_id' => 'required|integer|exists:ESTUDIANTE_CUP,ID'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $clasesIds = Clase::where('ID_CUP', $id)->where('ID_GRUPO', $grupoId)->pluck('ID_CLASE');
+            if ($clasesIds->isEmpty()) {
+                throw new \Exception("El grupo no tiene clases asignadas.");
+            }
+
+            $estudianteCupId = $validated['estudiante_cup_id'];
+
+            // Insertar estudiante en todas las clases del grupo
+            foreach ($clasesIds as $claseId) {
+                \App\Models\EstudianteClase::firstOrCreate([
+                    'ESTUDIANTE_CUP_ID' => $estudianteCupId,
+                    'ID_CLASE' => $claseId,
+                ], [
+                    'ESTADO' => 'CURSANDO',
+                    'FECHA_CREACION' => now()
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Estudiante añadido al grupo correctamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error añadiendo estudiante al grupo: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Error al añadir el estudiante: ' . $e->getMessage()]);
+        }
+    }
+
+    public function removerEstudianteGrupo(string $id, string $grupoId, string $estudianteId)
+    {
+        if (Cup::findOrFail($id)->ESTADO === 'Concluido') {
+            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $clasesIds = Clase::where('ID_CUP', $id)->where('ID_GRUPO', $grupoId)->pluck('ID_CLASE');
+            
+            if ($clasesIds->isNotEmpty()) {
+                \App\Models\EstudianteClase::whereIn('ID_CLASE', $clasesIds)
+                    ->where('ESTUDIANTE_CUP_ID', $estudianteId)
+                    ->delete();
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Estudiante removido del grupo correctamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error removiendo estudiante del grupo: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Error al remover el estudiante: ' . $e->getMessage()]);
+        }
     }
 
     /**
@@ -401,6 +531,10 @@ class CUPController extends Controller
      */
     public function asignarDocentes(Request $request, string $id)
     {
+        if (Cup::findOrFail($id)->ESTADO === 'Concluido') {
+            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        }
+
         $validated = $request->validate([
             'asignaciones'                  => 'present|array',
             'asignaciones.*.CODIGO_DOCENTE' => 'required|integer|exists:DOCENTE,CODIGO_DOCENTE',
@@ -538,117 +672,29 @@ class CUPController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
+            $carrerasIds = '{' . implode(',', collect($validated['carreras'])->pluck('ID_CARRERA')->toArray()) . '}';
+            $carrerasCupos = '{' . implode(',', collect($validated['carreras'])->pluck('CUPOS')->toArray()) . '}';
+            $materiasIds = '{' . implode(',', $validated['materias']) . '}';
 
             $totalCupos = collect($validated['carreras'])->sum('CUPOS');
 
-            $cup->update([
-                'ANIO' => $validated['ANIO'],
-                'SEMESTRE' => $validated['SEMESTRE'],
-                'NOTA_MINIMA' => $validated['NOTA_MINIMA'],
-                'CUPOS' => $totalCupos,
-                'FECHA_INICIO' => $validated['FECHA_INICIO'],
-                'FECHA_FIN' => $validated['FECHA_FIN'],
-                'USUARIO_ID' => $validated['USUARIO_ID'],
-                'ESTADO' => $validated['ESTADO'],
+            DB::statement('CALL public.p_actualizar_cup(?, ?, ?, ?, ?, ?, ?, ?, ?, ?::bigint[], ?::integer[], ?::bigint[])', [
+                (int)$cup->ID_CUP,
+                (int)$validated['ANIO'],
+                (int)$validated['SEMESTRE'],
+                (float)$validated['NOTA_MINIMA'],
+                (int)$totalCupos,
+                $validated['FECHA_INICIO'],
+                $validated['FECHA_FIN'],
+                (int)$validated['USUARIO_ID'],
+                $validated['ESTADO'],
+                $carrerasIds,
+                $carrerasCupos,
+                $materiasIds
             ]);
-
-            // Recalculate student approval status in this CUP if the minimum grade changed
-            $newNotaMinima = (float)$validated['NOTA_MINIMA'];
-            $claseIds = Clase::where('ID_CUP', $cup->ID_CUP)->pluck('ID_CLASE');
-            
-            // 1. Recalculate ESTUDIANTES_CLASE grades status
-            $estClases = \App\Models\EstudianteClase::whereIn('ID_CLASE', $claseIds)->get();
-            foreach ($estClases as $ec) {
-                if (!is_null($ec->NOTA_FINAL)) {
-                    $nuevoEstado = (float)$ec->NOTA_FINAL >= $newNotaMinima ? 'APROBADO' : 'REPROBADO';
-                    if ($ec->ESTADO !== $nuevoEstado) {
-                        $ec->update(['ESTADO' => $nuevoEstado]);
-                    }
-                }
-            }
-            
-            // 2. Recalculate ESTUDIANTE_CUP overall status
-            $estudianteCups = \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)->get();
-            foreach ($estudianteCups as $eCup) {
-                $estClasesStudent = \App\Models\EstudianteClase::where('ESTUDIANTE_CUP_ID', $eCup->ID)->get();
-                
-                if ($estClasesStudent->isEmpty()) {
-                    if (!is_null($eCup->NOTA_FINAL)) {
-                        $nuevoEstadoCup = (float)$eCup->NOTA_FINAL >= $newNotaMinima ? 'APROBADO' : 'REPROBADO';
-                        if ($eCup->ESTADO !== $nuevoEstadoCup) {
-                            $eCup->update(['ESTADO' => $nuevoEstadoCup]);
-                        }
-                    }
-                    continue;
-                }
-                
-                $hasFailed = $estClasesStudent->contains('ESTADO', 'REPROBADO');
-                $hasPending = $estClasesStudent->contains(fn($c) => is_null($c->NOTA_FINAL));
-                
-                if ($hasFailed) {
-                    $nuevoEstadoCup = 'REPROBADO';
-                } elseif ($hasPending) {
-                    $nuevoEstadoCup = 'INSCRITO';
-                } else {
-                    $nuevoEstadoCup = 'APROBADO';
-                }
-                
-                if ($eCup->ESTADO !== $nuevoEstadoCup) {
-                    $eCup->update(['ESTADO' => $nuevoEstadoCup]);
-                }
-            }
-
-            // Sync CarreraCup keeping existing IDs to prevent deleting student options due to cascade deletes
-            $existingCarreras = CarreraCup::where('ID_CUP', $cup->ID_CUP)->get()->keyBy('ID_CARRERA');
-            $newCarrerasInput = collect($validated['carreras'])->keyBy('ID_CARRERA');
-
-            // 1. Delete careers that are no longer offered
-            foreach ($existingCarreras as $idCarrera => $cc) {
-                if (!$newCarrerasInput->has($idCarrera)) {
-                    $cc->delete();
-                }
-            }
-
-            // 2. Update or Create careers
-            foreach ($newCarrerasInput as $idCarrera => $carreraData) {
-                if ($existingCarreras->has($idCarrera)) {
-                    $existingCarreras[$idCarrera]->update([
-                        'CUPOS' => $carreraData['CUPOS']
-                    ]);
-                } else {
-                    CarreraCup::create([
-                        'ID_CUP' => $cup->ID_CUP,
-                        'ID_CARRERA' => $idCarrera,
-                        'CUPOS' => $carreraData['CUPOS']
-                    ]);
-                }
-            }
-
-            // Sync MateriaCup keeping existing IDs
-            $existingMaterias = MateriaCup::where('ID_CUP', $cup->ID_CUP)->get()->keyBy('ID_MATERIA');
-            $newMateriasInput = collect($validated['materias']);
-
-            foreach ($existingMaterias as $idMateria => $mc) {
-                if (!$newMateriasInput->contains($idMateria)) {
-                    $mc->delete();
-                }
-            }
-
-            foreach ($newMateriasInput as $materiaId) {
-                if (!$existingMaterias->has($materiaId)) {
-                    MateriaCup::create([
-                        'ID_CUP' => $cup->ID_CUP,
-                        'ID_MATERIA' => $materiaId
-                    ]);
-                }
-            }
-
-            DB::commit();
 
             return redirect('/cup')->with('success', 'CUP actualizado correctamente.');
         } catch (\Exception $e) {
-            DB::rollBack();
             return back()->withErrors(['error' => 'Error al actualizar el CUP: ' . $e->getMessage()]);
         }
     }
@@ -754,12 +800,99 @@ class CUPController extends Controller
         }
     }
 
+    public function asignarRezagados(string $idCup)
+    {
+        try {
+            $pdo  = DB::getPdo();
+            $stmt = $pdo->prepare('CALL public.p_asignar_rezagados(?, NULL, NULL)');
+            $stmt->execute([(int) $idCup]);
+
+            $result    = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $asignados = $result['p_asignados'] ?? 0;
+            $sinCupo   = $result['p_sin_cupo'] ?? 0;
+
+            if ($asignados === 0 && $sinCupo === 0) {
+                return redirect("/cup/{$idCup}")->with('success', 'No hay estudiantes rezagados para asignar.');
+            }
+
+            $mensaje = "Se asignaron {$asignados} estudiantes rezagados a grupos existentes.";
+            if ($sinCupo > 0) {
+                $mensaje .= " Sin embargo, {$sinCupo} estudiantes no pudieron ser asignados porque los grupos están llenos. Deberá crear más grupos o aumentar el límite máximo.";
+                return redirect("/cup/{$idCup}")->with('success', $mensaje)->with('warning', true);
+            }
+
+            return redirect("/cup/{$idCup}")->with('success', $mensaje);
+        } catch (\PDOException $e) {
+            $mensaje = $e->getMessage();
+            if (preg_match('/ERROR:\s*(.+?)(?:\n|CONTEXT|$)/i', $mensaje, $m)) {
+                $mensaje = trim($m[1]);
+            }
+            \Log::error('Error en p_asignar_rezagados: ' . $e->getMessage());
+            return redirect("/cup/{$idCup}")->withErrors(['error' => $mensaje]);
+        } catch (\Exception $e) {
+            \Log::error('Error inesperado en asignarRezagados: ' . $e->getMessage());
+            return redirect("/cup/{$idCup}")->withErrors(['error' => 'Error inesperado: ' . $e->getMessage()]);
+        }
+    }
+
+    public function resetearPaqueteClases(string $idCup)
+    {
+        try {
+            DB::statement('CALL public.p_resetear_paquete_clases(?)', [(int)$idCup]);
+
+            return redirect("/cup/{$idCup}")->with(
+                'success',
+                'Todas las clases y grupos del CUP han sido reseteados correctamente.'
+            );
+        } catch (\PDOException $e) {
+            $mensaje = $e->getMessage();
+            if (preg_match('/ERROR:\s*(.+?)(?:\n|CONTEXT|$)/i', $mensaje, $m)) {
+                $mensaje = trim($m[1]);
+            }
+            \Log::error('Error en p_resetear_paquete_clases: ' . $e->getMessage());
+            return redirect("/cup/{$idCup}")->withErrors(['error' => $mensaje]);
+        } catch (\Exception $e) {
+            \Log::error('Error inesperado en resetearPaqueteClases: ' . $e->getMessage());
+            return redirect("/cup/{$idCup}")->withErrors(['error' => 'Error inesperado: ' . $e->getMessage()]);
+        }
+    }
+
+    public function modificarCapacidadGrupos(Request $request, string $idCup)
+    {
+        $validated = $request->validate([
+            'est_min' => 'required|integer|min:1',
+            'est_max' => 'required|integer|gte:est_min'
+        ]);
+
+        try {
+            $grupoIds = Clase::where('ID_CUP', $idCup)->pluck('ID_GRUPO')->unique();
+            
+            if ($grupoIds->isEmpty()) {
+                return back()->withErrors(['error' => 'No existen grupos creados para este CUP.']);
+            }
+
+            \App\Models\Grupo::whereIn('ID_GRUPO', $grupoIds)->update([
+                'EST_MIN' => $validated['est_min'],
+                'EST_MAX' => $validated['est_max']
+            ]);
+
+            return back()->with('success', 'Capacidad modificada exitosamente para todos los grupos de este CUP.');
+        } catch (\Exception $e) {
+            \Log::error('Error en modificarCapacidadGrupos: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error inesperado: ' . $e->getMessage()]);
+        }
+    }
+
 
     /**
      * Llama al procedimiento de asignación automática de docentes para el CUP.
      */
     public function asignacionAutomatica(string $idCup)
     {
+        if (Cup::findOrFail($idCup)->ESTADO === 'Concluido') {
+            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        }
+
         try {
             DB::statement('CALL public.p_asignacion_automatica_docentes_cup(?)', [(int)$idCup]);
 
@@ -786,6 +919,10 @@ class CUPController extends Controller
      */
     public function removerDocentes(string $idCup)
     {
+        if (Cup::findOrFail($idCup)->ESTADO === 'Concluido') {
+            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        }
+
         try {
             $affected = DB::table('CLASE')
                 ->where('ID_CUP', (int)$idCup)

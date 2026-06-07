@@ -136,6 +136,14 @@ class UsuarioController extends Controller
                     'FECHA_MOD' => now()
                 ]);
             }
+
+            // Logic to create a Docente record if the role is Docente
+            $rol = \App\Models\Rol::find($usuario->ROL_ID);
+            if ($rol && str_contains(strtoupper($rol->NOMBRE), 'DOCENTE')) {
+                \App\Models\Docente::firstOrCreate([
+                    'CODIGO_DOCENTE' => $usuario->ID
+                ]);
+            }
         }
 
         return redirect('/usuarios')->with('success', 'Usuario creado correctamente.');
@@ -194,6 +202,15 @@ class UsuarioController extends Controller
         }
 
         $usuario->update($validated);
+
+        if ($usuario->ROL_ID) {
+            $rol = \App\Models\Rol::find($usuario->ROL_ID);
+            if ($rol && str_contains(strtoupper($rol->NOMBRE), 'DOCENTE')) {
+                \App\Models\Docente::firstOrCreate([
+                    'CODIGO_DOCENTE' => $usuario->ID
+                ]);
+            }
+        }
 
         return redirect('/usuarios')->with('success', 'Usuario actualizado correctamente.');
     }

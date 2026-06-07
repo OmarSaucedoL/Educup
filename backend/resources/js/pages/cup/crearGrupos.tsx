@@ -1,13 +1,14 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { 
     Users, Clock, 
     ChevronLeft, AlertCircle, Save,
-    Calculator, CheckSquare, Square
+    Calculator, CheckSquare, Square, RefreshCcw, Trash2
 } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface CrearGruposProps {
     cup: any;
@@ -23,6 +24,12 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
         EST_MAX: 40,
         turnos: [] as string[],
     });
+
+    const [isActionProcessing, setIsActionProcessing] = useState(false);
+    
+    // State to control open/close manually
+    const [openRezagados, setOpenRezagados] = useState(false);
+    const [openReset, setOpenReset] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Gestión Académica', href: '#' },
@@ -44,7 +51,38 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
         post(`/cup/${cup.ID_CUP}/clases`);
     };
 
-    const isSubmitDisabled = data.turnos.length === 0 || data.EST_MIN < 1 || data.EST_MAX < data.EST_MIN || processing;
+    const handleAsignarRezagados = () => {
+        setIsActionProcessing(true);
+        router.post(`/cup/${cup.ID_CUP}/clases/rezagados`, {}, {
+            onFinish: () => {
+                setIsActionProcessing(false);
+                setOpenRezagados(false);
+            }
+        });
+    };
+
+    const handleResetearGrupos = () => {
+        setIsActionProcessing(true);
+        router.delete(`/cup/${cup.ID_CUP}/clases`, {
+            onFinish: () => {
+                setIsActionProcessing(false);
+                setOpenReset(false);
+            }
+        });
+    };
+
+    const handleModificarCapacidad = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsActionProcessing(true);
+        router.put(`/cup/${cup.ID_CUP}/grupos/capacidad`, {
+            est_min: data.EST_MIN,
+            est_max: data.EST_MAX
+        }, {
+            onFinish: () => setIsActionProcessing(false)
+        });
+    };
+
+    const isSubmitDisabled = data.turnos.length === 0 || data.EST_MIN < 1 || data.EST_MAX < data.EST_MIN || processing || isActionProcessing;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -159,9 +197,25 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
                                     {errors.EST_MAX && <p className="text-xs text-red-600 font-medium">{errors.EST_MAX}</p>}
                                 </div>
                             </div>
+                            
                             <p className="text-xs text-neutral-500 mt-2">
                                 Los estudiantes sobrantes se asignarán a un grupo nuevo solo si superan el tamaño mínimo.
                             </p>
+
+                            {conGrupo > 0 && (
+                                <div className="pt-2">
+                                    <Button 
+                                        type="button" 
+                                        onClick={handleModificarCapacidad}
+                                        variant="outline" 
+                                        className="w-full border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 font-medium"
+                                        disabled={processing || isActionProcessing || data.EST_MIN < 1 || data.EST_MAX < data.EST_MIN}
+                                    >
+                                        <Calculator className="h-4 w-4 mr-2" />
+                                        Modificar Capacidad a Grupos Existentes
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Turnos / Horarios */}
@@ -224,18 +278,86 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
                     </div>
 
                     {/* Acciones */}
-                    <div className="flex items-center justify-end gap-4 pt-4">
-                        <Button type="button" variant="ghost" onClick={() => reset()} disabled={processing}>
-                            Restablecer
-                        </Button>
-                        <Button 
-                            type="submit" 
-                            disabled={isSubmitDisabled} 
-                            className="bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 shadow-sm font-bold px-8"
-                        >
-                            <Calculator className="h-4 w-4 mr-2" />
-                            {processing ? 'Procesando...' : 'Ejecutar Algoritmo de Grupos'}
-                        </Button>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            {conGrupo > 0 && sinGrupo > 0 && (
+                                <Dialog open={openRezagados} onOpenChange={setOpenRezagados}>
+                                    <DialogTrigger asChild>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 w-full sm:w-auto"
+                                            disabled={processing || isActionProcessing}
+                                        >
+                                            <Users className="h-4 w-4 mr-2" />
+                                            Asignar Rezagados
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogTitle>Asignar estudiantes rezagados</DialogTitle>
+                                        <DialogDescription>
+                                            ¿Estás seguro que deseas asignar a los {sinGrupo} estudiantes sin grupo a los grupos existentes que tengan cupos libres?
+                                        </DialogDescription>
+                                        <DialogFooter>
+                                            <Button variant="ghost" onClick={() => setOpenRezagados(false)} disabled={isActionProcessing}>
+                                                Cancelar
+                                            </Button>
+                                            <Button onClick={handleAsignarRezagados} disabled={isActionProcessing} className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600">
+                                                Confirmar Asignación
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+
+
+                            {conGrupo > 0 && (
+                                <Dialog open={openReset} onOpenChange={setOpenReset}>
+                                    <DialogTrigger asChild>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/40 w-full sm:w-auto"
+                                            disabled={processing || isActionProcessing}
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Resetear Grupos
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogTitle>Resetear todos los grupos</DialogTitle>
+                                        <DialogDescription className="text-red-600 dark:text-red-400 font-medium">
+                                            ATENCIÓN: Se eliminarán TODOS los grupos y clases creados para este CUP. Los estudiantes perderán su grupo asignado. ¿Deseas continuar?
+                                        </DialogDescription>
+                                        <DialogFooter>
+                                            <Button variant="ghost" onClick={() => setOpenReset(false)} disabled={isActionProcessing}>
+                                                Cancelar
+                                            </Button>
+                                            <Button variant="destructive" onClick={handleResetearGrupos} disabled={isActionProcessing}>
+                                                Sí, eliminar todo
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                            <Button type="button" variant="ghost" onClick={() => reset()} disabled={processing || isActionProcessing}>
+                                Restablecer
+                            </Button>
+                            
+                            {sinGrupo > 0 && (
+                                <Button 
+                                    type="submit" 
+                                    disabled={isSubmitDisabled} 
+                                    className="bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 shadow-sm font-bold px-8 w-full sm:w-auto"
+                                >
+                                    <Calculator className="h-4 w-4 mr-2" />
+                                    {processing ? 'Procesando...' : (conGrupo > 0 ? 'Generar Nuevos Grupos' : 'Ejecutar Algoritmo de Grupos')}
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
                 </form>

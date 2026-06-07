@@ -8,6 +8,10 @@ Route::get('/cup/crearCUP', [CUPController::class, 'create'])->middleware('permi
 Route::get('/cup/{id}', [CUPController::class, 'show'])->middleware('permiso:VER_CUP');
 Route::get('/cup/{id}/clases', [CUPController::class, 'clases'])->middleware('permiso:VER_CUP');
 Route::get('/cup/{id}/grupos/{grupoId}', [CUPController::class, 'grupoDetalles'])->middleware('permiso:VER_CUP');
+Route::post('/cup/{id}/grupos/{grupoId}/estudiantes', [CUPController::class, 'agregarEstudianteGrupo'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
+Route::delete('/cup/{id}/grupos/{grupoId}/estudiantes/{estudianteId}', [CUPController::class, 'removerEstudianteGrupo'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
+Route::put('/cup/{id}/clases/{claseId}/docente', [CUPController::class, 'asignarDocenteClase'])->middleware('permiso:ASIGNAR_DOCENTES_CUP');
+Route::delete('/cup/{id}/clases/{claseId}/docente', [CUPController::class, 'removerDocenteClase'])->middleware('permiso:ASIGNAR_DOCENTES_CUP');
 Route::post('/cup', [CUPController::class, 'store'])->middleware('permiso:GESTIONAR_CUP');
 Route::get('/cup/{id}/editar', [CUPController::class, 'edit'])->middleware('permiso:VER_CUP');
 Route::put('/cup/{id}', [CUPController::class, 'update'])->middleware('permiso:GESTIONAR_CUP');
@@ -20,6 +24,10 @@ Route::post('/cup/{id}/asignar-docentes-auto', [CUPController::class, 'asignacio
 Route::delete('/cup/{id}/remover-docentes', [CUPController::class, 'removerDocentes'])->middleware('permiso:ASIGNAR_DOCENTES_CUP');
 Route::get('/cup/{id}/clases/crear', [CUPController::class, 'crearClasesForm'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
 Route::post('/cup/{id}/clases', [CUPController::class, 'crearPaqueteClases'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
+Route::post('/cup/{id}/clases/rezagados', [CUPController::class, 'asignarRezagados'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
+Route::delete('/cup/{id}/clases', [CUPController::class, 'resetearPaqueteClases'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
+Route::put('/cup/{id}/grupos/capacidad', [CUPController::class, 'modificarCapacidadGrupos'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
+
 
 Route::get('/clases', function() {
     $cup = \App\Models\Cup::where('ESTADO', 'En curso')->orderBy('ID_CUP', 'desc')->first();

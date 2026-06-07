@@ -28,13 +28,21 @@ class UsuariosImport implements ToModel, WithHeadingRow
         }
 
         // Fase 2: Registro en la Tabla USUARIO
+        $username = strtoupper(trim($row['username'] ?? ''));
+        $correo = strtolower(trim($row['correo'] ?? ''));
+
+        // Si el usuario ya existe (por username o correo), lo saltamos silenciosamente
+        if (Usuario::where('USERNAME', $username)->orWhere('CORREO', $correo)->exists()) {
+            return null;
+        }
+
         $usuario = Usuario::create([
-            'USERNAME'       => strtoupper(trim($row['username'] ?? '')),
+            'USERNAME'       => $username,
             'CONTRASENIA'    => Hash::make($row['contrasenia'] ?? ''),
             'CARNET'         => strtoupper(trim($row['carnet'] ?? '')),
             'NOMBRE'         => strtoupper(trim($row['nombre'] ?? '')),
             'APELLIDO'       => strtoupper(trim($row['apellido'] ?? '')),
-            'CORREO'         => strtolower(trim($row['correo'] ?? '')),
+            'CORREO'         => $correo,
             'ESTADO'         => 1, // Por defecto ACTIVO (1)
             'FECHA_CREACION' => now(),
             'ROL_ID'         => $rol->ID,
