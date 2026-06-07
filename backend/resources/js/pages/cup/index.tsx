@@ -1,8 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Info } from 'lucide-react';
+import { Plus, Edit, Info, AlertCircle } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -15,19 +15,42 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Index({ cups }: { cups: any[] }) {
+export default function Index({ cups, hayActivo }: { cups: any[]; hayActivo: boolean }) {
+    const { props } = usePage<any>();
+    const flashError = props.flash?.error as string | undefined;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de CUP" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-2xl font-semibold tracking-tight">Gestión de CUP (Curso Universitario Pre-Facultativo)</h1>
-                    <Button asChild>
-                        <Link href="/cup/crearCUP">
-                            <Plus className="mr-2 h-4 w-4" /> Nuevo CUP
-                        </Link>
-                    </Button>
+                    <div className="relative group">
+                        <Button asChild={!hayActivo} disabled={hayActivo}>
+                            {hayActivo ? (
+                                <span className="inline-flex items-center gap-1.5 cursor-not-allowed opacity-50">
+                                    <Plus className="mr-2 h-4 w-4" /> Nuevo CUP
+                                </span>
+                            ) : (
+                                <Link href="/cup/crearCUP">
+                                    <Plus className="mr-2 h-4 w-4" /> Nuevo CUP
+                                </Link>
+                            )}
+                        </Button>
+                        {hayActivo && (
+                            <div className="absolute right-0 top-full mt-1.5 z-10 hidden group-hover:block w-64 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-700 shadow-md dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                                Ya existe un CUP activo. Debe concluirlo antes de crear uno nuevo.
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                {flashError && (
+                    <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        {flashError}
+                    </div>
+                )}
 
                 <div className="border-sidebar-border/70 dark:border-sidebar-border bg-card text-card-foreground relative flex-1 rounded-xl border shadow-sm">
                     <div className="relative w-full overflow-auto">
@@ -113,3 +136,4 @@ export default function Index({ cups }: { cups: any[] }) {
         </AppLayout>
     );
 }
+

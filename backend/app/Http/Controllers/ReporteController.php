@@ -26,75 +26,22 @@ class ReporteController extends Controller
 
         $estudiantes = [];
         if ($cup) {
-            // Consulta de estudiantes inscritos en el CUP actual, cargando sus relaciones de manera eficiente
-            $estudiantesRaw = EstudianteCup::where('ID_CUP', $cup->ID_CUP)
-                ->with([
-                    'estudiante.colegio',
-                    'estudiante.ciudad',
-                    'opcionesCarrera.carreraCup.carrera',
-                    'estudiantesClases.clase.materia'
-                ])
-                ->join('ESTUDIANTE', 'ESTUDIANTE_CUP.ID_ESTUDIANTE', '=', 'ESTUDIANTE.ID_ESTUDIANTE')
-                ->select('ESTUDIANTE_CUP.*')
-                ->orderBy('ESTUDIANTE.APELLIDO', 'asc')
-                ->orderBy('ESTUDIANTE.NOMBRE', 'asc')
-                ->get();
+            // Consulta de estudiantes inscritos en el CUP actual mediante función de base de datos
+            $estudiantesRaw = \Illuminate\Support\Facades\DB::select(
+                'SELECT * FROM public.f_obtener_lista_general_postulantes(?)',
+                [$cup->ID_CUP]
+            );
 
-            // Transformar la información para enviarla limpia al frontend React
-            $estudiantes = $estudiantesRaw->map(function ($ec) {
-                // Obtener nombres de las opciones de carrera
-                $opcion1 = null;
-                $opcion2 = null;
-                foreach ($ec->opcionesCarrera as $op) {
-                    if ($op->OPCION == 1) {
-                        $opcion1 = $op->carreraCup?->carrera?->NOMBRE ?? null;
-                    } elseif ($op->OPCION == 2) {
-                        $opcion2 = $op->carreraCup?->carrera?->NOMBRE ?? null;
-                    }
+            $estudiantes = array_map(function ($row) {
+                $row->id = (int)$row->id;
+                $row->carnet = (int)$row->carnet;
+                $row->nota_final = $row->nota_final !== null ? (float)$row->nota_final : null;
+                if ($row->preferencia_asignada !== null && is_numeric($row->preferencia_asignada)) {
+                    $row->preferencia_asignada = (int)$row->preferencia_asignada;
                 }
-
-                // Determinar el número de opción/preferencia de carrera que le fue asignada
-                $preferenciaAsignada = null;
-                if (!empty($ec->CARRERA)) {
-                    if ($opcion1 === $ec->CARRERA) {
-                        $preferenciaAsignada = 1;
-                    } elseif ($opcion2 === $ec->CARRERA) {
-                        $preferenciaAsignada = 2;
-                    } else {
-                        $preferenciaAsignada = 'Otro';
-                    }
-                }
-
-                // Mapear materias cursadas con sus respectivas notas en este CUP
-                $notasMaterias = $ec->estudiantesClases->map(function ($ecClase) {
-                    return [
-                        'materia' => $ecClase->clase?->materia?->NOMBRE ?? 'Desconocida',
-                        'materia_sigla' => $ecClase->clase?->materia?->SIGLA ?? '',
-                        'nota_final' => $ecClase->NOTA_FINAL !== null ? (float)$ecClase->NOTA_FINAL : null,
-                        'estado' => $ecClase->ESTADO
-                    ];
-                });
-
-                return [
-                    'id' => $ec->ID,
-                    'carnet' => $ec->estudiante?->CARNET,
-                    'nombre' => $ec->estudiante?->NOMBRE,
-                    'apellido' => $ec->estudiante?->APELLIDO,
-                    'nombre_completo' => trim(($ec->estudiante?->APELLIDO ?? '') . ' ' . ($ec->estudiante?->NOMBRE ?? '')),
-                    'correo' => $ec->estudiante?->CORREO,
-                    'telefono' => $ec->estudiante?->TELEFONO,
-                    'colegio' => $ec->estudiante?->colegio?->NOMBRE ?? 'No especificado',
-                    'ciudad' => $ec->estudiante?->ciudad?->NOMBRE ?? 'No especificada',
-                    'estado' => $ec->ESTADO,
-                    'nota_final' => $ec->NOTA_FINAL !== null ? (float)$ec->NOTA_FINAL : null,
-                    'carrera_asignada' => $ec->CARRERA,
-                    'preferencia_asignada' => $preferenciaAsignada,
-                    'opcion_1' => $opcion1 ?? 'Sin seleccionar',
-                    'opcion_2' => $opcion2 ?? 'Sin seleccionar',
-                    'notas_materias' => $notasMaterias,
-                    'fecha_inscripcion' => $ec->FECHA ? $ec->FECHA->format('d/m/Y') : 'No registrada',
-                ];
-            });
+                $row->notas_materias = json_decode($row->notas_materias);
+                return $row;
+            }, $estudiantesRaw);
 
             // Obtener estadísticas de carreras en el CUP desde la base de datos
             $estadisticasCarreras = \Illuminate\Support\Facades\DB::select(
@@ -121,10 +68,32 @@ class ReporteController extends Controller
                 $row->preferencia_asignada = $row->preferencia_asignada !== null ? (int)$row->preferencia_asignada : null;
                 return $row;
             }, $postulantesAprobadosRaw);
+
+            // Obtener postulantes reprobados desde la base de datos
+            $postulantesReprobadosRaw = \Illuminate\Support\Facades\DB::select(
+                'SELECT * FROM public.f_obtener_postulantes_reprobados(?)',
+                [$cup->ID_CUP]
+            );
+
+            $postulantesReprobados = array_map(function ($row) {
+                $row->id = (int)$row->id;
+                $row->carnet = (int)$row->carnet;
+                $row->nota_final = $row->nota_final !== null ? (float)$row->nota_final : null;
+                $row->notas_materias = json_decode($row->notas_materias);
+                return $row;
+            }, $postulantesReprobadosRaw);
+
+            // Obtener estadísticas de reprobados por materia desde la base de datos
+            $reprobadosPorMateria = \Illuminate\Support\Facades\DB::select(
+                'SELECT * FROM public.f_obtener_reprobados_por_materia(?)',
+                [$cup->ID_CUP]
+            );
         } else {
             $estadisticasCarreras = [];
             $distribucionAprobados = [];
             $postulantesAprobados = [];
+            $postulantesReprobados = [];
+            $reprobadosPorMateria = [];
         }
 
         return inertia('reportes/index', [
@@ -134,6 +103,8 @@ class ReporteController extends Controller
             'estadisticasCarreras' => $estadisticasCarreras,
             'distribucionAprobados' => $distribucionAprobados,
             'postulantesAprobados' => $postulantesAprobados,
+            'postulantesReprobados' => $postulantesReprobados,
+            'reprobadosPorMateria' => $reprobadosPorMateria,
         ]);
     }
 }

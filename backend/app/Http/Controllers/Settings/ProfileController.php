@@ -16,23 +16,11 @@ class ProfileController extends Controller
     /**
      * Instanciate a new controller instance.
      */
-    public function __construct()
-    {
-        // Enforce admin role
-        if (request()->route() && auth()->check() && auth()->user()->ROL_ID !== 1) {
-            abort(403, 'Solo el administrador puede acceder a la configuración de perfil.');
-        }
-    }
-
     /**
      * Show the user's profile settings page.
      */
     public function edit(Request $request): Response
     {
-        if ($request->user()->ROL_ID !== 1) {
-            abort(403, 'Solo el administrador puede acceder a la configuración de perfil.');
-        }
-
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
@@ -44,9 +32,6 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        if ($request->user()->ROL_ID !== 1) {
-            abort(403, 'Solo el administrador puede acceder a la configuración de perfil.');
-        }
 
         $request->user()->fill($request->validated());
 

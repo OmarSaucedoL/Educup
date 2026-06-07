@@ -7,17 +7,17 @@ import { Link, usePage } from '@inertiajs/react';
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Profile',
+        title: 'Perfil',
         url: '/settings/profile',
         icon: null,
     },
     {
-        title: 'Password',
+        title: 'Contraseña',
         url: '/settings/password',
         icon: null,
     },
     {
-        title: 'Appearance',
+        title: 'Aspecto',
         url: '/settings/appearance',
         icon: null,
     },
@@ -27,16 +27,11 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     const currentPath = window.location.pathname;
     const { auth } = usePage<SharedData>().props;
 
-    const visibleNavItems = sidebarNavItems.filter((item) => {
-        if (item.url === '/settings/profile') {
-            return auth.user.ROL_ID === 1;
-        }
-        return true;
-    });
+    const visibleNavItems = sidebarNavItems;
 
     return (
         <div className="px-4 py-6">
-            <Heading title="Settings" description="Manage your profile and account settings" />
+            <Heading title="Configuración" description="Administre la configuración de su perfil y cuenta" />
 
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">

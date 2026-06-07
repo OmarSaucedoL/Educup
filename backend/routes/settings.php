@@ -7,10 +7,7 @@ use Inertia\Inertia;
 
 Route::middleware('auth')->group(function () {
     Route::get('settings', function () {
-        if (auth()->user()->ROL_ID === 1) {
-            return redirect('settings/profile');
-        }
-        return redirect('settings/password');
+        return redirect('settings/profile');
     });
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');

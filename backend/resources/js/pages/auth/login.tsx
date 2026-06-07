@@ -3,6 +3,7 @@ import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
+import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,6 +59,15 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <div className="grid gap-2">
                         <div className="flex items-center">
                             <Label htmlFor="password">Contraseña</Label>
+                            {canResetPassword && (
+                                <TextLink
+                                    href={route('password.request')}
+                                    className="ml-auto text-sm"
+                                    tabIndex={5}
+                                >
+                                    ¿Olvidaste tu contraseña?
+                                </TextLink>
+                            )}
                         </div>
                         <Input
                             id="password"

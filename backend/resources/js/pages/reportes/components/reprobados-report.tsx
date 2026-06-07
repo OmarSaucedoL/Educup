@@ -29,7 +29,7 @@ interface StudentReportData {
 }
 
 interface ReprobadosReportProps {
-    estudiantes: StudentReportData[];
+    postulantesReprobados: StudentReportData[];
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     cup: {
@@ -38,15 +38,16 @@ interface ReprobadosReportProps {
         SEMESTRE: number;
         ESTADO: string;
     } | null;
+    reprobadosPorMateria?: Array<{ materia_nombre: string; cantidad_reprobados: number }>;
 }
 
-export default function ReprobadosReport({ estudiantes, searchQuery, setSearchQuery, cup }: ReprobadosReportProps) {
+export default function ReprobadosReport({ postulantesReprobados = [], searchQuery, setSearchQuery, cup, reprobadosPorMateria = [] }: ReprobadosReportProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 15;
 
-    // Filter students: state REPROBADO and search query
+    // Filter students: search query
     const filteredEstudiantes = useMemo(() => {
-        let list = estudiantes.filter(e => e.estado === 'REPROBADO');
+        let list = [...postulantesReprobados];
         if (searchQuery.trim() !== '') {
             const query = searchQuery.toLowerCase();
             list = list.filter(e => 
@@ -56,7 +57,22 @@ export default function ReprobadosReport({ estudiantes, searchQuery, setSearchQu
             );
         }
         return list;
-    }, [estudiantes, searchQuery]);
+    }, [postulantesReprobados, searchQuery]);
+
+    // Obtener todas las materias únicas presentes en este listado para crear las columnas dinámicas
+    const materiasColumnas = useMemo(() => {
+        const set = new Set<string>();
+        postulantesReprobados.forEach(student => {
+            if (student.notas_materias) {
+                student.notas_materias.forEach(nm => {
+                    if (nm.materia) {
+                        set.add(nm.materia);
+                    }
+                });
+            }
+        });
+        return Array.from(set).sort();
+    }, [postulantesReprobados]);
 
     // Paginate
     const totalPages = Math.ceil(filteredEstudiantes.length / itemsPerPage);
@@ -68,30 +84,39 @@ export default function ReprobadosReport({ estudiantes, searchQuery, setSearchQu
     // CSV local export
     const exportToCSV = () => {
         let csvContent = "\uFEFF"; // UTF-8 BOM
+
+        // 1. Resumen de Reprobados por Materia
+        csvContent += `"RESUMEN DE REPROBADOS POR MATERIA"\r\n`;
+        csvContent += `"Materia";"Cantidad de Reprobados"\r\n`;
+        reprobadosPorMateria.forEach((item) => {
+            csvContent += `"${item.materia_nombre}";"${item.cantidad_reprobados}"\r\n`;
+        });
+        csvContent += "\r\n"; // Línea en blanco
+
+        // 2. Detalle de Postulantes Reprobados
+        csvContent += `"DETALLE DE POSTULANTES REPROBADOS (REPORTE DE POSTULANTES REPROBADOS)"\r\n`;
         const headers = [
             "Carnet (CI)", 
             "Postulante", 
             "Colegio de Origen",
             "Ciudad de Procedencia",
-            "Carrera Opción 1", 
-            "Carrera Opción 2", 
-            "Promedio Final", 
-            "Notas Materias"
+            ...materiasColumnas,
+            "Promedio Final"
         ];
         
         csvContent += headers.map(h => `"${h}"`).join(";") + "\r\n";
 
         filteredEstudiantes.forEach((e) => {
-            const notesStr = e.notas_materias.map(nm => `${nm.materia_sigla}: ${nm.nota_final !== null ? nm.nota_final : 'S/N'}`).join(', ');
             const row = [
                 e.carnet,
                 e.nombre_completo,
                 e.colegio,
                 e.ciudad,
-                e.opcion_1,
-                e.opcion_2,
-                e.nota_final !== null ? e.nota_final : 'S/N',
-                notesStr
+                ...materiasColumnas.map(materia => {
+                    const notaObj = e.notas_materias.find(nm => nm.materia === materia);
+                    return notaObj && notaObj.nota_final !== null ? notaObj.nota_final : 'S/N';
+                }),
+                e.nota_final !== null ? e.nota_final : 'S/N'
             ];
             csvContent += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(";") + "\r\n";
         });
@@ -144,58 +169,88 @@ export default function ReprobadosReport({ estudiantes, searchQuery, setSearchQu
                 </div>
             </div>
 
+            {/* Resumen de Reprobados por Materia */}
+            {reprobadosPorMateria.length > 0 && (
+                <div className="mb-6">
+                    <h4 className="mb-2 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">
+                        Resumen de Reprobados por Materia
+                    </h4>
+                    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-neutral-200 bg-neutral-50/50 text-left text-xs font-bold tracking-wider text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-950/20">
+                                        <th className="p-4 font-bold">Materia</th>
+                                        <th className="w-[250px] p-4 text-center font-bold">Cantidad de Reprobados</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+                                    {reprobadosPorMateria.map((item) => (
+                                        <tr
+                                            key={item.materia_nombre}
+                                            className="transition-colors hover:bg-neutral-50/40 dark:hover:bg-neutral-950/20"
+                                        >
+                                            <td className="p-4 font-bold text-neutral-900 dark:text-neutral-100">
+                                                {item.materia_nombre}
+                                            </td>
+                                            <td className="p-4 text-center font-bold text-rose-600 dark:text-rose-400">
+                                                {item.cantidad_reprobados}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Table */}
-            <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 rounded-xl overflow-hidden shadow-xs">
+            <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/20 text-neutral-500 font-bold text-xs uppercase tracking-wider text-left">
-                                <th className="p-4 w-[120px] font-bold">Carnet (CI)</th>
+                            <tr className="border-b border-neutral-200 bg-neutral-50/50 text-left text-xs font-bold tracking-wider text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-950/20">
+                                <th className="w-[120px] p-4 font-bold">Carnet (CI)</th>
                                 <th className="p-4 font-bold">Postulante</th>
-                                <th className="p-4 font-bold">Carrera Opción 1</th>
-                                <th className="p-4 font-bold">Carrera Opción 2</th>
-                                <th className="p-4 font-bold">Calificaciones por Materia</th>
-                                <th className="p-4 w-[110px] text-center font-bold">Prom. Final</th>
+                                {materiasColumnas.map(materia => (
+                                    <th key={materia} className="p-4 text-center font-bold">{materia}</th>
+                                ))}
+                                <th className="w-[110px] p-4 text-center font-bold">Prom. Final</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
                             {paginatedEstudiantes.length > 0 ? (
                                 paginatedEstudiantes.map((student) => (
-                                    <tr key={student.id} className="hover:bg-neutral-50/40 dark:hover:bg-neutral-950/20 transition-colors">
-                                        <td className="p-4 font-semibold text-neutral-900 dark:text-neutral-200">
-                                            {student.carnet}
-                                        </td>
+                                    <tr key={student.id} className="transition-colors hover:bg-neutral-50/40 dark:hover:bg-neutral-950/20">
+                                        <td className="p-4 font-semibold text-neutral-900 dark:text-neutral-200">{student.carnet}</td>
                                         <td className="p-4">
                                             <div className="font-bold text-neutral-900 dark:text-neutral-100">{student.nombre_completo}</div>
-                                            <div className="text-[10px] text-neutral-450 dark:text-neutral-500">{student.colegio} | {student.ciudad}</div>
-                                        </td>
-                                        <td className="p-4 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                            {student.opcion_1}
-                                        </td>
-                                        <td className="p-4 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                            {student.opcion_2}
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex flex-wrap gap-1">
-                                                {student.notas_materias.length > 0 ? (
-                                                    student.notas_materias.map((nm, nIdx) => (
-                                                        <span 
-                                                            key={nIdx} 
-                                                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                                                                nm.estado === 'APROBADO' 
-                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900' 
-                                                                    : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900'
-                                                            }`}
-                                                            title={nm.materia}
-                                                        >
-                                                            {nm.materia_sigla || nm.materia}: {nm.nota_final !== null ? nm.nota_final : 'S/N'}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-xs text-neutral-400 italic">Sin materias</span>
-                                                )}
+                                            <div className="text-neutral-450 text-[10px] dark:text-neutral-500">
+                                                {student.colegio} | {student.ciudad}
                                             </div>
                                         </td>
+                                        {materiasColumnas.map(materia => {
+                                            const notaObj = student.notas_materias.find(nm => nm.materia === materia);
+                                            const notaVal = notaObj ? notaObj.nota_final : null;
+                                            const isApproved = notaObj ? notaObj.estado === 'APROBADO' : false;
+
+                                            return (
+                                                <td key={materia} className="p-4 text-center">
+                                                    {notaVal !== null ? (
+                                                        <span className={`font-bold ${
+                                                            isApproved 
+                                                                ? 'text-emerald-600 dark:text-emerald-400' 
+                                                                : 'text-rose-600 dark:text-rose-400'
+                                                        }`}>
+                                                            {notaVal}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-neutral-450 dark:text-neutral-500 italic">-</span>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
                                         <td className="p-4 text-center font-bold text-rose-600 dark:text-rose-400">
                                             {student.nota_final !== null ? student.nota_final.toFixed(2) : 'S/N'}
                                         </td>
@@ -203,7 +258,7 @@ export default function ReprobadosReport({ estudiantes, searchQuery, setSearchQu
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="p-8 text-center text-neutral-500 dark:text-neutral-400">
+                                    <td colSpan={3 + materiasColumnas.length} className="p-8 text-center text-neutral-500 dark:text-neutral-400">
                                         No se encontraron postulantes reprobados.
                                     </td>
                                 </tr>

@@ -31,3 +31,5 @@ Route::get('/clases', function() {
     }
     return redirect("/cup/{$cup->ID_CUP}/clases");
 })->middleware('permiso:VER_CUP');
+
+Route::get('/reportes-academicos', [\App\Http\Controllers\ReporteAcademicoController::class, 'index'])->middleware('permiso:VER_CUP');

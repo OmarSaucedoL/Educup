@@ -34,6 +34,10 @@ const mainNavItems: NavItem[] = [
                 title: 'Grupos',
                 url: '/clases',
             },
+            {
+                title: 'Reportes Académicos',
+                url: '/reportes-academicos',
+            },
         ],
     },
     {

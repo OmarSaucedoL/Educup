@@ -1,60 +1,24 @@
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { useState, useMemo } from 'react';
-import { 
-    GraduationCap, 
-    BookOpen,
-    Calendar,
-    Search
-} from 'lucide-react';
+import { useState } from 'react';
+import { GraduationCap, Calendar, BookOpen } from 'lucide-react';
+import MateriasStats from './components/materias-stats';
 
-// Subcomponents import
-import GeneralReport from './components/general-report';
-import AprobadosReport from './components/aprobados-report';
-import ReprobadosReport from './components/reprobados-report';
-import PromediosReport from './components/promedios-report';
-
-interface StudentClassGrade {
-    materia: string;
-    materia_sigla: string;
-    nota_final: number | null;
-    estado: string;
-}
-
-interface StudentReportData {
+interface MateriaItem {
     id: number;
-    carnet: number | string;
     nombre: string;
-    apellido: string;
+}
+
+interface StudentCriticalData {
+    id: number;
+    carnet: number;
     nombre_completo: string;
-    correo: string | null;
-    telefono: string | null;
-    colegio: string;
-    ciudad: string;
-    estado: string;
-    nota_final: number | null;
-    carrera_asignada: string | null;
-    preferencia_asignada: number | string | null;
-    opcion_1: string;
-    opcion_2: string;
-    notas_materias: StudentClassGrade[];
-    fecha_inscripcion: string;
-}
-
-interface CareerStats {
-    carrera_nombre: string;
-    total_postulantes: number;
-    opcion_1_postulantes: number;
-    opcion_2_postulantes: number;
-}
-
-interface ApprovedStats {
-    carrera_nombre: string;
-    ingresados_opcion_1: number;
-    ingresados_opcion_2: number;
-    aprobado_sin_cupo: number;
-    cupos_sobrantes: number;
+    nota_computacion: number;
+    nota_matematica: number;
+    nota_ingles: number;
+    nota_fisica: number;
+    nota_final_promedio: number;
 }
 
 interface ReportsProps {
@@ -63,7 +27,6 @@ interface ReportsProps {
         ANIO: string;
         SEMESTRE: number;
         ESTADO: string;
-        NOTA_MINIMA: string;
     } | null;
     cups: Array<{
         ID_CUP: number;
@@ -71,71 +34,43 @@ interface ReportsProps {
         SEMESTRE: number;
         ESTADO: string;
     }>;
-    estudiantes: StudentReportData[];
-    postulantesAprobados?: StudentReportData[];
-    postulantesReprobados?: StudentReportData[];
-    estadisticasCarreras?: CareerStats[];
-    distribucionAprobados?: ApprovedStats[];
-    reprobadosPorMateria?: Array<{ materia_nombre: string; cantidad_reprobados: number }>;
+    postulantesCriticos?: StudentCriticalData[];
+    materiasSeleccionadas?: number[];
+    notaLimite?: number;
+    materiasCatalogo?: MateriaItem[];
 }
 
-type TabType = 'general' | 'aprobados' | 'reprobados' | 'promedios';
+type TabType = 'materias';
 
-export default function ReportsIndex({ cup, cups, estudiantes = [], postulantesAprobados = [], postulantesReprobados = [], estadisticasCarreras = [], distribucionAprobados = [], reprobadosPorMateria = [] }: ReportsProps) {
-    const [activeTab, setActiveTab] = useState<TabType>('general');
-    const [searchQuery, setSearchQuery] = useState('');
+export default function AcademicReportsIndex({ 
+    cup, 
+    cups, 
+    postulantesCriticos = [], 
+    materiasSeleccionadas = [], 
+    notaLimite = 51, 
+    materiasCatalogo = [] 
+}: ReportsProps) {
+    const [activeTab, setActiveTab] = useState<TabType>('materias');
     const [selectedCupId, setSelectedCupId] = useState<number | null>(cup?.ID_CUP ?? null);
 
     // Handle CUP selector change
     const handleCupChange = (id: number) => {
         setSelectedCupId(id);
-        setSearchQuery('');
-        router.get('/reportes', { cup_id: id }, { preserveState: false });
+        router.get('/reportes-academicos', { cup_id: id }, { preserveState: false });
     };
 
-    // Calculate CUP stats based on all loaded students (global stats for selected CUP)
-    const stats = useMemo(() => {
-        const total = estudiantes.length;
-        const approved = estudiantes.filter(e => e.estado === 'APROBADO').length;
-        const failed = estudiantes.filter(e => e.estado === 'REPROBADO').length;
-        const pending = total - (approved + failed);
-        
-        const grades = estudiantes
-            .map(e => e.nota_final)
-            .filter((n): n is number => n !== null);
-            
-        const avg = grades.length > 0 ? grades.reduce((sum, n) => sum + n, 0) / grades.length : 0;
-        const max = grades.length > 0 ? Math.max(...grades) : 0;
-        const min = grades.length > 0 ? Math.min(...grades) : 0;
-
-        return {
-            total,
-            approved,
-            failed,
-            pending,
-            approvedPercent: total > 0 ? ((approved / total) * 100).toFixed(1) : '0.0',
-            failedPercent: total > 0 ? ((failed / total) * 100).toFixed(1) : '0.0',
-            avgGrade: avg.toFixed(2),
-            maxGrade: max.toFixed(2),
-            minGrade: min.toFixed(2)
-        };
-    }, [estudiantes]);
-
     const tabTitle = {
-        general: 'Lista General de Postulantes',
-        aprobados: 'Postulantes Aprobados',
-        reprobados: 'Postulantes Reprobados',
-        promedios: 'Promedios Generales y Rankings'
+        materias: 'Estadísticas de Materia'
     }[activeTab];
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Módulo Notas', href: '#' },
-        { title: 'Reportes', href: '/reportes' },
+        { title: 'Módulo Académico', href: '#' },
+        { title: 'Reportes Académicos', href: '/reportes-academicos' },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Reportes — ${tabTitle}`} />
+            <Head title={`Reportes Académicos — ${tabTitle}`} />
 
             {/* ── CSS Hack para Impresión Física y PDF Limpios ── */}
             <style dangerouslySetInnerHTML={{__html: `
@@ -200,7 +135,6 @@ export default function ReportsIndex({ cup, cups, estudiantes = [], postulantesA
                 }
             `}} />
 
-            {/* ── Contenedor General React ── */}
             <div id="print-report-container" className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-6 rounded-xl p-4">
                 
                 {/* Membrete Oficial para Impresión / PDF (Invisible en la pantalla normal) */}
@@ -218,21 +152,21 @@ export default function ReportsIndex({ cup, cups, estudiantes = [], postulantesA
                     <div className="text-center mt-6">
                         <h1 className="text-lg font-bold tracking-normal uppercase text-neutral-900">{tabTitle}</h1>
                         <p className="text-xs text-neutral-600 mt-1">
-                            CUP #{cup?.ID_CUP} &mdash; Gestión {cup?.ANIO}/{cup?.SEMESTRE} &nbsp;|&nbsp; Nota Mínima de Aprobación: {cup?.NOTA_MINIMA ?? '60.00'}
+                            CUP #{cup?.ID_CUP} &mdash; Gestión {cup?.ANIO}/{cup?.SEMESTRE}
                         </p>
                     </div>
                 </div>
 
-                {/* ── Encabezado Interactivo en Pantalla ── */}
+                {/* Encabezado Interactivo en Pantalla */}
                 <div className="no-print flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-4">
                         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900/60 shadow-xs">
                             <GraduationCap className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Módulo de Notas — Reportes</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Reportes Académicos</h1>
                             <p className="text-muted-foreground mt-0.5 text-sm">
-                                Visualiza, exporta y genera reportes académicos de los postulantes inscritos en el CUP.
+                                Visualiza y analiza estadísticas académicas de los CUPs y sus materias.
                             </p>
                         </div>
                     </div>
@@ -268,24 +202,18 @@ export default function ReportsIndex({ cup, cups, estudiantes = [], postulantesA
 
                 {cup && (
                     <>
-                        {/* ── Pestañas / Tabs de Reportes (Oculto en impresión) ── */}
+                        {/* Pestañas de Reportes */}
                         <div className="no-print border-b border-neutral-200 dark:border-neutral-800">
                             <div className="flex flex-wrap gap-1">
-                                {(['general', 'aprobados', 'reprobados', 'promedios'] as TabType[]).map((tab) => {
+                                {(['materias'] as TabType[]).map((tab) => {
                                     const labels = {
-                                        general: 'Lista General',
-                                        aprobados: 'Postulantes Aprobados',
-                                        reprobados: 'Postulantes Reprobados',
-                                        promedios: 'Promedios & Rankings'
+                                        materias: 'Estadísticas de Materia'
                                     };
                                     const isActive = activeTab === tab;
                                     return (
                                         <button
                                             key={tab}
-                                            onClick={() => {
-                                                setActiveTab(tab);
-                                                setSearchQuery('');
-                                            }}
+                                            onClick={() => setActiveTab(tab)}
                                             className={`px-4 py-2 text-sm font-bold relative transition-colors duration-200 -mb-[1px] border-b-2 ${
                                                 isActive
                                                     ? 'border-neutral-850 text-neutral-900 dark:border-neutral-200 dark:text-neutral-100'
@@ -299,41 +227,15 @@ export default function ReportsIndex({ cup, cups, estudiantes = [], postulantesA
                             </div>
                         </div>
 
-                        {/* ── Render del Reporte Modular Activo ── */}
+                        {/* Contenido de la Pestaña Activa */}
                         <div className="flex flex-col gap-4">
-                            {activeTab === 'general' && (
-                                <GeneralReport 
-                                    estudiantes={estudiantes} 
-                                    searchQuery={searchQuery} 
-                                    setSearchQuery={setSearchQuery}
+                            {activeTab === 'materias' && (
+                                <MateriasStats 
                                     cup={cup} 
-                                    estadisticasCarreras={estadisticasCarreras}
-                                />
-                            )}
-                            {activeTab === 'aprobados' && (
-                                <AprobadosReport 
-                                    postulantesAprobados={postulantesAprobados} 
-                                    searchQuery={searchQuery} 
-                                    setSearchQuery={setSearchQuery}
-                                    cup={cup} 
-                                    distribucionAprobados={distribucionAprobados}
-                                />
-                            )}
-                            {activeTab === 'reprobados' && (
-                                <ReprobadosReport 
-                                    postulantesReprobados={postulantesReprobados} 
-                                    searchQuery={searchQuery} 
-                                    setSearchQuery={setSearchQuery}
-                                    cup={cup} 
-                                    reprobadosPorMateria={reprobadosPorMateria}
-                                />
-                            )}
-                            {activeTab === 'promedios' && (
-                                <PromediosReport 
-                                    estudiantes={estudiantes} 
-                                    searchQuery={searchQuery} 
-                                    setSearchQuery={setSearchQuery}
-                                    cup={cup} 
+                                    postulantesCriticos={postulantesCriticos}
+                                    materiasSeleccionadas={materiasSeleccionadas}
+                                    notaLimite={notaLimite}
+                                    materiasCatalogo={materiasCatalogo}
                                 />
                             )}
                         </div>

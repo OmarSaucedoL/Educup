@@ -5,17 +5,19 @@ import { Button } from '@/components/ui/button';
 import { 
     Users, Clock, 
     ChevronLeft, AlertCircle, Save,
-    Calculator, UserCircle, CheckSquare, Square
+    Calculator, CheckSquare, Square
 } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 interface CrearGruposProps {
     cup: any;
     inscritos: number;
+    conGrupo: number;
+    sinGrupo: number;
     turnos: { nombre: string; horarios: string[] }[];
 }
 
-export default function CrearGrupos({ cup, inscritos, turnos }: CrearGruposProps) {
+export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos }: CrearGruposProps) {
     const { data, setData, post, processing, errors, reset } = useForm({
         EST_MIN: 20,
         EST_MAX: 40,
@@ -68,18 +70,27 @@ export default function CrearGrupos({ cup, inscritos, turnos }: CrearGruposProps
 
                 <form onSubmit={submit} className="flex flex-col gap-6">
                     {/* Panel de Información */}
-                    <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl border border-sky-200 bg-sky-50 dark:border-sky-900/50 dark:bg-sky-950/20 text-sky-800 dark:text-sky-300">
-                        <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-900/50 flex items-center justify-center shrink-0">
-                            <UserCircle className="h-5 w-5" />
+                    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-4">
+                        <h3 className="font-bold text-sm text-neutral-800 dark:text-neutral-200 mb-3">Resumen de Estudiantes Inscritos</h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="flex flex-col items-center rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2.5">
+                                <span className="text-2xl font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{inscritos}</span>
+                                <span className="text-[11px] font-semibold text-neutral-500 text-center leading-tight mt-0.5">Total inscritos</span>
+                            </div>
+                            <div className="flex flex-col items-center rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2.5">
+                                <span className="text-2xl font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{conGrupo}</span>
+                                <span className="text-[11px] font-semibold text-neutral-500 text-center leading-tight mt-0.5">Con grupo</span>
+                            </div>
+                            <div className="flex flex-col items-center rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2.5">
+                                <span className="text-2xl font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{sinGrupo}</span>
+                                <span className="text-[11px] font-semibold text-neutral-500 text-center leading-tight mt-0.5">Sin grupo</span>
+                            </div>
                         </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-sm">Estudiantes Inscritos Actualmente: <span className="text-lg">{inscritos}</span></h3>
-                            <p className="text-xs mt-0.5 opacity-80">
-                                {inscritos === 0 
-                                    ? 'Actualmente no hay inscritos. El algoritmo no podrá dividir ni generar los grupos.'
-                                    : 'El algoritmo dividirá este número entre el tamaño máximo para saber cuántos grupos instanciar.'}
-                            </p>
-                        </div>
+                        <p className="text-xs text-neutral-500 mt-2.5">
+                            {sinGrupo === 0
+                                ? 'Todos los estudiantes inscritos ya tienen grupo asignado.'
+                                : `El algoritmo procesará los ${sinGrupo} estudiantes sin grupo asignado.`}
+                        </p>
                     </div>
 
                     {(errors as any).inscritos && (

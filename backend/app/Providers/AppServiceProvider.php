@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use App\Models\Bitacora;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Configurar reglas de contraseña por defecto para todo el sistema
+        Password::defaults(function () {
+            return Password::min(8)
+                ->letters()
+                ->mixedCase()
+                ->numbers()
+                ->symbols();
+        });
+
         Event::listen(Login::class, function ($event) {
             try {
                 Bitacora::create([

@@ -30,8 +30,12 @@ class CUPController extends Controller
         $cups = Cup::with(['usuario', 'carreraCups.carrera', 'materias'])
             ->orderBy('ID_CUP')
             ->get();
+
+        $hayActivo = Cup::where('ESTADO', '!=', 'Concluido')->exists();
+
         return inertia('cup/index', [
-            'cups' => $cups
+            'cups'      => $cups,
+            'hayActivo' => $hayActivo,
         ]);
     }
 
@@ -40,6 +44,11 @@ class CUPController extends Controller
      */
     public function create()
     {
+        // Bloquear si ya existe un CUP activo (no concluido)
+        if (Cup::where('ESTADO', '!=', 'Concluido')->exists()) {
+            return redirect('/cup')->with('error', 'Ya existe un CUP activo en el sistema. Debe concluirlo antes de crear uno nuevo.');
+        }
+
         $usuarios = Usuario::orderBy('NOMBRE')->get(['ID', 'NOMBRE', 'APELLIDO']);
         $carreras = Carrera::orderBy('NOMBRE')->get(['ID_CARRERA', 'NOMBRE']);
         $materias = Materia::orderBy('NOMBRE')->get(['ID_MATERIA', 'NOMBRE']);
@@ -104,6 +113,16 @@ class CUPController extends Controller
             'materias' => 'required|array|min:1|max:4',
             'materias.*' => 'required|integer|exists:MATERIA,ID_MATERIA',
         ]);
+
+        // Solo puede existir un CUP no concluido a la vez
+        if ($validated['ESTADO'] !== 'Concluido') {
+            $activoExistente = Cup::where('ESTADO', '!=', 'Concluido')->exists();
+            if ($activoExistente) {
+                return back()->withErrors([
+                    'ESTADO' => 'Ya existe un CUP activo (no concluido) en el sistema. Debe concluir el CUP actual antes de crear uno nuevo.'
+                ])->withInput();
+            }
+        }
 
         try {
             DB::beginTransaction();
@@ -443,6 +462,21 @@ class CUPController extends Controller
     {
         $cup = Cup::findOrFail($id);
 
+        // Solo puede existir un CUP no concluido a la vez.
+        // Si se intenta reactivar un CUP concluido (cambiar a Inscripciones/En curso),
+        // verificar que no haya ya otro CUP activo.
+        if ($cup->ESTADO === 'Concluido' && $request->input('ESTADO') !== 'Concluido') {
+            $otroActivo = Cup::where('ID_CUP', '!=', $id)
+                ->where('ESTADO', '!=', 'Concluido')
+                ->exists();
+
+            if ($otroActivo) {
+                return back()->withErrors([
+                    'ESTADO' => 'Ya existe un CUP activo en el sistema. Solo puede haber un CUP no concluido a la vez.'
+                ]);
+            }
+        }
+
         if ($cup->ESTADO === 'Concluido' && $request->input('ESTADO') === 'Concluido') {
             // Compare fields to check if modifications were attempted
             $hasChanges = $request->input('ANIO') != $cup->ANIO ||
@@ -626,6 +660,17 @@ class CUPController extends Controller
     {
         $cup = Cup::findOrFail($idCup);
         $inscritos = \App\Models\EstudianteCup::where('ID_CUP', $idCup)->count();
+
+        // Estudiantes ya asignados a alguna clase/grupo
+        $conGrupo = \App\Models\EstudianteCup::where('ID_CUP', $idCup)
+            ->whereHas('clases')
+            ->count();
+
+        // Estudiantes sin grupo (los que procesará el algoritmo)
+        $sinGrupo = \App\Models\EstudianteCup::where('ID_CUP', $idCup)
+            ->where('ESTADO', 'INSCRITO')
+            ->whereDoesntHave('clases')
+            ->count();
         
         // Cargar todos los turnos y sus horarios para la visualización en UI
         $turnosData = BloqueHorario::with('horariosEnBloque.horario')
@@ -652,143 +697,63 @@ class CUPController extends Controller
         }
 
         return inertia('cup/crearGrupos', [
-            'cup' => $cup,
+            'cup'       => $cup,
             'inscritos' => $inscritos,
-            'turnos' => $turnos,
+            'conGrupo'  => $conGrupo,
+            'sinGrupo'  => $sinGrupo,
+            'turnos'    => $turnos,
         ]);
     }
 
     /**
-     * Crea un paquete de clases basado en grupos calculados dinámicamente.
+     * Crea un paquete de clases llamando al procedimiento almacenado p_crear_paquete_clases.
      */
     public function crearPaqueteClases(Request $request, string $idCup)
     {
         $validated = $request->validate([
-            'EST_MIN' => 'required|integer|min:1',
-            'EST_MAX' => 'required|integer|gte:EST_MIN',
-            'turnos' => 'required|array|min:1',
+            'EST_MIN'  => 'required|integer|min:1',
+            'EST_MAX'  => 'required|integer|gte:EST_MIN',
+            'turnos'   => 'required|array|min:1',
             'turnos.*' => 'required|string',
         ]);
 
         try {
-            DB::beginTransaction();
+            // Formatear el array de turnos como texto[] de PostgreSQL: {"Mañana","Tarde"}
+            $turnosStr = '{' . implode(',', array_map(
+                fn($t) => '"' . str_replace('"', '\\"', $t) . '"',
+                $validated['turnos']
+            )) . '}';
 
-            $estudiantesDisponibles = \App\Models\EstudianteCup::where('ID_CUP', $idCup)
-                ->where('ESTADO', 'INSCRITO')
-                ->whereDoesntHave('clases')
-                ->get();
-                
-            $inscritos = $estudiantesDisponibles->count();
-            
-            if ($inscritos === 0) {
-                throw ValidationException::withMessages(['inscritos' => 'No hay estudiantes inscritos sin asignar clases. No se puede calcular la cantidad de grupos.']);
+            $pdo  = DB::getPdo();
+            $stmt = $pdo->prepare('CALL public.p_crear_paquete_clases(?, ?, ?, ?, NULL)');
+            $stmt->execute([
+                (int) $idCup,
+                (int) $validated['EST_MIN'],
+                (int) $validated['EST_MAX'],
+                $turnosStr,
+            ]);
+
+            $result       = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $gruposCreados = $result['p_grupos_creados'] ?? '?';
+
+            return redirect("/cup/{$idCup}")->with(
+                'success',
+                "Algoritmo completado: Se generaron {$gruposCreados} grupo(s) distribuidos en los turnos seleccionados."
+            );
+        } catch (\PDOException $e) {
+            $mensaje = $e->getMessage();
+            // Extraer el mensaje limpio del RAISE EXCEPTION de PostgreSQL
+            if (preg_match('/ERROR:\s*(.+?)(?:\n|CONTEXT|$)/i', $mensaje, $m)) {
+                $mensaje = trim($m[1]);
             }
-
-            $cup = Cup::with('materias')->findOrFail($idCup);
-            $materias = $cup->materias;
-
-            if ($materias->count() !== 4) {
-                throw ValidationException::withMessages(['cup' => 'El CUP no tiene exactamente 4 materias asignadas.']);
-            }
-
-            $estMax = $validated['EST_MAX'];
-            $estMin = $validated['EST_MIN'];
-            
-            // 1. Primera ronda de grupos
-            $totalGrupos = (int) floor($inscritos / $estMax);
-            $sobrantes = $inscritos % $estMax;
-
-            // 2. Revisar lo que sobró comparado con est_min
-            if ($sobrantes >= $estMin) {
-                $totalGrupos++; // Creamos un grupo más para los sobrantes
-            }
-
-            if ($totalGrupos == 0) {
-                $totalGrupos = 1;
-            }
-
-            $turnosSeleccionados = $validated['turnos'];
-            $numTurnos = count($turnosSeleccionados);
-
-            // Al hacer split($totalGrupos), Laravel distribuye equitativamente.
-            // Si totalGrupos no se incrementó (sobrantes < est_min), split() meterá 
-            // a los sobrantes de 1 en 1 en los grupos que ya existen (ej: 8,8,7,7,7,7).
-            // Si se incrementó (sobrantes >= est_min), split() balanceará para no dejar a uno con muy pocos.
-
-            $chunksEstudiantes = $estudiantesDisponibles->split($totalGrupos)->values();
-
-            // Determinar prefijo y offset de grupos existentes para evitar nombres duplicados
-            $anioCorto = substr((string)$cup->ANIO, -2);
-            $nroSemestre = (string)$cup->SEMESTRE;
-            $prefijoGrupo = $anioCorto . $nroSemestre;
-            $gruposExistentes = \App\Models\Grupo::where('NOMBRE', 'LIKE', $prefijoGrupo . '%')->count();
-
-            // Repartir los grupos entre los turnos usando Round-Robin
-            for ($i = 0; $i < $totalGrupos; $i++) {
-                $turnoNombre = $turnosSeleccionados[$i % $numTurnos];
-                
-                // Generar nombre de grupo secuencial
-                $nombreGrupo = $prefijoGrupo . ($gruposExistentes + $i + 1);
-
-                // 1. Crear el Grupo en la BD
-                $grupo = Grupo::create([
-                    'NOMBRE' => $nombreGrupo,
-                    'EST_MIN' => $estMin,
-                    'EST_MAX' => $estMax
-                ]);
-
-                // 2. Obtener bloques horarios para el turno
-                $bloques = BloqueHorario::where('TURNO', $turnoNombre)->get();
-                if ($bloques->count() < 4) {
-                    throw ValidationException::withMessages(['turnos' => "No hay suficientes bloques horarios (mínimo 4) para el turno: $turnoNombre."]);
-                }
-
-                // 3. Crear 4 clases para este grupo usando materias y bloques horarios distintos
-                $clasesCreadasIds = [];
-                for ($j = 0; $j < 4; $j++) {
-                    $clase = Clase::create([
-                        'ID_CUP' => $idCup,
-                        'ID_MATERIA' => $materias[$j]->ID_MATERIA,
-                        'ID_BLOQUE_HORARIO' => $bloques[$j]->ID_BLOQUE_HORARIO,
-                        'ID_GRUPO' => $grupo->ID_GRUPO,
-                        'DOCENTE_CUP_ID' => null,
-                        'ID_AULA' => null,
-                    ]);
-                    $clasesCreadasIds[] = $clase->ID_CLASE;
-                }
-
-                // 4. Asignar los estudiantes disponibles a estas 4 clases
-                $estudiantesDeEsteGrupo = $chunksEstudiantes->get($i) ?? collect();
-                $estudiantesClaseInsert = [];
-                
-                foreach ($estudiantesDeEsteGrupo as $est) {
-                    foreach ($clasesCreadasIds as $cId) {
-                        $estudiantesClaseInsert[] = [
-                            'ESTUDIANTE_CUP_ID' => $est->ID,
-                            'ID_CLASE' => $cId,
-                            'ESTADO' => 'CURSANDO',
-                            'FECHA_CREACION' => now()
-                        ];
-                    }
-                }
-                
-                if (count($estudiantesClaseInsert) > 0) {
-                    DB::table('ESTUDIANTES_CLASE')->insert($estudiantesClaseInsert);
-                }
-            }
-
-            DB::commit();
-
-            return redirect("/cup/{$idCup}")->with('success', "Algoritmo completado: Se generaron {$totalGrupos} grupo(s) distribuidos en los turnos seleccionados.");
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            throw $e;
+            \Log::error('Error en p_crear_paquete_clases: ' . $e->getMessage());
+            throw ValidationException::withMessages(['error' => $mensaje]);
         } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Error creating clases: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            throw ValidationException::withMessages(['error' => 'Error en base de datos: ' . $e->getMessage()]);
+            \Log::error('Error inesperado en crearPaqueteClases: ' . $e->getMessage());
+            throw ValidationException::withMessages(['error' => 'Error inesperado: ' . $e->getMessage()]);
         }
     }
+
 
     /**
      * Llama al procedimiento de asignación automática de docentes para el CUP.

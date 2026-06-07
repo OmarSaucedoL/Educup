@@ -79,6 +79,19 @@ export default function GeneralReport({ estudiantes, searchQuery, setSearchQuery
     // CSV local export
     const exportToCSV = () => {
         let csvContent = "\uFEFF"; // UTF-8 BOM
+
+        // 1. Resumen de Postulaciones por Carrera
+        csvContent += `"RESUMEN DE POSTULACIONES POR CARRERA"\r\n`;
+        csvContent += `"Carrera";"Postulaciones (Cualquier Opción)";"Preferencia 1ª Opción";"Preferencia 2ª Opción"\r\n`;
+        
+        estadisticasCarreras.forEach((stat) => {
+            csvContent += `"${stat.carrera_nombre}";"${stat.total_postulantes}";"${stat.opcion_1_postulantes}";"${stat.opcion_2_postulantes}"\r\n`;
+        });
+        
+        csvContent += "\r\n"; // Línea en blanco
+
+        // 2. Detalle General de Postulantes
+        csvContent += `"DETALLE DE POSTULANTES"\r\n`;
         const headers = [
             "Carnet (CI)", 
             "Postulante", 
@@ -158,7 +171,7 @@ export default function GeneralReport({ estudiantes, searchQuery, setSearchQuery
 
             {/* Tabla de Estadísticas de Postulantes por Carrera */}
             {estadisticasCarreras.length > 0 && (
-                <div className="no-print mb-6 flex flex-col gap-3">
+                <div className="mb-6 flex flex-col gap-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <h4 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                             Resumen de Postulaciones por Carrera

@@ -33,7 +33,30 @@ Route::middleware(['auth'])->group(function () {
             ]);
         }
 
-        return Inertia::render('dashboard');
+        // Dashboard del administrador — indicadores estadísticos
+        $cup = \App\Models\Cup::where('ESTADO', '!=', 'Concluido')
+            ->orderBy('ID_CUP', 'desc')
+            ->first()
+            ?? \App\Models\Cup::orderBy('ID_CUP', 'desc')->first();
+
+        $stats = [
+            'totalInscritos'  => 0,
+            'totalAprobados'  => 0,
+            'totalReprobados' => 0,
+            'totalGrupos'     => 0,
+        ];
+
+        if ($cup) {
+            $stats['totalInscritos']  = \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)->count();
+            $stats['totalAprobados']  = \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)->where('ESTADO', 'Aprobado')->count();
+            $stats['totalReprobados'] = \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)->where('ESTADO', 'Reprobado')->count();
+            $stats['totalGrupos']     = \App\Models\Clase::where('ID_CUP', $cup->ID_CUP)->distinct('ID_GRUPO')->count('ID_GRUPO');
+        }
+
+        return Inertia::render('dashboard', [
+            'cup'   => $cup,
+            'stats' => $stats,
+        ]);
     })->name('dashboard');
 
     require __DIR__.'/usuarios_routes.php';
