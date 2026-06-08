@@ -175,7 +175,7 @@ export default function GrupoDetallesPage({ cup, grupo, clases, estudiantesSinGr
                                                                             })}
                                                                         </select>
                                                                         {assignErrors.docente_cup_id && <p className="text-xs text-red-600 font-medium">{assignErrors.docente_cup_id}</p>}
-                                                                        {assignErrors.error && <p className="text-xs text-red-600 font-medium">{assignErrors.error}</p>}
+                                                                        {(assignErrors as any).error && <p className="text-xs text-red-600 font-medium">{(assignErrors as any).error}</p>}
                                                                         {(!docentesPorMateria[materia?.ID_MATERIA] || docentesPorMateria[materia?.ID_MATERIA].length === 0) && (
                                                                             <p className="text-xs text-amber-600 font-medium">No hay docentes autorizados para dictar esta materia en este CUP.</p>
                                                                         )}
