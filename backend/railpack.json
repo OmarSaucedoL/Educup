@@ -1,5 +1,5 @@
 {
   "php": {
-    "extensions": ["gd"]
+    "extensions": ["gd", "zip"]
   }
 }
