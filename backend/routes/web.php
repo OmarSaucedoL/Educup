@@ -3,9 +3,19 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+use App\Http\Controllers\InscripcionPublicaController;
+
 Route::get('/', function () {
-    return redirect('/login');
+    return Inertia::render('welcome', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'laravelVersion' => \Illuminate\Foundation\Application::VERSION,
+        'phpVersion' => PHP_VERSION,
+    ]);
 })->name('home');
+
+Route::get('/inscripcion-cup', [InscripcionPublicaController::class, 'create'])->name('inscripcion-cup.create');
+Route::post('/inscripcion-cup', [InscripcionPublicaController::class, 'store'])->name('inscripcion-cup.store');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', function () {
@@ -51,6 +61,10 @@ Route::middleware(['auth'])->group(function () {
             $stats['totalAprobados']  = \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)->where('ESTADO', 'Aprobado')->count();
             $stats['totalReprobados'] = \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)->where('ESTADO', 'Reprobado')->count();
             $stats['totalGrupos']     = \App\Models\Clase::where('ID_CUP', $cup->ID_CUP)->distinct('ID_GRUPO')->count('ID_GRUPO');
+        }
+
+        if (str_contains($rolNombre, 'ESTUDIANTE')) {
+            return Inertia::render('dashboard-estudiante');
         }
 
         return Inertia::render('dashboard', [

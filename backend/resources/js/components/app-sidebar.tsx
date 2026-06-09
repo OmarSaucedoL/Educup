@@ -3,7 +3,7 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, BookMarked, Folder, GraduationCap, LayoutGrid, Shield } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -98,6 +98,21 @@ const mainNavItems: NavItem[] = [
 
 
 export function AppSidebar() {
+    const { auth } = usePage<any>().props;
+    const rolNombre = auth.user?.rol?.NOMBRE?.toUpperCase() || '';
+
+    let itemsToRender = mainNavItems;
+
+    if (rolNombre === 'ESTUDIANTE') {
+        itemsToRender = [
+            {
+                title: 'Mis clases',
+                url: '#', // TODO: Update with real URL later
+                icon: BookOpen,
+            }
+        ];
+    }
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -113,7 +128,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={itemsToRender} />
             </SidebarContent>
 
             <SidebarFooter>

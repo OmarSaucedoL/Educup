@@ -181,8 +181,8 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
                 </div>
 
                 {/* Table Container */}
-                <div className="border border-neutral-200/60 dark:border-neutral-800 bg-card text-card-foreground relative flex-1 rounded-xl shadow-sm overflow-hidden">
-                    <div className="relative w-full overflow-auto">
+                <div className="border border-neutral-200/60 dark:border-neutral-800 bg-card text-card-foreground relative flex-1 rounded-xl shadow-sm overflow-hidden flex flex-col min-h-0">
+                    <div className="relative w-full overflow-auto flex-1">
                         <table className="w-full caption-bottom text-sm border-collapse">
                             <thead>
                                 <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/20 text-neutral-500 dark:text-neutral-400">

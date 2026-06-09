@@ -50,7 +50,7 @@ export default function Password() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Profile settings" />
+            <Head title="Configuración de Contraseña" />
 
             <SettingsLayout>
                 <div className="space-y-6">
@@ -120,7 +120,7 @@ export default function Password() {
                                 leave="transition ease-in-out"
                                 leaveTo="opacity-0"
                             >
-                                <p className="text-sm text-neutral-600">Saved</p>
+                                <p className="text-sm text-neutral-600">Guardado</p>
                             </Transition>
                         </div>
                     </form>

@@ -28,7 +28,8 @@ class Estudiante extends Model
         'SEXO',
         'ESTADO',
         'COLEGIO_ID',
-        'CIUDAD_ID'
+        'CIUDAD_ID',
+        'USUARIO_ID'
     ];
 
     protected $casts = [
@@ -43,6 +44,11 @@ class Estudiante extends Model
     public function colegio(): BelongsTo
     {
         return $this->belongsTo(Colegio::class, 'COLEGIO_ID', 'ID');
+    }
+
+    public function usuario(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'USUARIO_ID', 'ID');
     }
 
     public function ciudad(): BelongsTo

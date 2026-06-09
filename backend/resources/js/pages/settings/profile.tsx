@@ -34,7 +34,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Profile settings" />
+            <Head title="Configuración de Perfil" />
 
             <SettingsLayout>
                 <div className="space-y-6">
@@ -51,7 +51,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                 onChange={(e) => setData('name', e.target.value)}
                                 required
                                 autoComplete="name"
-                                placeholder="Full name"
+                                placeholder="Nombre completo"
                             />
 
                             <InputError className="mt-2" message={errors.name} />
@@ -68,7 +68,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                 onChange={(e) => setData('email', e.target.value)}
                                 required
                                 autoComplete="username"
-                                placeholder="Email address"
+                                placeholder="Dirección de correo electrónico"
                             />
 
                             <InputError className="mt-2" message={errors.email} />
