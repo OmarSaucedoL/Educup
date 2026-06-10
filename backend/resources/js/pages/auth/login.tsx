@@ -47,7 +47,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             type="text"
                             required
                             autoFocus
-                            tabIndex={1}
                             autoComplete="username"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
@@ -63,7 +62,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 <TextLink
                                     href={route('password.request')}
                                     className="ml-auto text-sm"
-                                    tabIndex={5}
                                 >
                                     ¿Olvidaste tu contraseña?
                                 </TextLink>
@@ -73,7 +71,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             id="password"
                             type="password"
                             required
-                            tabIndex={2}
                             autoComplete="current-password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
@@ -82,7 +79,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <InputError message={errors.password} />
                     </div>
 
-                    <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
+                    <Button type="submit" className="mt-4 w-full" disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Iniciar Sesión
                     </Button>

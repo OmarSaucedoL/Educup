@@ -94,12 +94,12 @@ export default function CupDocentesPage({ cup }: { cup: any }) {
 
                             // Obtener grupos únicos asignados al docente
                             const uniqueGroups = Array.from(
-                                new Map(
-                                    clases
-                                        .map((clase: any) => clase.grupo)
-                                        .filter(Boolean)
-                                        .map((grupo: any) => [grupo.ID_GRUPO, grupo])
-                                ).values()
+                                clases.reduce((map: Map<any, any>, clase: any) => {
+                                    if (clase?.grupo) {
+                                        map.set(clase.grupo.ID_GRUPO, clase.grupo);
+                                    }
+                                    return map;
+                                }, new Map()).values()
                             );
 
                             return (
@@ -110,7 +110,15 @@ export default function CupDocentesPage({ cup }: { cup: any }) {
                                     {/* Docente Header */}
                                     <div 
                                         onClick={() => toggleDocente(dc.ID)}
-                                        className="flex flex-col md:flex-row md:items-center gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/40 cursor-pointer select-none hover:bg-neutral-100/70 dark:hover:bg-neutral-900/60 transition-colors"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                toggleDocente(dc.ID);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        className="flex flex-col md:flex-row md:items-center gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/40 cursor-pointer select-none hover:bg-neutral-100/70 dark:hover:bg-neutral-900/60 transition-colors focus:outline-hidden focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 dark:focus:ring-neutral-700 dark:focus:ring-offset-neutral-950 rounded-t-xl"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800">

@@ -106,6 +106,7 @@ export default function EstudiantesCupPage({ cup, estudianteCups, filters }: Est
                             <Search className="absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
                             <input
                                 type="text"
+                                aria-label="Buscar estudiantes por nombre, apellido o carnet (CI)"
                                 placeholder="Buscar por nombre, apellido o carnet (CI)..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}

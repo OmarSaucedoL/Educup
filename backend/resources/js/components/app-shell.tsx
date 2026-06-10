@@ -1,13 +1,44 @@
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 
 interface AppShellProps {
     children: React.ReactNode;
     variant?: 'header' | 'sidebar';
 }
 
+const isLargeScreenStore = {
+    subscribe(callback: () => void) {
+        if (typeof window === 'undefined') return () => {};
+        const mql = window.matchMedia('(min-width: 1024px)');
+        mql.addEventListener('change', callback);
+        return () => mql.removeEventListener('change', callback);
+    },
+    getSnapshot() {
+        if (typeof window === 'undefined') return true;
+        return window.matchMedia('(min-width: 1024px)').matches;
+    },
+    getServerSnapshot() {
+        return true;
+    }
+};
+
 export function AppShell({ children, variant = 'header' }: AppShellProps) {
     const [isOpen, setIsOpen] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('sidebar') !== 'false' : true));
+
+    const isLarge = useSyncExternalStore(
+        isLargeScreenStore.subscribe,
+        isLargeScreenStore.getSnapshot,
+        isLargeScreenStore.getServerSnapshot
+    );
+
+    const prevIsLargeRef = useRef(true);
+
+    if (isLarge !== prevIsLargeRef.current) {
+        prevIsLargeRef.current = isLarge;
+        if (!isLarge) {
+            setIsOpen(false);
+        }
+    }
 
     const handleSidebarChange = (open: boolean) => {
         setIsOpen(open);
@@ -16,30 +47,6 @@ export function AppShell({ children, variant = 'header' }: AppShellProps) {
             localStorage.setItem('sidebar', String(open));
         }
     };
-
-    // Auto-collapse sidebar on smaller screens (width < 1024px)
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-
-        let prevWidth = window.innerWidth;
-
-        // Auto-collapse on mount if screen is already small
-        if (prevWidth < 1024) {
-            setIsOpen(false);
-        }
-
-        const handleResize = () => {
-            const currentWidth = window.innerWidth;
-            // Collapse automatically if transitioning from large to small screen
-            if (currentWidth < 1024 && prevWidth >= 1024) {
-                setIsOpen(false);
-            }
-            prevWidth = currentWidth;
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     if (variant === 'header') {
         return <div className="flex min-h-screen w-full flex-col">{children}</div>;

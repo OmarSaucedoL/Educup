@@ -33,6 +33,11 @@ interface PaginatedUsuarios {
     links: PaginationLink[];
 }
 
+const goToPage = (url: string | null) => {
+    if (!url) return;
+    router.visit(url, { preserveState: true });
+};
+
 export default function Index({
     usuarios,
     permisos = [],
@@ -83,11 +88,6 @@ export default function Index({
         debounceTimer = setTimeout(() => doSearch(value), 350);
     };
 
-    const goToPage = (url: string | null) => {
-        if (!url) return;
-        router.visit(url, { preserveState: true });
-    };
-
     const { data: listaUsuarios, current_page, last_page, total, from, to } = usuarios;
     const activeRolId = filters.rol_id;
 
@@ -124,6 +124,7 @@ export default function Index({
                         <input
                             id="usuarios-search"
                             type="text"
+                            aria-label="Buscar por nombre, usuario o correo"
                             value={searchValue}
                             onChange={handleSearch}
                             placeholder="Buscar por nombre, usuario o correo…"
@@ -298,6 +299,7 @@ export default function Index({
                                                 key={key}
                                                 onClick={() => goToPage(link.url)}
                                                 disabled={!link.url || link.active}
+                                                aria-label={link.label === '...' ? 'Páginas intermedias' : `Página ${link.label}`}
                                                 className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-md border px-2 text-xs font-medium transition-colors ${
                                                     link.active
                                                         ? 'border-primary bg-primary text-primary-foreground pointer-events-none'

@@ -148,7 +148,15 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                                             {/* Header del dropdown */}
                                             <div
                                                 onClick={() => toggleGroup(grupoId)}
-                                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer select-none gap-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        toggleGroup(grupoId);
+                                                    }
+                                                }}
+                                                role="button"
+                                                tabIndex={0}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer select-none gap-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors focus:outline-hidden focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 dark:focus:ring-neutral-700 dark:focus:ring-offset-neutral-950 rounded-t-xl"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900/60 text-neutral-800 dark:text-neutral-200">

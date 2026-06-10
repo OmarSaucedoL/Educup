@@ -14,7 +14,7 @@ interface Role {
     NOMBRE: string;
 }
 
-interface CrearUsuarioForm {
+type CrearUsuarioForm = {
     USERNAME: string;
     NOMBRE: string;
     APELLIDO: string;
@@ -22,7 +22,7 @@ interface CrearUsuarioForm {
     CARNET: string;
     CONTRASENIA: string;
     ROL_ID: string;
-}
+};
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

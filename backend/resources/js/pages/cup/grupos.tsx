@@ -130,61 +130,61 @@ function SummaryCardsSection({ totalGrupos, turnosCount }: SummaryCardsSectionPr
                             <h3 className="text-muted-foreground text-xs font-bold tracking-wider uppercase">Distribución por Turno</h3>
                         </div>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                            {Object.entries(turnosCount)
-                                .filter(([turno, count]) => count > 0 || ['MAÑANA', 'TARDE', 'NOCHE'].includes(turno))
-                                .map(([turno, count]) => {
-                                    const colors: Record<string, { bg: string; text: string; dot: string; border: string }> = {
-                                        MAÑANA: {
-                                            bg: 'bg-neutral-50 dark:bg-neutral-900/40',
-                                            text: 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950',
-                                            dot: 'bg-neutral-900 dark:bg-neutral-100',
-                                            border: 'border-neutral-200 dark:border-neutral-800',
-                                        },
-                                        TARDE: {
-                                            bg: 'bg-neutral-50 dark:bg-neutral-900/40',
-                                            text: 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950',
-                                            dot: 'bg-neutral-900 dark:bg-neutral-100',
-                                            border: 'border-neutral-200 dark:border-neutral-800',
-                                        },
-                                        NOCHE: {
-                                            bg: 'bg-neutral-50 dark:bg-neutral-900/40',
-                                            text: 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950',
-                                            dot: 'bg-neutral-900 dark:bg-neutral-100',
-                                            border: 'border-neutral-200 dark:border-neutral-800',
-                                        },
-                                        'NO DEFINIDO': {
-                                            bg: 'bg-neutral-50/50 dark:bg-neutral-900/20',
-                                            text: 'bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
-                                            dot: 'bg-neutral-400 dark:bg-neutral-600',
-                                            border: 'border-neutral-200 dark:border-neutral-800/60',
-                                        },
-                                    };
-                                    const style = colors[turno] ?? colors['NO DEFINIDO'];
-                                    const label =
-                                        turno === 'MAÑANA' ? 'Mañana' : turno === 'TARDE' ? 'Tarde' : turno === 'NOCHE' ? 'Noche' : turno;
+                            {Object.entries(turnosCount).flatMap(([turno, count]) => {
+                                if (!(count > 0 || ['MAÑANA', 'TARDE', 'NOCHE'].includes(turno))) {
+                                    return [];
+                                }
+                                const colors: Record<string, { bg: string; text: string; dot: string; border: string }> = {
+                                    MAÑANA: {
+                                        bg: 'bg-neutral-50 dark:bg-neutral-900/40',
+                                        text: 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950',
+                                        dot: 'bg-neutral-900 dark:bg-neutral-100',
+                                        border: 'border-neutral-200 dark:border-neutral-800',
+                                    },
+                                    TARDE: {
+                                        bg: 'bg-neutral-50 dark:bg-neutral-900/40',
+                                        text: 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950',
+                                        dot: 'bg-neutral-900 dark:bg-neutral-100',
+                                        border: 'border-neutral-200 dark:border-neutral-800',
+                                    },
+                                    NOCHE: {
+                                        bg: 'bg-neutral-50 dark:bg-neutral-900/40',
+                                        text: 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950',
+                                        dot: 'bg-neutral-900 dark:bg-neutral-100',
+                                        border: 'border-neutral-200 dark:border-neutral-800',
+                                    },
+                                    'NO DEFINIDO': {
+                                        bg: 'bg-neutral-50/50 dark:bg-neutral-900/20',
+                                        text: 'bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
+                                        dot: 'bg-neutral-400 dark:bg-neutral-600',
+                                        border: 'border-neutral-200 dark:border-neutral-800/60',
+                                    },
+                                };
+                                const style = colors[turno] ?? colors['NO DEFINIDO'];
+                                const label =
+                                    turno === 'MAÑANA' ? 'Mañana' : turno === 'TARDE' ? 'Tarde' : turno === 'NOCHE' ? 'Noche' : turno;
 
-                                    return (
-                                        <div
-                                            key={turno}
-                                            className={`flex items-center justify-between rounded-xl border p-3 ${style.border} ${style.bg} transition-all hover:scale-[1.01]`}
-                                        >
-                                            <div className="flex min-w-0 items-center gap-2">
-                                                <span
-                                                    className={`h-2.5 w-2.5 shrink-0 rounded-full ${style.dot} animate-pulse`}
-                                                    style={{ animationDuration: '3s' }}
-                                                />
-                                                <span className="truncate text-xs font-bold tracking-wide text-neutral-800 uppercase dark:text-neutral-200">
-                                                    {label}
-                                                </span>
-                                            </div>
+                                return [
+                                    <div
+                                        key={turno}
+                                        className={`flex items-center justify-between rounded-xl border p-3 ${style.border} ${style.bg} transition-all hover:scale-[1.01]`}
+                                    >
+                                        <div className="flex min-w-0 items-center gap-2">
                                             <span
-                                                className={`inline-flex items-center justify-center rounded-lg px-2.5 py-1 text-xs font-extrabold shadow-xs ${style.text}`}
-                                            >
-                                                {count}
+                                                className={`h-2.5 w-2.5 shrink-0 rounded-full ${style.dot} animate-pulse`}
+                                            />
+                                            <span className="truncate text-xs font-bold tracking-wide text-neutral-800 uppercase dark:text-neutral-200">
+                                                {label}
                                             </span>
                                         </div>
-                                    );
-                                })}
+                                        <span
+                                            className={`inline-flex items-center justify-center rounded-lg px-2.5 py-1 text-xs font-extrabold shadow-xs ${style.text}`}
+                                        >
+                                            {count}
+                                        </span>
+                                    </div>
+                                ];
+                            })}
                         </div>
                     </div>
                 </div>

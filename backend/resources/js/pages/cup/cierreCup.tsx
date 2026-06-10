@@ -208,6 +208,7 @@ export default function CierreCupPage({ cup, ocupacion, estudianteCups, filters 
                                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
                                     <input
                                         type="text"
+                                        aria-label="Buscar postulante por nombre, apellido o carnet"
                                         placeholder="Buscar postulante por nombre, apellido o carnet..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}

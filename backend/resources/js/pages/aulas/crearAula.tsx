@@ -9,11 +9,11 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
-interface CrearAulaForm {
+type CrearAulaForm = {
     NOMBRE: string;
     DESCRIPCION: string;
     ESTADO: string;
-}
+};
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -93,6 +93,7 @@ export default function CrearAula() {
                                     <Label htmlFor="DESCRIPCION" className="text-sm font-semibold">Descripción / Observación</Label>
                                     <textarea
                                         id="DESCRIPCION"
+                                        aria-label="Descripción / Observación"
                                         value={data.DESCRIPCION}
                                         onChange={(e) => setData('DESCRIPCION', e.target.value)}
                                         placeholder="Ubicación, equipamiento disponible (proyector, aire acondicionado, etc.)"

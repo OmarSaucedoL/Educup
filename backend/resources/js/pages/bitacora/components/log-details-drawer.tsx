@@ -42,6 +42,7 @@ export function LogDetailsDrawer({
                 <div 
                     className="absolute inset-0 bg-neutral-950/40 dark:bg-neutral-950/60 backdrop-blur-sm transition-opacity" 
                     onClick={onClose}
+                    aria-hidden="true"
                 ></div>
 
                 <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">

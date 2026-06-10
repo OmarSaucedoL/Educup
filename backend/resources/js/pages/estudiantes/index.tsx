@@ -172,6 +172,7 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
                             <input
                                 type="text"
+                                aria-label="Buscar estudiantes por carnet, nombre o apellido"
                                 placeholder="Buscar por carnet, nombre o apellido..."
                                 value={search}
                                 onChange={handleSearchChange}

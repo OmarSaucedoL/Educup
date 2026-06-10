@@ -8,35 +8,37 @@ interface DashboardDocenteProps {
     clases: any[];
 }
 
-export default function DashboardDocente({ cup, clases }: DashboardDocenteProps) {
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) return '—';
-        try {
-            // dateStr comes in format "YYYY-MM-DD" or similar
-            const cleanStr = dateStr.split('T')[0];
-            const [year, month, day] = cleanStr.split('-');
-            const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-            return `${parseInt(day)} de ${months[parseInt(month) - 1]} de ${year}`;
-        } catch (e) {
-            return dateStr;
-        }
-    };
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
+    try {
+        // dateStr comes in format "YYYY-MM-DD" or similar
+        const cleanStr = dateStr.split('T')[0];
+        const [year, month, day] = cleanStr.split('-');
+        const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return `${parseInt(day)} de ${months[parseInt(month) - 1]} de ${year}`;
+    } catch (e) {
+        return dateStr;
+    }
+};
 
-    const formatClassSchedules = (clase: any) => {
-        const hebList = clase.bloqueHorario?.horariosEnBloque ?? clase.bloque_horario?.horarios_en_bloque ?? [];
-        if (hebList.length === 0) return 'Horario no definido';
-        
-        return hebList.map((heb: any) => {
-            const h = heb.horario;
-            if (!h) return '';
-            const formatTime = (timeStr: string) => {
-                if (!timeStr) return '';
-                const parts = timeStr.split(':');
-                return `${parts[0]}:${parts[1]}`;
-            };
-            return `${h.DIA} ${formatTime(h.HORA_INI)}-${formatTime(h.HORA_FIN)}`;
-        }).filter(Boolean).join(', ');
-    };
+const formatClassSchedules = (clase: any) => {
+    const hebList = clase.bloqueHorario?.horariosEnBloque ?? clase.bloque_horario?.horarios_en_bloque ?? [];
+    if (hebList.length === 0) return 'Horario no definido';
+    
+    return hebList.flatMap((heb: any) => {
+        const h = heb.horario;
+        if (!h) return [];
+        const formatTime = (timeStr: string) => {
+            if (!timeStr) return '';
+            const parts = timeStr.split(':');
+            return `${parts[0]}:${parts[1]}`;
+        };
+        const result = `${h.DIA} ${formatTime(h.HORA_INI)}-${formatTime(h.HORA_FIN)}`;
+        return result ? [result] : [];
+    }).join(', ');
+};
+
+export default function DashboardDocente({ cup, clases }: DashboardDocenteProps) {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard Docente', href: '/dashboard' },

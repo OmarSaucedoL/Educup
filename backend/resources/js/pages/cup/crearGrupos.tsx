@@ -7,7 +7,7 @@ import {
     ChevronLeft, AlertCircle, Save,
     Calculator, CheckSquare, Square, RefreshCcw, Trash2, CheckCircle2
 } from 'lucide-react';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { FormEventHandler, useEffect, useState, useRef } from 'react';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface CrearGruposProps {
@@ -30,13 +30,16 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
         turnos: [] as string[],
     });
 
-    useEffect(() => {
+    // Adjust local form state when props change during rendering
+    const prevPropsRef = useRef({ estMinExistente, estMaxExistente });
+    if (prevPropsRef.current.estMinExistente !== estMinExistente || prevPropsRef.current.estMaxExistente !== estMaxExistente) {
+        prevPropsRef.current = { estMinExistente, estMaxExistente };
         setData(prev => ({
             ...prev,
             EST_MIN: estMinExistente,
             EST_MAX: estMaxExistente
         }));
-    }, [estMinExistente, estMaxExistente]);
+    }
 
     const [isActionProcessing, setIsActionProcessing] = useState(false);
     
@@ -183,10 +186,11 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
                             
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
+                                    <label htmlFor="EST_MIN" className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
                                         Tamaño Mínimo
                                     </label>
                                     <input
+                                        id="EST_MIN"
                                         type="number"
                                         min="1"
                                         value={(data.EST_MIN as any) === '' || Number.isNaN(data.EST_MIN as any) ? '' : data.EST_MIN}
@@ -200,10 +204,11 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
                                     {errors.EST_MIN && <p className="text-xs text-red-600 font-medium">{errors.EST_MIN}</p>}
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
+                                    <label htmlFor="EST_MAX" className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
                                         Tamaño Máximo
                                     </label>
                                     <input
+                                        id="EST_MAX"
                                         type="number"
                                         min={(data.EST_MIN as any) === '' || Number.isNaN(data.EST_MIN as any) ? 1 : data.EST_MIN}
                                         value={(data.EST_MAX as any) === '' || Number.isNaN(data.EST_MAX as any) ? '' : data.EST_MAX}

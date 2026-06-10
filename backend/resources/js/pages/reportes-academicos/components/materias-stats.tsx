@@ -104,8 +104,7 @@ export default function MateriasStats({
 
         // Names of selected subjects
         const selectedNames = materiasCatalogo
-            .filter((m) => selectedIds.includes(m.id))
-            .map((m) => m.nombre)
+            .flatMap((m) => selectedIds.includes(m.id) ? [m.nombre] : [])
             .join(', ');
 
         // 1. Cabecera del Reporte de Filtros
@@ -180,9 +179,10 @@ export default function MateriasStats({
 
                     {/* Nota Limite Input */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">2. Nota Máxima</label>
+                        <label htmlFor="nota-maxima" className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">2. Nota Máxima</label>
                         <div className="flex gap-2">
                             <input
+                                id="nota-maxima"
                                 type="number"
                                 step="1"
                                 min="0"
@@ -221,6 +221,7 @@ export default function MateriasStats({
                             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                             <input
                                 type="text"
+                                aria-label="Buscar postulante por carnet o nombre"
                                 placeholder="Buscar postulante por carnet o nombre..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -263,8 +264,7 @@ export default function MateriasStats({
                             <div className="col-span-2">
                                 <strong>Materias Filtro:</strong>{' '}
                                 {materiasCatalogo
-                                    .filter((m) => materiasSeleccionadas.includes(m.id))
-                                    .map((m) => m.nombre)
+                                    .flatMap((m) => materiasSeleccionadas.includes(m.id) ? [m.nombre] : [])
                                     .join(', ')}
                             </div>
                             <div>

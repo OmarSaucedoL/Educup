@@ -121,6 +121,7 @@ export default function ImportarEstudiantes({ periodos }: Props) {
                                         <input
                                             ref={fileInputRef}
                                             type="file"
+                                            aria-label="Seleccionar archivo Excel (.xlsx, .xls)"
                                             accept=".xlsx, .xls"
                                             onChange={e => setData('archivo_excel', e.target.files ? e.target.files[0] : null)}
                                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"

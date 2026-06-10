@@ -25,7 +25,7 @@ interface Usuario {
     ROL_ID: number | null;
 }
 
-interface EditarUsuarioForm {
+type EditarUsuarioForm = {
     USERNAME: string;
     NOMBRE: string;
     APELLIDO: string;
@@ -34,7 +34,7 @@ interface EditarUsuarioForm {
     CONTRASENIA: string;
     ESTADO: string;
     ROL_ID: string;
-}
+};
 
 export default function EditarUsuario({ usuario, roles }: { usuario: Usuario; roles: Role[] }) {
     const breadcrumbs: BreadcrumbItem[] = [

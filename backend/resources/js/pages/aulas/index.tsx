@@ -15,16 +15,17 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const handleToggleStatus = (id: number) => {
+    router.patch(`/aulas/${id}/toggle-status`, {}, {
+        preserveScroll: true,
+        preserveState: true,
+        onError: () => {
+            alert('No se pudo actualizar el estado de la aula.');
+        },
+    });
+};
+
 export default function Index({ aulas }: { aulas: any[] }) {
-    const handleToggleStatus = (id: number) => {
-        router.patch(`/aulas/${id}/toggle-status`, {}, {
-            preserveScroll: true,
-            preserveState: true,
-            onError: () => {
-                alert('No se pudo actualizar el estado de la aula.');
-            },
-        });
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
