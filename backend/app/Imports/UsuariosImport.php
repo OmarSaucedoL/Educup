@@ -39,12 +39,12 @@ class UsuariosImport implements ToModel, WithHeadingRow
         $usuario = Usuario::create([
             'USERNAME'       => $username,
             'CONTRASENIA'    => Hash::make($row['contrasenia'] ?? ''),
-            'CARNET'         => strtoupper(trim($row['carnet'] ?? '')),
+            'CARNET'         => empty(trim($row['carnet'] ?? '')) ? null : strtoupper(trim($row['carnet'] ?? '')),
             'NOMBRE'         => strtoupper(trim($row['nombre'] ?? '')),
             'APELLIDO'       => strtoupper(trim($row['apellido'] ?? '')),
             'CORREO'         => $correo,
-            'TELEFONO'       => trim($row['telefono'] ?? ''),
-            'ESTADO'         => 1, // Por defecto ACTIVO (1)
+            'TELEFONO'       => empty(trim($row['telefono'] ?? '')) ? null : trim($row['telefono'] ?? ''),
+            'ESTADO'         => 'ACTIVO', // Por defecto ACTIVO
             'FECHA_CREACION' => now(),
             'ROL_ID'         => $rol->ID,
         ]);
