@@ -35,23 +35,23 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-        <AuthLayout title="Inicia Sesión" description="Ingrese su correo electrónico y contraseña para iniciar sesión">
+        <AuthLayout title="Inicia Sesión" description="Ingrese su usuario o correo electrónico y contraseña para iniciar sesión">
             <Head title="Inicia Sesión" />
 
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Correo Electronico</Label>
+                        <Label htmlFor="email">Usuario o Correo Electrónico</Label>
                         <Input
                             id="email"
-                            type="email"
+                            type="text"
                             required
                             autoFocus
                             tabIndex={1}
-                            autoComplete="email"
+                            autoComplete="username"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
-                            placeholder="email@example.com"
+                            placeholder="usuario o correo@ejemplo.com"
                         />
                         <InputError message={errors.email} />
                     </div>

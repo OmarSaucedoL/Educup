@@ -19,15 +19,10 @@ class LoginRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,7 +36,29 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt(['CORREO' => strtolower(trim($this->email)), 'password' => $this->password], $this->boolean('remember'))) {
+        $loginInput = trim($this->email);
+
+        if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
+            $credentials = [
+                'CORREO' => strtolower($loginInput),
+                'password' => $this->password,
+            ];
+        } else {
+            // Primero intentamos buscar una coincidencia exacta (sensible a mayúsculas/minúsculas)
+            $user = \App\Models\Usuario::where('USERNAME', $loginInput)->first();
+
+            // Si no se encuentra, intentamos una búsqueda insensible a mayúsculas
+            if (!$user) {
+                $user = \App\Models\Usuario::whereRaw('LOWER("USERNAME") = ?', [strtolower($loginInput)])->first();
+            }
+
+            $credentials = [
+                'USERNAME' => $user ? $user->USERNAME : $loginInput,
+                'password' => $this->password,
+            ];
+        }
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

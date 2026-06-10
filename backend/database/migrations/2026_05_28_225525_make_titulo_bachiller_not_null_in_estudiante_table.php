@@ -8,9 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Backfill any existing NULL values before enforcing NOT NULL
         \Illuminate\Support\Facades\DB::statement(
-            'UPDATE "ESTUDIANTE" SET "TITULO_BACHILLER" = CONCAT(\'SIN_TITULO_\', "ID_ESTUDIANTE") WHERE "TITULO_BACHILLER" IS NULL'
+            'UPDATE "ESTUDIANTE" SET "TITULO_BACHILLER" = \'SIN_TITULO_\' || "ID_ESTUDIANTE" WHERE "TITULO_BACHILLER" IS NULL'
         );
 
         Schema::table('ESTUDIANTE', function (Blueprint $table) {

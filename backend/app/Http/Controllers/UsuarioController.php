@@ -18,6 +18,8 @@ class UsuarioController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search', '');
+        $rolId = $request->input('rol_id', '');
+        $estado = $request->input('estado', '');
 
         $query = Usuario::with(['rol.permisos', 'permisos' => function ($q) {
             $q->where('PERMISOS_USUARIO.ESTADO', 'ACTIVO');
@@ -32,6 +34,14 @@ class UsuarioController extends Controller
             });
         }
 
+        if ($rolId !== '') {
+            $query->where('ROL_ID', $rolId);
+        }
+
+        if ($estado !== '') {
+            $query->where('ESTADO', $estado);
+        }
+
         $usuarios = $query->orderBy('APELLIDO')->orderBy('NOMBRE')->paginate(15)->withQueryString();
 
         foreach ($usuarios as $usuario) {
@@ -41,11 +51,17 @@ class UsuarioController extends Controller
         }
 
         $todosLosPermisos = \App\Models\Permiso::with('modulo')->get();
+        $roles = \App\Models\Rol::orderBy('NOMBRE')->get();
 
         return inertia('usuarios/index', [
             'usuarios'  => $usuarios,
             'permisos'  => $todosLosPermisos,
-            'filters'   => ['search' => $search],
+            'roles'     => $roles,
+            'filters'   => [
+                'search' => $search,
+                'rol_id' => $rolId,
+                'estado' => $estado,
+            ],
         ]);
     }
 
@@ -96,6 +112,12 @@ class UsuarioController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->has('USERNAME')) {
+            $request->merge([
+                'USERNAME' => strtoupper(trim($request->USERNAME)),
+            ]);
+        }
+
         $validated = $request->validate([
             'USERNAME' => 'required|string|max:255|unique:USUARIO',
             'CONTRASENIA' => 'required|string|min:6',
@@ -178,6 +200,12 @@ class UsuarioController extends Controller
     public function update(Request $request, string $id)
     {
         $usuario = Usuario::findOrFail($id);
+
+        if ($request->has('USERNAME')) {
+            $request->merge([
+                'USERNAME' => strtoupper(trim($request->USERNAME)),
+            ]);
+        }
 
         $validated = $request->validate([
             'USERNAME' => 'sometimes|required|string|max:255|unique:USUARIO,USERNAME,' . $id . ',ID',

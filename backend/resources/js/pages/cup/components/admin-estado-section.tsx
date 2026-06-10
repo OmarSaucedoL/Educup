@@ -32,7 +32,7 @@ export function AdminEstadoSection({
     estadoError,
 }: AdminEstadoSectionProps) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-neutral-100 dark:border-neutral-800 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start border-t border-neutral-100 dark:border-neutral-800 pt-6">
             <div className="grid gap-2">
                 <Label htmlFor="USUARIO_ID" className="text-sm font-semibold flex items-center gap-1.5">
                     <UserCheck className="h-4 w-4 text-neutral-500" /> Administrador Encargado *

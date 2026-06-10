@@ -40,6 +40,11 @@ class Usuario extends Authenticatable
         $this->attributes['CORREO'] = strtolower(trim($value));
     }
 
+    public function setUsernameAttribute($value)
+    {
+        $this->attributes['USERNAME'] = strtoupper(trim($value));
+    }
+
     public function getAuthPasswordName()
     {
         return 'CONTRASENIA';

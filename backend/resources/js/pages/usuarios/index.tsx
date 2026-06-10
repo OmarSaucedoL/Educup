@@ -3,8 +3,14 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Users, Key, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Users, Key, Search, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
 import { EditUserPermisosModal } from './components/edit-user-permisos-modal';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Usuarios', href: '/usuarios' },
@@ -30,22 +36,44 @@ interface PaginatedUsuarios {
 export default function Index({
     usuarios,
     permisos = [],
-    filters = { search: '' },
+    roles = [],
+    filters = { search: '', rol_id: '', estado: '' },
 }: {
     usuarios: PaginatedUsuarios;
     permisos: any[];
-    filters: { search: string };
+    roles: any[];
+    filters: { search: string; rol_id?: string; estado?: string };
 }) {
     const [editingUser, setEditingUser] = useState<any | null>(null);
     const [searchValue, setSearchValue] = useState(filters.search ?? '');
 
-    // Debounce search → Inertia GET
-    const doSearch = useCallback((value: string) => {
-        router.get('/usuarios', { search: value }, {
+    // Apply multiple filters at once, maintaining state
+    const applyFilters = useCallback((newFilters: { search?: string; rol_id?: string; estado?: string }) => {
+        const queryParams: any = {
+            search: newFilters.search !== undefined ? newFilters.search : searchValue,
+        };
+
+        const finalRolId = newFilters.rol_id !== undefined ? newFilters.rol_id : (filters.rol_id ?? '');
+        const finalEstado = newFilters.estado !== undefined ? newFilters.estado : (filters.estado ?? '');
+
+        if (finalRolId !== '') {
+            queryParams.rol_id = finalRolId;
+        }
+
+        if (finalEstado !== '') {
+            queryParams.estado = finalEstado;
+        }
+
+        router.get('/usuarios', queryParams, {
             preserveState: true,
             replace: true,
         });
-    }, []);
+    }, [searchValue, filters.rol_id, filters.estado]);
+
+    // Debounce search → Inertia GET
+    const doSearch = useCallback((value: string) => {
+        applyFilters({ search: value });
+    }, [applyFilters]);
 
     let debounceTimer: ReturnType<typeof setTimeout>;
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,17 +116,91 @@ export default function Index({
                     </div>
                 </div>
 
-                {/* Search bar */}
-                <div className="relative max-w-sm">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                    <input
-                        id="usuarios-search"
-                        type="text"
-                        value={searchValue}
-                        onChange={handleSearch}
-                        placeholder="Buscar por nombre, usuario o correo…"
-                        className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-4 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
+                {/* Search and Filters bar */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative w-full max-w-sm">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                        <input
+                            id="usuarios-search"
+                            type="text"
+                            value={searchValue}
+                            onChange={handleSearch}
+                            placeholder="Buscar por nombre, usuario o correo…"
+                            className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-4 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                    </div>
+
+                    {/* Filtro por Rol */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant={filters.rol_id ? "default" : "outline"}
+                                className="h-9 text-xs gap-1.5"
+                            >
+                                <Filter className="h-3.5 w-3.5" />
+                                {filters.rol_id 
+                                    ? `Rol: ${roles.find(r => r.ID.toString() === filters.rol_id.toString())?.NOMBRE || filters.rol_id}`
+                                    : "Filtro por Rol"}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48 max-h-60 overflow-y-auto">
+                            <DropdownMenuItem onClick={() => applyFilters({ rol_id: '' })}>
+                                Todos los Roles
+                            </DropdownMenuItem>
+                            {roles.map(rol => (
+                                <DropdownMenuItem 
+                                    key={rol.ID} 
+                                    onClick={() => applyFilters({ rol_id: rol.ID.toString() })}
+                                >
+                                    {rol.NOMBRE}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Filtro por Estado */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant={filters.estado ? "default" : "outline"}
+                                className="h-9 text-xs gap-1.5"
+                            >
+                                <Filter className="h-3.5 w-3.5" />
+                                {filters.estado 
+                                    ? `Estado: ${filters.estado === 'ACTIVO' ? 'Activo' : 'Inactivo'}`
+                                    : "Filtro por Estado"}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48">
+                            <DropdownMenuItem onClick={() => applyFilters({ estado: '' })}>
+                                Todos los Estados
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => applyFilters({ estado: 'ACTIVO' })}>
+                                Activo
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => applyFilters({ estado: 'INACTIVO' })}>
+                                Inactivo
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Limpiar Filtros */}
+                    {(filters.rol_id || filters.estado || searchValue) && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-9 text-xs text-muted-foreground hover:text-foreground gap-1"
+                            onClick={() => {
+                                setSearchValue('');
+                                router.get('/usuarios', {}, {
+                                    preserveState: false,
+                                });
+                            }}
+                        >
+                            <X className="h-3.5 w-3.5" />
+                            Limpiar
+                        </Button>
+                    )}
                 </div>
 
                 {/* Table */}
