@@ -89,6 +89,7 @@ export default function Index({
     };
 
     const { data: listaUsuarios, current_page, last_page, total, from, to } = usuarios;
+    const activeRolId = filters.rol_id;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -134,12 +135,12 @@ export default function Index({
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
-                                variant={filters.rol_id ? "default" : "outline"}
+                                variant={activeRolId ? "default" : "outline"}
                                 className="h-9 text-xs gap-1.5"
                             >
                                 <Filter className="h-3.5 w-3.5" />
-                                {filters.rol_id 
-                                    ? `Rol: ${roles.find(r => r.ID.toString() === filters.rol_id.toString())?.NOMBRE || filters.rol_id}`
+                                {activeRolId 
+                                    ? `Rol: ${roles.find(r => r.ID.toString() === activeRolId)?.NOMBRE || activeRolId}`
                                     : "Filtro por Rol"}
                             </Button>
                         </DropdownMenuTrigger>
@@ -185,7 +186,7 @@ export default function Index({
                     </DropdownMenu>
 
                     {/* Limpiar Filtros */}
-                    {(filters.rol_id || filters.estado || searchValue) && (
+                    {(activeRolId || filters.estado || searchValue) && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -288,19 +289,25 @@ export default function Index({
                                 </button>
 
                                 {/* Numbered pages — skip the first (prev) and last (next) links */}
-                                {usuarios.links.slice(1, -1).map((link, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => goToPage(link.url)}
-                                        disabled={!link.url || link.active}
-                                        className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-md border px-2 text-xs font-medium transition-colors ${
-                                            link.active
-                                                ? 'border-primary bg-primary text-primary-foreground pointer-events-none'
-                                                : 'hover:bg-muted disabled:opacity-40'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
+                                {(() => {
+                                    let ellipsisCount = 0;
+                                    return usuarios.links.slice(1, -1).map((link) => {
+                                        const key = link.label === '...' ? `ellipsis-${++ellipsisCount}` : link.label;
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => goToPage(link.url)}
+                                                disabled={!link.url || link.active}
+                                                className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-md border px-2 text-xs font-medium transition-colors ${
+                                                    link.active
+                                                        ? 'border-primary bg-primary text-primary-foreground pointer-events-none'
+                                                        : 'hover:bg-muted disabled:opacity-40'
+                                                }`}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    });
+                                })()}
 
                                 {/* Next */}
                                 <button
@@ -316,11 +323,13 @@ export default function Index({
                     )}
                 </div>
 
-                <EditUserPermisosModal
-                    user={editingUser}
-                    permisos={permisos}
-                    onClose={() => setEditingUser(null)}
-                />
+                {editingUser && (
+                    <EditUserPermisosModal
+                        user={editingUser}
+                        permisos={permisos}
+                        onClose={() => setEditingUser(null)}
+                    />
+                )}
             </div>
         </AppLayout>
     );

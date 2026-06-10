@@ -211,30 +211,34 @@ export default function EstudiantesCupPage({ cup, estudianteCups, filters }: Est
                 {estudianteCups.links && estudianteCups.links.length > 3 && (
                     <div className="flex justify-center">
                         <div className="flex flex-wrap gap-1 rounded-xl border border-neutral-200/60 bg-white/40 p-1.5 dark:border-neutral-800 dark:bg-neutral-900/40">
-                            {estudianteCups.links.map((link, idx) => {
-                                if (link.url === null) {
+                            {(() => {
+                                let ellipsisCount = 0;
+                                return estudianteCups.links.map((link) => {
+                                    const key = link.label === '...' ? `ellipsis-${++ellipsisCount}` : link.label;
+                                    if (link.url === null) {
+                                        return (
+                                            <div
+                                                key={key}
+                                                className="cursor-not-allowed rounded-lg px-3 py-1.5 text-xs text-neutral-400 select-none dark:text-neutral-600"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    }
                                     return (
-                                        <div
-                                            key={idx}
-                                            className="cursor-not-allowed rounded-lg px-3 py-1.5 text-xs text-neutral-400 select-none dark:text-neutral-600"
+                                        <Link
+                                            key={key}
+                                            href={link.url}
+                                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                                                link.active
+                                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                                    : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
+                                            }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
+                                            preserveState
                                         />
                                     );
-                                }
-                                return (
-                                    <Link
-                                        key={idx}
-                                        href={link.url}
-                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                                            link.active
-                                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                                : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                        preserveState
-                                    />
-                                );
-                            })}
+                                });
+                            })()}
                         </div>
                     </div>
                 )}

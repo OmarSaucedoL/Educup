@@ -120,8 +120,8 @@ export function LogDetailsDrawer({
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800 bg-white dark:bg-neutral-950/20">
-                                                        {parseChanges(selectedLog.DESCRIPCION)!.map((change, idx) => (
-                                                            <tr key={idx} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
+                                                        {parseChanges(selectedLog.DESCRIPCION)!.map((change) => (
+                                                            <tr key={change.field} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
                                                                 <td className="p-2.5 font-bold text-neutral-700 dark:text-neutral-300">{change.field}</td>
                                                                 <td className="p-2.5 text-rose-600 dark:text-rose-400 font-medium bg-rose-50/20 dark:bg-rose-950/10 truncate max-w-[120px]" title={change.oldValue}>
                                                                     {change.oldValue || <span className="italic opacity-60">nulo</span>}

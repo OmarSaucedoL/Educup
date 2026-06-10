@@ -231,7 +231,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                     }
                                     return (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {[...options].sort((a, b) => a.OPCION - b.OPCION).map((op) => (
+                                            {options.toSorted((a, b) => a.OPCION - b.OPCION).map((op) => (
                                                 <div key={op.ID} className="flex items-center justify-between bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800/80 p-3 rounded-xl shadow-3xs">
                                                     <div className="flex items-center gap-2 min-w-0">
                                                         <span className="inline-flex h-6 px-2.5 items-center justify-center rounded-md bg-primary/5 text-[10px] font-extrabold text-primary border border-primary/20 shrink-0 whitespace-nowrap">

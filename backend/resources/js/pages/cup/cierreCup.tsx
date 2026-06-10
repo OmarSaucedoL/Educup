@@ -323,30 +323,34 @@ export default function CierreCupPage({ cup, ocupacion, estudianteCups, filters 
                         {estudianteCups.links && estudianteCups.links.length > 3 && (
                             <div className="flex justify-center">
                                 <div className="flex flex-wrap gap-1 bg-white/40 dark:bg-neutral-900/40 p-1.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800">
-                                    {estudianteCups.links.map((link, idx) => {
-                                        if (link.url === null) {
+                                    {(() => {
+                                        let ellipsisCount = 0;
+                                        return estudianteCups.links.map((link) => {
+                                            const key = link.label === '...' ? `ellipsis-${++ellipsisCount}` : link.label;
+                                            if (link.url === null) {
+                                                return (
+                                                    <div
+                                                        key={key}
+                                                        className="px-3 py-1.5 text-xs text-neutral-400 dark:text-neutral-600 rounded-lg cursor-not-allowed select-none"
+                                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    />
+                                                );
+                                            }
                                             return (
-                                                <div
-                                                    key={idx}
-                                                    className="px-3 py-1.5 text-xs text-neutral-400 dark:text-neutral-600 rounded-lg cursor-not-allowed select-none"
+                                                <Link
+                                                    key={key}
+                                                    href={link.url}
+                                                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                                                        link.active
+                                                            ? 'bg-primary text-primary-foreground shadow-sm'
+                                                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                                                    }`}
                                                     dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    preserveState
                                                 />
                                             );
-                                        }
-                                        return (
-                                            <Link
-                                                key={idx}
-                                                href={link.url}
-                                                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                                                    link.active
-                                                        ? 'bg-primary text-primary-foreground shadow-sm'
-                                                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                                                }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                                preserveState
-                                            />
-                                        );
-                                    })}
+                                        });
+                                    })()}
                                 </div>
                             </div>
                         )}

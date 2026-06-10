@@ -408,7 +408,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
 
                             <div className="flex flex-col gap-3">
                                 {components.map((comp, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
+                                    <div key={comp.nombre} className="flex items-center gap-3">
                                         <input
                                             type="text"
                                             value={comp.nombre}
@@ -508,8 +508,8 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                     <tr className="border-neutral-250/50 border-b bg-neutral-50/50 text-left text-xs font-semibold tracking-wider text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900/30">
                                         <th className="w-24 p-4 text-left font-semibold">CI</th>
                                         <th className="p-4 text-left font-semibold">Postulante</th>
-                                        {components.map((comp, idx) => (
-                                            <th key={idx} className="w-36 p-4 text-center font-semibold">
+                                        {components.map((comp) => (
+                                            <th key={comp.nombre} className="w-36 p-4 text-center font-semibold">
                                                 <div className="max-w-[120px] truncate" title={`${comp.nombre} (${comp.ponderacion}%)`}>
                                                     {comp.nombre}
                                                 </div>
@@ -543,10 +543,10 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                     </td>
  
                                                     {/* Notas individuales de evaluación */}
-                                                    {components.map((comp, idx) => {
+                                                    {components.map((comp) => {
                                                         const currentVal = grades[ec.ID]?.[comp.nombre] ?? '';
                                                         return (
-                                                            <td key={idx} className="p-4 text-center align-middle">
+                                                            <td key={comp.nombre} className="p-4 text-center align-middle">
                                                                 <div className="inline-flex items-center justify-center">
                                                                     <input
                                                                         type="text"

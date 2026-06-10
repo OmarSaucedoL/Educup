@@ -40,20 +40,12 @@ interface EditUserPermisosModalProps {
 
 export function EditUserPermisosModal({ user, permisos, onClose }: EditUserPermisosModalProps) {
     const { data, setData, put, processing, errors, reset, clearErrors } = useForm({
-        permisos: [] as number[],
-    });
-
-    useEffect(() => {
-        if (user) {
-            const initialPermisos = user.has_custom_permissions
+        permisos: user
+            ? (user.has_custom_permissions
                 ? user.permisos.map(p => p.ID)
-                : (user.rol?.permisos?.map(p => p.ID) || []);
-
-            setData({
-                permisos: initialPermisos,
-            });
-        }
-    }, [user, setData]);
+                : (user.rol?.permisos?.map(p => p.ID) || []))
+            : [] as number[],
+    });
 
     const handleOpenChange = (open: boolean) => {
         if (!open) {

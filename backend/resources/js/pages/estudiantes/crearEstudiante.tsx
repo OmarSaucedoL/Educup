@@ -138,6 +138,8 @@ function PostulacionesCarreraSection({
 }
 
 export default function CrearEstudiante({ colegios, ciudades, carreras = EMPTY_CARRERAS, activeCup = null }: Props) {
+    const initialEstado = activeCup ? 'ACTIVO' : 'INACTIVO';
+
     const { data, setData, post, processing, errors } = useForm<CrearEstudianteForm>({
         CARNET: '',
         NOMBRE: '',
@@ -148,25 +150,25 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = EMPTY_C
         TELEFONO: '',
         DIRECCION: '',
         TITULO_BACHILLER: '',
-        ESTADO: 'ACTIVO',
+        ESTADO: initialEstado,
         COLEGIO_ID: '',
         CIUDAD_ID: '',
         OPCION_1: '',
         OPCION_2: '',
     });
 
-    useEffect(() => {
-        if (!activeCup && data.ESTADO === 'ACTIVO') {
-            setData('ESTADO', 'INACTIVO');
+    const handleEstadoChange = (newEstado: 'ACTIVO' | 'INACTIVO' | 'APROBADO') => {
+        if (newEstado !== 'ACTIVO') {
+            setData(prev => ({
+                ...prev,
+                ESTADO: newEstado,
+                OPCION_1: '',
+                OPCION_2: '',
+            }));
+        } else {
+            setData('ESTADO', newEstado);
         }
-    }, [activeCup, data.ESTADO, setData]);
-
-    useEffect(() => {
-        if (data.ESTADO !== 'ACTIVO') {
-            setData('OPCION_1', '');
-            setData('OPCION_2', '');
-        }
-    }, [data.ESTADO, setData]);
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -344,7 +346,7 @@ export default function CrearEstudiante({ colegios, ciudades, carreras = EMPTY_C
                                                     key={s}
                                                     type="button"
                                                     disabled={processing || isDisabled}
-                                                    onClick={() => setData('ESTADO', s)}
+                                                    onClick={() => handleEstadoChange(s)}
                                                     className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
                                                         data.ESTADO === s
                                                             ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20'

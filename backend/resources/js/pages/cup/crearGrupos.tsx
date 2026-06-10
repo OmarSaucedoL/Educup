@@ -1,13 +1,13 @@
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { 
     Users, Clock, 
     ChevronLeft, AlertCircle, Save,
-    Calculator, CheckSquare, Square, RefreshCcw, Trash2
+    Calculator, CheckSquare, Square, RefreshCcw, Trash2, CheckCircle2
 } from 'lucide-react';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface CrearGruposProps {
@@ -16,14 +16,27 @@ interface CrearGruposProps {
     conGrupo: number;
     sinGrupo: number;
     turnos: { nombre: string; horarios: string[] }[];
+    estMinExistente?: number;
+    estMaxExistente?: number;
 }
 
-export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos }: CrearGruposProps) {
+export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos, estMinExistente = 20, estMaxExistente = 40 }: CrearGruposProps) {
+    const { props } = usePage<any>();
+    const flash = props.flash as { success?: string; warning?: boolean } | undefined;
+
     const { data, setData, post, processing, errors, reset } = useForm({
-        EST_MIN: 20,
-        EST_MAX: 40,
+        EST_MIN: estMinExistente,
+        EST_MAX: estMaxExistente,
         turnos: [] as string[],
     });
+
+    useEffect(() => {
+        setData(prev => ({
+            ...prev,
+            EST_MIN: estMinExistente,
+            EST_MAX: estMaxExistente
+        }));
+    }, [estMinExistente, estMaxExistente]);
 
     const [isActionProcessing, setIsActionProcessing] = useState(false);
     
@@ -131,6 +144,13 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
                         </p>
                     </div>
 
+                    {flash?.success && (
+                        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300">
+                            <CheckCircle2 className="h-4.5 w-4.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                            {flash.success}
+                        </div>
+                    )}
+
                     {(errors as any).inscritos && (
                         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20 p-3 text-sm text-red-700 dark:text-red-300">
                             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -138,10 +158,10 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
                         </div>
                     )}
                     
-                    {(errors as any).error && (
+                    {((errors as any).error || props.errors?.error) && (
                         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20 p-3 text-sm text-red-700 dark:text-red-300">
                             <AlertCircle className="h-4 w-4 shrink-0" />
-                            {(errors as any).error}
+                            {((errors as any).error || props.errors?.error)}
                         </div>
                     )}
                     
@@ -256,8 +276,8 @@ export default function CrearGrupos({ cup, inscritos, conGrupo, sinGrupo, turnos
                                             <div className="flex flex-col min-w-0 w-full gap-1">
                                                 <span className="font-bold text-sm tracking-tight">Turno {turno.nombre}</span>
                                                 <div className="flex flex-wrap gap-1.5 mt-1">
-                                                    {turno.horarios.map((h, i) => (
-                                                        <span key={i} className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                                    {turno.horarios.map((h) => (
+                                                        <span key={h} className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${
                                                             selected 
                                                                 ? 'bg-white/20 text-white dark:bg-neutral-900/20 dark:text-neutral-900' 
                                                                 : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400'

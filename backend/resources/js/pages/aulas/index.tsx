@@ -61,6 +61,7 @@ export default function Index({ aulas }: { aulas: any[] }) {
                                             <td className="p-4 align-middle text-muted-foreground">{aula.DESCRIPCION || <span className="italic text-muted-foreground/50">Sin descripción</span>}</td>
                                             <td className="p-4 align-middle text-center">
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleToggleStatus(aula.ID_AULA)}
                                                     title="Haga clic para alternar el estado"
                                                     className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold cursor-pointer transition-all hover:scale-105 select-none ${

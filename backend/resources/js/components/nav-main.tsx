@@ -20,7 +20,7 @@ export function NavMain({ items = EMPTY_ITEMS }: { items: NavItem[] }) {
                             <SidebarMenuButton asChild isActive={item.url === page.url} tooltip={item.title}>
                                 {item.items?.length ? (
                                     <CollapsibleTrigger asChild>
-                                        <button onClick={() => {
+                                        <button type="button" onClick={() => {
                                             if (state === 'collapsed') {
                                                 setOpen(true);
                                             }

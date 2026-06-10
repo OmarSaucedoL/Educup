@@ -81,8 +81,8 @@ class CUPController extends Controller
                 'SEMESTRE' => $cup->SEMESTRE,
                 'NOTA_MINIMA' => $cup->NOTA_MINIMA,
                 'CUPOS' => $cup->CUPOS,
-                'FECHA_INICIO' => $cup->FECHA_INICIO ? $cup->FECHA_INICIO->format('Y-m-d') : null,
-                'FECHA_FIN' => $cup->FECHA_FIN ? $cup->FECHA_FIN->format('Y-m-d') : null,
+                'FECHA_INICIO' => $cup->FECHA_INICIO ? \Carbon\Carbon::parse($cup->FECHA_INICIO)->format('Y-m-d') : null,
+                'FECHA_FIN' => $cup->FECHA_FIN ? \Carbon\Carbon::parse($cup->FECHA_FIN)->format('Y-m-d') : null,
                 'USUARIO_ID' => $cup->USUARIO_ID,
                 'ESTADO' => $cup->ESTADO,
                 'carreras' => $cupCarreras,
@@ -216,7 +216,7 @@ class CUPController extends Controller
         ]);
     }
 
-    public function estudiantes(\Illuminate\Http\Request $request, string $id)
+    public function estudiantes(Request $request, string $id)
     {
         $cup = Cup::findOrFail($id);
         $search = $request->input('search');
@@ -331,16 +331,16 @@ class CUPController extends Controller
     {
         $cup = Cup::findOrFail($id);
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($cup) {
+        DB::transaction(function () use ($cup) {
             // 1. Ejecutar el procedimiento de cierre
-            \Illuminate\Support\Facades\DB::statement('CALL public.p_cerrar_gestion_cup(?)', [$cup->ID_CUP]);
+            DB::statement('CALL public.p_cerrar_gestion_cup(?)', [$cup->ID_CUP]);
 
             // 2. Cambiar el estado del CUP a Concluido
             $cup->update(['ESTADO' => 'Concluido']);
 
             // 3. Registrar en Bitácora
-            \App\Models\Bitacora::create([
-                'USUARIO_ID' => \Illuminate\Support\Facades\Auth::id(),
+            Bitacora::create([
+                'USUARIO_ID' => auth()->id(),
                 'ACCION' => 'ACTUALIZAR',
                 'TABLA' => 'CUP',
                 'REGISTRO_ID' => $cup->ID_CUP,
@@ -402,7 +402,7 @@ class CUPController extends Controller
             ->get();
 
         // Obtener docentes disponibles (solo los que pertenecen a este CUP y tienen materias autorizadas)
-        $docentesAutorizados = \App\Models\DocenteCupMat::whereHas('docenteCup', function($q) use ($id) {
+        $docentesAutorizados = DocenteCupMat::whereHas('docenteCup', function($q) use ($id) {
             $q->where('ID_CUP', $id);
         })
         ->with('docenteCup.docente.usuario')
@@ -592,6 +592,58 @@ class CUPController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    private function verificarCambiosCupConcluido(Cup $cup, Request $request): void
+    {
+        if ($cup->ESTADO !== 'Concluido' || $request->input('ESTADO') !== 'Concluido') {
+            return;
+        }
+
+        // Compare simple fields
+        $hasChanges = $request->input('ANIO') != $cup->ANIO ||
+                      $request->input('SEMESTRE') != $cup->SEMESTRE ||
+                      $request->input('NOTA_MINIMA') != $cup->NOTA_MINIMA ||
+                      $request->input('FECHA_INICIO') != ($cup->FECHA_INICIO ? \Carbon\Carbon::parse($cup->FECHA_INICIO)->format('Y-m-d') : null) ||
+                      $request->input('FECHA_FIN') != ($cup->FECHA_FIN ? \Carbon\Carbon::parse($cup->FECHA_FIN)->format('Y-m-d') : null) ||
+                      $request->input('USUARIO_ID') != $cup->USUARIO_ID;
+
+        if (!$hasChanges) {
+            // Compare careers
+            $existingCarreras = CarreraCup::where('ID_CUP', $cup->ID_CUP)
+                ->orderBy('ID_CARRERA')
+                ->get(['ID_CARRERA', 'CUPOS'])
+                ->toArray();
+
+            $newCarreras = collect($request->input('carreras'))
+                ->map(fn($c) => ['ID_CARRERA' => (int)$c['ID_CARRERA'], 'CUPOS' => (int)$c['CUPOS']])
+                ->sortBy('ID_CARRERA')
+                ->values()
+                ->toArray();
+
+            if ($existingCarreras != $newCarreras) {
+                $hasChanges = true;
+            }
+        }
+
+        if (!$hasChanges) {
+            // Compare subjects
+            $existingMaterias = MateriaCup::where('ID_CUP', $cup->ID_CUP)
+                ->pluck('ID_MATERIA')
+                ->toArray();
+
+            $newMaterias = array_map('intval', $request->input('materias') ?? []);
+
+            if (array_diff($existingMaterias, $newMaterias) || array_diff($newMaterias, $existingMaterias)) {
+                $hasChanges = true;
+            }
+        }
+
+        if ($hasChanges) {
+            throw ValidationException::withMessages([
+                'error' => 'Para modificar la información de un CUP concluido, primero debe cambiar su estado.'
+            ]);
+        }
+    }
+
     public function update(Request $request, string $id)
     {
         $cup = Cup::findOrFail($id);
@@ -605,56 +657,13 @@ class CUPController extends Controller
                 ->exists();
 
             if ($otroActivo) {
-                return back()->withErrors([
+                throw ValidationException::withMessages([
                     'ESTADO' => 'Ya existe un CUP activo en el sistema. Solo puede haber un CUP no concluido a la vez.'
                 ]);
             }
         }
 
-        if ($cup->ESTADO === 'Concluido' && $request->input('ESTADO') === 'Concluido') {
-            // Compare fields to check if modifications were attempted
-            $hasChanges = $request->input('ANIO') != $cup->ANIO ||
-                          $request->input('SEMESTRE') != $cup->SEMESTRE ||
-                          $request->input('NOTA_MINIMA') != $cup->NOTA_MINIMA ||
-                          $request->input('FECHA_INICIO') != ($cup->FECHA_INICIO ? $cup->FECHA_INICIO->format('Y-m-d') : null) ||
-                          $request->input('FECHA_FIN') != ($cup->FECHA_FIN ? $cup->FECHA_FIN->format('Y-m-d') : null) ||
-                          $request->input('USUARIO_ID') != $cup->USUARIO_ID;
-
-            if (!$hasChanges) {
-                // Compare careers
-                $existingCarreras = \App\Models\CarreraCup::where('ID_CUP', $cup->ID_CUP)
-                    ->orderBy('ID_CARRERA')
-                    ->get(['ID_CARRERA', 'CUPOS'])
-                    ->toArray();
-
-                $newCarreras = collect($request->input('carreras'))
-                    ->map(fn($c) => ['ID_CARRERA' => (int)$c['ID_CARRERA'], 'CUPOS' => (int)$c['CUPOS']])
-                    ->sortBy('ID_CARRERA')
-                    ->values()
-                    ->toArray();
-
-                if ($existingCarreras != $newCarreras) {
-                    $hasChanges = true;
-                }
-            }
-
-            if (!$hasChanges) {
-                // Compare subjects
-                $existingMaterias = \App\Models\MateriaCup::where('ID_CUP', $cup->ID_CUP)
-                    ->pluck('ID_MATERIA')
-                    ->toArray();
-
-                $newMaterias = array_map('intval', $request->input('materias') ?? []);
-
-                if (array_diff($existingMaterias, $newMaterias) || array_diff($newMaterias, $existingMaterias)) {
-                    $hasChanges = true;
-                }
-            }
-
-            if ($hasChanges) {
-                return back()->withErrors(['error' => 'Para modificar la información de un CUP concluido, primero debe cambiar su estado.']);
-            }
-        }
+        $this->verificarCambiosCupConcluido($cup, $request);
 
         $validated = $request->validate([
             'ANIO' => 'required|integer',
@@ -742,12 +751,26 @@ class CUPController extends Controller
             ];
         }
 
+        // Obtener capacidad de los grupos si ya existen
+        $primerClase = Clase::where('ID_CUP', $idCup)->whereNotNull('ID_GRUPO')->first();
+        $estMinExistente = 20;
+        $estMaxExistente = 40;
+        if ($primerClase) {
+            $grupo = Grupo::find($primerClase->ID_GRUPO);
+            if ($grupo) {
+                $estMinExistente = $grupo->EST_MIN;
+                $estMaxExistente = $grupo->EST_MAX;
+            }
+        }
+
         return inertia('cup/crearGrupos', [
             'cup'       => $cup,
             'inscritos' => $inscritos,
             'conGrupo'  => $conGrupo,
             'sinGrupo'  => $sinGrupo,
             'turnos'    => $turnos,
+            'estMinExistente' => $estMinExistente,
+            'estMaxExistente' => $estMaxExistente,
         ]);
     }
 
@@ -812,26 +835,26 @@ class CUPController extends Controller
             $sinCupo   = $result['p_sin_cupo'] ?? 0;
 
             if ($asignados === 0 && $sinCupo === 0) {
-                return redirect("/cup/{$idCup}")->with('success', 'No hay estudiantes rezagados para asignar.');
+                return back()->with('success', 'No hay estudiantes rezagados para asignar.');
             }
 
             $mensaje = "Se asignaron {$asignados} estudiantes rezagados a grupos existentes.";
             if ($sinCupo > 0) {
                 $mensaje .= " Sin embargo, {$sinCupo} estudiantes no pudieron ser asignados porque los grupos están llenos. Deberá crear más grupos o aumentar el límite máximo.";
-                return redirect("/cup/{$idCup}")->with('success', $mensaje)->with('warning', true);
+                return back()->with('success', $mensaje)->with('warning', true);
             }
 
-            return redirect("/cup/{$idCup}")->with('success', $mensaje);
+            return back()->with('success', $mensaje);
         } catch (\PDOException $e) {
             $mensaje = $e->getMessage();
             if (preg_match('/ERROR:\s*(.+?)(?:\n|CONTEXT|$)/i', $mensaje, $m)) {
                 $mensaje = trim($m[1]);
             }
             \Log::error('Error en p_asignar_rezagados: ' . $e->getMessage());
-            return redirect("/cup/{$idCup}")->withErrors(['error' => $mensaje]);
+            throw ValidationException::withMessages(['error' => $mensaje]);
         } catch (\Exception $e) {
             \Log::error('Error inesperado en asignarRezagados: ' . $e->getMessage());
-            return redirect("/cup/{$idCup}")->withErrors(['error' => 'Error inesperado: ' . $e->getMessage()]);
+            throw ValidationException::withMessages(['error' => 'Error inesperado: ' . $e->getMessage()]);
         }
     }
 
@@ -840,7 +863,7 @@ class CUPController extends Controller
         try {
             DB::statement('CALL public.p_resetear_paquete_clases(?)', [(int)$idCup]);
 
-            return redirect("/cup/{$idCup}")->with(
+            return back()->with(
                 'success',
                 'Todas las clases y grupos del CUP han sido reseteados correctamente.'
             );
@@ -850,10 +873,10 @@ class CUPController extends Controller
                 $mensaje = trim($m[1]);
             }
             \Log::error('Error en p_resetear_paquete_clases: ' . $e->getMessage());
-            return redirect("/cup/{$idCup}")->withErrors(['error' => $mensaje]);
+            throw ValidationException::withMessages(['error' => $mensaje]);
         } catch (\Exception $e) {
             \Log::error('Error inesperado en resetearPaqueteClases: ' . $e->getMessage());
-            return redirect("/cup/{$idCup}")->withErrors(['error' => 'Error inesperado: ' . $e->getMessage()]);
+            throw ValidationException::withMessages(['error' => 'Error inesperado: ' . $e->getMessage()]);
         }
     }
 
@@ -871,7 +894,7 @@ class CUPController extends Controller
                 return back()->withErrors(['error' => 'No existen grupos creados para este CUP.']);
             }
 
-            \App\Models\Grupo::whereIn('ID_GRUPO', $grupoIds)->update([
+            Grupo::whereIn('ID_GRUPO', $grupoIds)->update([
                 'EST_MIN' => $validated['est_min'],
                 'EST_MAX' => $validated['est_max']
             ]);

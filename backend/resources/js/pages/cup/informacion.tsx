@@ -35,8 +35,10 @@ interface RequerimientoDocente {
 interface CupInformacionProps {
     cup: any;
     docentesActivos: any[];
-    requerimientoDocentes: RequerimientoDocente[];
+    requerimientoDocentes?: RequerimientoDocente[];
 }
+
+const DEFAULT_REQUERIMIENTO_DOCENTES: RequerimientoDocente[] = [];
 
 function estadoBadge(estado: string) {
     const map: Record<string, string> = {
@@ -60,23 +62,19 @@ function AsignarDocentesModal({
     onOpenChange: (open: boolean) => void;
 }) {
     const materiasCup: any[] = cup.materias ?? [];
-    const [asignaciones, setAsignaciones] = useState<Record<string, number[]>>({});
+    const [asignaciones, setAsignaciones] = useState<Record<string, number[]>>(() => {
+        const initial: Record<string, number[]> = {};
+        const docenteCups: any[] = cup.docente_cups ?? cup.docenteCups ?? [];
+
+        docenteCups.forEach((dc: any) => {
+            const docenteId = dc.CODIGO_DOCENTE.toString();
+            const materiasDc = (dc.docente_cup_mats ?? dc.docenteCupMats ?? []).map((m: any) => m.MATERIA_ID);
+            initial[docenteId] = materiasDc;
+        });
+        return initial;
+    });
     const [processing, setProcessing] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (open) {
-            const initial: Record<string, number[]> = {};
-            const docenteCups: any[] = cup.docente_cups ?? cup.docenteCups ?? [];
-
-            docenteCups.forEach((dc: any) => {
-                const docenteId = dc.CODIGO_DOCENTE.toString();
-                const materiasDc = (dc.docente_cup_mats ?? dc.docenteCupMats ?? []).map((m: any) => m.MATERIA_ID);
-                initial[docenteId] = materiasDc;
-            });
-            setAsignaciones(initial);
-        }
-    }, [open, cup]);
 
     function toggleMateria(docenteId: string, materiaId: number) {
         setAsignaciones((prev) => {
@@ -286,8 +284,8 @@ function LeftColumnSection({ carreraCups, materias, cup }: LeftColumnSectionProp
                 </div>
                 <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {carreraCups.length > 0 ? (
-                        carreraCups.map((cc: any, i: number) => (
-                            <div key={i} className="flex items-center justify-between px-4 py-3 text-sm">
+                        carreraCups.map((cc: any) => (
+                            <div key={cc.ID} className="flex items-center justify-between px-4 py-3 text-sm">
                                 <span className="truncate font-semibold text-neutral-700 dark:text-neutral-300">
                                     {cc.carrera?.NOMBRE ?? `Carrera #${cc.ID_CARRERA}`}
                                 </span>
@@ -311,8 +309,8 @@ function LeftColumnSection({ carreraCups, materias, cup }: LeftColumnSectionProp
                 </div>
                 <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {materias.length > 0 ? (
-                        materias.map((m: any, i: number) => (
-                            <div key={i} className="flex items-center gap-2 px-4 py-3 text-sm">
+                        materias.map((m: any) => (
+                            <div key={m.ID_MATERIA} className="flex items-center gap-2 px-4 py-3 text-sm">
                                 <BookOpen className="h-3.5 w-3.5 shrink-0 text-violet-400" />
                                 <span className="font-semibold text-neutral-700 dark:text-neutral-300">{m.NOMBRE}</span>
                             </div>
@@ -354,7 +352,7 @@ function LeftColumnSection({ carreraCups, materias, cup }: LeftColumnSectionProp
     );
 }
 
-export default function Informacion({ cup, docentesActivos, requerimientoDocentes = [] }: CupInformacionProps) {
+export default function Informacion({ cup, docentesActivos, requerimientoDocentes = DEFAULT_REQUERIMIENTO_DOCENTES }: CupInformacionProps) {
     const { props } = usePage<any>();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const flash = props.flash as { success?: string } | undefined;
@@ -379,6 +377,17 @@ export default function Informacion({ cup, docentesActivos, requerimientoDocente
                     <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300">
                         <CheckCircle2 className="h-4 w-4 shrink-0" />
                         {flash.success}
+                    </div>
+                )}
+
+                {props.errors && Object.keys(props.errors).length > 0 && (
+                    <div className="flex flex-col gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-800/40 dark:bg-red-950/20 dark:text-red-300">
+                        {Object.entries(props.errors).map(([key, err]) => (
+                            <div key={key} className="flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+                                <span>{String(err)}</span>
+                            </div>
+                        ))}
                     </div>
                 )}
 
@@ -540,7 +549,9 @@ export default function Informacion({ cup, docentesActivos, requerimientoDocente
                             </Button>
                         </div>
 
-                        <AsignarDocentesModal cup={cup} docentesActivos={docentesActivos} open={isModalOpen} onOpenChange={setIsModalOpen} />
+                        {isModalOpen && (
+                            <AsignarDocentesModal cup={cup} docentesActivos={docentesActivos} open={isModalOpen} onOpenChange={setIsModalOpen} />
+                        )}
 
                         {/* Botón para navegar a la lista independiente de docentes */}
                         <Button
