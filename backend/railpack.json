@@ -1,5 +1,5 @@
 {
   "php": {
-    "extensions": ["gd", "zip"]
+    "extensions": ["gd", "zip", "bcmath"]
   }
 }
