@@ -145,13 +145,13 @@ class UsuarioController extends Controller
             ', [
                 $validated['USERNAME'],
                 $validated['CONTRASENIA'],
-                $validated['CARNET'] ?? null,
+                $validated['CARNET'] === '' ? null : ($validated['CARNET'] ?? null),
                 $validated['NOMBRE'],
                 $validated['APELLIDO'],
                 $validated['CORREO'],
-                $validated['TELEFONO'] ?? null,
+                $validated['TELEFONO'] === '' ? null : ($validated['TELEFONO'] ?? null),
                 $validated['ESTADO'] ?? 'ACTIVO',
-                $validated['ROL_ID'] ?? null
+                $validated['ROL_ID'] === '' ? null : ($validated['ROL_ID'] ?? null)
             ])->nuevo_id;
 
             return redirect('/usuarios')->with('success', 'Usuario creado correctamente (ID: ' . $nuevoId . ').');
@@ -231,14 +231,14 @@ class UsuarioController extends Controller
             ', [
                 $id,
                 $validated['USERNAME'],
-                $validated['CONTRASENIA'] ?? null,
-                $validated['CARNET'] ?? null,
+                $validated['CONTRASENIA'] === '' ? null : ($validated['CONTRASENIA'] ?? null),
+                $validated['CARNET'] === '' ? null : ($validated['CARNET'] ?? null),
                 $validated['NOMBRE'],
                 $validated['APELLIDO'],
                 $validated['CORREO'],
-                $validated['TELEFONO'] ?? null,
+                $validated['TELEFONO'] === '' ? null : ($validated['TELEFONO'] ?? null),
                 $validated['ESTADO'] ?? null,
-                $validated['ROL_ID'] ?? null
+                $validated['ROL_ID'] === '' ? null : ($validated['ROL_ID'] ?? null)
             ]);
 
             return redirect('/usuarios')->with('success', 'Usuario actualizado correctamente.');
