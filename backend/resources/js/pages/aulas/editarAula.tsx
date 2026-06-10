@@ -147,6 +147,7 @@ export default function EditarAula({ aula }: EditarAulaProps) {
                                     <Label htmlFor="DESCRIPCION" className="text-sm font-semibold">Descripción / Observación</Label>
                                     <textarea
                                         id="DESCRIPCION"
+                                        aria-label="Descripción / Observación"
                                         value={data.DESCRIPCION}
                                         onChange={(e) => setData('DESCRIPCION', e.target.value)}
                                         placeholder="Ubicación, equipamiento disponible (proyector, aire acondicionado, etc.)"

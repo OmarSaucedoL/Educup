@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState } from 'react';
 
-export default function GrupoDetallesPage({ cup, grupo, clases, estudiantesSinGrupo = [], docentesPorMateria = {} }: { cup: any; grupo: any; clases: any[]; estudiantesSinGrupo?: any[]; docentesPorMateria?: any }) {
+const DEFAULT_ESTUDIANTES: any[] = [];
+const DEFAULT_DOCENTES: Record<string, any> = {};
+
+export default function GrupoDetallesPage({ cup, grupo, clases, estudiantesSinGrupo = DEFAULT_ESTUDIANTES, docentesPorMateria = DEFAULT_DOCENTES }: { cup: any; grupo: any; clases: any[]; estudiantesSinGrupo?: any[]; docentesPorMateria?: any }) {
     const [isProcessing, setIsProcessing] = useState(false);
     
     // Add student state
@@ -120,13 +123,13 @@ export default function GrupoDetallesPage({ cup, grupo, clases, estudiantesSinGr
                             <GraduationCap className="h-5 w-5" /> Materias y Docentes
                         </h3>
                         <div className="grid grid-cols-1 gap-4">
-                            {clases.map((clase: any, idx: number) => {
+                            {clases.map((clase: any) => {
                                 const materia = clase.materia;
                                 const docente = clase.docente_cup?.docente?.usuario ?? clase.docenteCup?.docente?.usuario;
                                 const heb = clase.bloque_horario?.horarios_en_bloque ?? clase.bloqueHorario?.horariosEnBloque ?? [];
                                 
                                 return (
-                                    <div key={idx} className="rounded-xl border border-neutral-200 bg-card text-card-foreground shadow-sm dark:border-neutral-800 p-4 flex flex-col gap-3">
+                                    <div key={clase.ID_CLASE} className="rounded-xl border border-neutral-200 bg-card text-card-foreground shadow-sm dark:border-neutral-800 p-4 flex flex-col gap-3">
                                         <div className="flex flex-col gap-2">
                                             <div className="font-bold text-base text-neutral-800 dark:text-neutral-200">
                                                 {materia?.NOMBRE ?? 'Materia no definida'}
@@ -222,10 +225,11 @@ export default function GrupoDetallesPage({ cup, grupo, clases, estudiantesSinGr
                                         </div>
                                         {heb.length > 0 && (
                                             <div className="flex flex-wrap gap-2 mt-1">
-                                                {heb.map((hObj: any, i: number) => {
+                                                {heb.map((hObj: any) => {
                                                     const h = hObj.horario;
+                                                    const key = h ? `${h.DIA}-${h.HORA_INI}` : hObj.ID;
                                                     return (
-                                                        <span key={i} className="inline-flex items-center gap-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2.5 py-1 text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                                                        <span key={key} className="inline-flex items-center gap-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2.5 py-1 text-xs font-bold text-neutral-700 dark:text-neutral-300">
                                                             <Clock className="h-3.5 w-3.5" /> {h?.DIA} {h?.HORA_INI?.substring(0,5)} - {h?.HORA_FIN?.substring(0,5)}
                                                         </span>
                                                     );
@@ -306,7 +310,7 @@ export default function GrupoDetallesPage({ cup, grupo, clases, estudiantesSinGr
                                     const est = ec.estudiante;
                                     const estudianteCupId = ec.ESTUDIANTE_CUP_ID ?? ec.ID;
                                     return (
-                                        <div key={idx} className="flex flex-row items-center justify-between px-4 py-3 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group">
+                                        <div key={estudianteCupId} className="flex flex-row items-center justify-between px-4 py-3 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">
                                                     {idx + 1}. {est ? `${est.NOMBRE} ${est.APELLIDO}` : `Estudiante #${ec.ID_ESTUDIANTE}`}

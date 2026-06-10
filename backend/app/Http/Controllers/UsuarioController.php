@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Imports\UsuariosImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rules\Password;
 
 class UsuarioController extends Controller
 {
@@ -18,6 +19,8 @@ class UsuarioController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search', '');
+        $rolId = $request->input('rol_id', '');
+        $estado = $request->input('estado', '');
 
         $query = Usuario::with(['rol.permisos', 'permisos' => function ($q) {
             $q->where('PERMISOS_USUARIO.ESTADO', 'ACTIVO');
@@ -32,6 +35,14 @@ class UsuarioController extends Controller
             });
         }
 
+        if ($rolId !== '') {
+            $query->where('ROL_ID', $rolId);
+        }
+
+        if ($estado !== '') {
+            $query->where('ESTADO', $estado);
+        }
+
         $usuarios = $query->orderBy('APELLIDO')->orderBy('NOMBRE')->paginate(15)->withQueryString();
 
         foreach ($usuarios as $usuario) {
@@ -41,11 +52,17 @@ class UsuarioController extends Controller
         }
 
         $todosLosPermisos = \App\Models\Permiso::with('modulo')->get();
+        $roles = \App\Models\Rol::orderBy('NOMBRE')->get();
 
         return inertia('usuarios/index', [
             'usuarios'  => $usuarios,
             'permisos'  => $todosLosPermisos,
-            'filters'   => ['search' => $search],
+            'roles'     => $roles,
+            'filters'   => [
+                'search' => $search,
+                'rol_id' => $rolId,
+                'estado' => $estado,
+            ],
         ]);
     }
 
@@ -96,13 +113,20 @@ class UsuarioController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->has('USERNAME')) {
+            $request->merge([
+                'USERNAME' => strtoupper(trim($request->USERNAME)),
+            ]);
+        }
+
         $validated = $request->validate([
-            'USERNAME' => 'required|string|max:255|unique:USUARIO',
-            'CONTRASENIA' => 'required|string|min:6',
-            'CARNET' => 'nullable',
+            'USERNAME' => 'required|string|max:255',
+            'CONTRASENIA' => ['required', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
+            'CARNET' => 'nullable|numeric',
             'NOMBRE' => 'required|string|max:255',
             'APELLIDO' => 'required|string|max:255',
-            'CORREO' => 'required|string|email|max:255|unique:USUARIO',
+            'CORREO' => 'required|string|email|max:255',
+            'TELEFONO' => 'nullable|numeric',
             'ESTADO' => 'nullable|string|in:ACTIVO,INACTIVO',
             'ROL_ID' => 'nullable|integer|exists:ROL,ID'
         ]);
@@ -114,39 +138,37 @@ class UsuarioController extends Controller
             $validated['ESTADO'] = 'ACTIVO'; // Default to active
         }
 
-        // Ensure CARNET is cast to string if provided
-        if (isset($validated['CARNET'])) {
-            $validated['CARNET'] = (string) $validated['CARNET'];
-        }
+        // Call the database function inside a try-catch to handle constraints and custom errors
+        try {
+            $nuevoId = DB::selectOne('
+                SELECT public.f_insertar_usuario(?, ?, ?, ?, ?, ?, ?, ?, ?) as nuevo_id
+            ', [
+                $validated['USERNAME'],
+                $validated['CONTRASENIA'],
+                $validated['CARNET'] ?? null,
+                $validated['NOMBRE'],
+                $validated['APELLIDO'],
+                $validated['CORREO'],
+                $validated['TELEFONO'] ?? null,
+                $validated['ESTADO'] ?? 'ACTIVO',
+                $validated['ROL_ID'] ?? null
+            ])->nuevo_id;
 
-        $usuario = Usuario::create($validated);
-
-        // Seed role's permissions as initial direct permissions
-        if ($usuario->ROL_ID) {
-            $rolPermisosIds = DB::table('PERMISO_ROL')
-                ->where('ROL_ID', $usuario->ROL_ID)
-                ->where('ESTADO', 'ACTIVO')
-                ->pluck('PERMISOS_ID');
-            
-            foreach ($rolPermisosIds as $permId) {
-                DB::table('PERMISOS_USUARIO')->insert([
-                    'USUARIO_ID' => $usuario->ID,
-                    'PERMISOS_ID' => $permId,
-                    'ESTADO' => 'ACTIVO',
-                    'FECHA_MOD' => now()
+            return redirect('/usuarios')->with('success', 'Usuario creado correctamente (ID: ' . $nuevoId . ').');
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            // Check if the error comes from our RAISE EXCEPTION blocks
+            if (str_contains($errorMsg, 'ya está en uso') || str_contains($errorMsg, 'ya está registrado')) {
+                // Try to extract the clean message from Postgres ERROR
+                preg_match('/ERROR:\s+(.*?)\n/', $errorMsg, $matches);
+                $cleanMsg = $matches[1] ?? 'Error de validación al crear el usuario. Datos duplicados.';
+                
+                throw ValidationException::withMessages([
+                    'USERNAME' => $cleanMsg,
                 ]);
             }
-
-            // Logic to create a Docente record if the role is Docente
-            $rol = \App\Models\Rol::find($usuario->ROL_ID);
-            if ($rol && str_contains(strtoupper($rol->NOMBRE), 'DOCENTE')) {
-                \App\Models\Docente::firstOrCreate([
-                    'CODIGO_DOCENTE' => $usuario->ID
-                ]);
-            }
+            throw $e;
         }
-
-        return redirect('/usuarios')->with('success', 'Usuario creado correctamente.');
     }
 
     /**
@@ -179,13 +201,20 @@ class UsuarioController extends Controller
     {
         $usuario = Usuario::findOrFail($id);
 
+        if ($request->has('USERNAME')) {
+            $request->merge([
+                'USERNAME' => strtoupper(trim($request->USERNAME)),
+            ]);
+        }
+
         $validated = $request->validate([
-            'USERNAME' => 'sometimes|required|string|max:255|unique:USUARIO,USERNAME,' . $id . ',ID',
-            'CONTRASENIA' => 'nullable|string|min:6',
-            'CARNET' => 'nullable',
+            'USERNAME' => 'sometimes|required|string|max:255',
+            'CONTRASENIA' => ['nullable', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
+            'CARNET' => 'nullable|numeric',
             'NOMBRE' => 'sometimes|required|string|max:255',
             'APELLIDO' => 'sometimes|required|string|max:255',
-            'CORREO' => 'sometimes|required|string|email|max:255|unique:USUARIO,CORREO,' . $id . ',ID',
+            'CORREO' => 'sometimes|required|string|email|max:255',
+            'TELEFONO' => 'nullable|numeric',
             'ESTADO' => 'nullable|string|in:ACTIVO,INACTIVO',
             'ROL_ID' => 'nullable|integer|exists:ROL,ID'
         ]);
@@ -196,23 +225,35 @@ class UsuarioController extends Controller
             unset($validated['CONTRASENIA']);
         }
 
-        // Ensure CARNET is cast to string if provided
-        if (isset($validated['CARNET'])) {
-            $validated['CARNET'] = (string) $validated['CARNET'];
-        }
+        try {
+            DB::statement('
+                SELECT public.f_actualizar_usuario(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ', [
+                $id,
+                $validated['USERNAME'],
+                $validated['CONTRASENIA'] ?? null,
+                $validated['CARNET'] ?? null,
+                $validated['NOMBRE'],
+                $validated['APELLIDO'],
+                $validated['CORREO'],
+                $validated['TELEFONO'] ?? null,
+                $validated['ESTADO'] ?? null,
+                $validated['ROL_ID'] ?? null
+            ]);
 
-        $usuario->update($validated);
-
-        if ($usuario->ROL_ID) {
-            $rol = \App\Models\Rol::find($usuario->ROL_ID);
-            if ($rol && str_contains(strtoupper($rol->NOMBRE), 'DOCENTE')) {
-                \App\Models\Docente::firstOrCreate([
-                    'CODIGO_DOCENTE' => $usuario->ID
+            return redirect('/usuarios')->with('success', 'Usuario actualizado correctamente.');
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            if (str_contains($errorMsg, 'ya está en uso') || str_contains($errorMsg, 'ya está registrado')) {
+                preg_match('/ERROR:\s+(.*?)\n/', $errorMsg, $matches);
+                $cleanMsg = $matches[1] ?? 'Error de validación al actualizar el usuario. Datos duplicados.';
+                
+                throw ValidationException::withMessages([
+                    'USERNAME' => $cleanMsg,
                 ]);
             }
+            throw $e;
         }
-
-        return redirect('/usuarios')->with('success', 'Usuario actualizado correctamente.');
     }
 
     /**

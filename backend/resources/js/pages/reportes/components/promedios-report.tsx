@@ -45,7 +45,6 @@ export default function PromediosReport({ estudiantes, searchQuery, setSearchQue
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 15;
 
-    // Filter, sort by grade descending, and search query
     const sortedAndFilteredEstudiantes = useMemo(() => {
         let list = [...estudiantes];
 
@@ -65,6 +64,16 @@ export default function PromediosReport({ estudiantes, searchQuery, setSearchQue
         return list;
     }, [estudiantes, searchQuery]);
 
+    const uniqueSubjects = useMemo(() => {
+        const subs = new Set<string>();
+        estudiantes.forEach((s) => {
+            s.notas_materias?.forEach((nm) => {
+                subs.add(nm.materia_sigla || nm.materia);
+            });
+        });
+        return Array.from(subs).sort();
+    }, [estudiantes]);
+
     // Paginate
     const totalPages = Math.ceil(sortedAndFilteredEstudiantes.length / itemsPerPage);
     const paginatedEstudiantes = useMemo(() => {
@@ -75,16 +84,22 @@ export default function PromediosReport({ estudiantes, searchQuery, setSearchQue
     // CSV local export
     const exportToCSV = () => {
         let csvContent = '\uFEFF'; // UTF-8 BOM
-        const headers = ['Puesto', 'Carnet (CI)', 'Postulante', 'Colegio de Origen', 'Promedio Final', 'Estado', 'Carrera Asignada'];
+        const headers = ['Puesto', 'Carnet (CI)', 'Postulante', 'Colegio de Origen', ...uniqueSubjects, 'Promedio Final', 'Estado', 'Carrera Asignada'];
 
         csvContent += headers.map((h) => `"${h}"`).join(';') + '\r\n';
 
         sortedAndFilteredEstudiantes.forEach((e, index) => {
+            const subjectGrades = uniqueSubjects.map((sub) => {
+                const notaObj = e.notas_materias?.find((nm) => (nm.materia_sigla || nm.materia) === sub);
+                return notaObj && notaObj.nota_final !== null ? notaObj.nota_final : 'S/N';
+            });
+
             const row = [
                 index + 1,
                 e.carnet,
                 e.nombre_completo,
                 e.colegio,
+                ...subjectGrades,
                 e.nota_final !== null ? e.nota_final : 'S/N',
                 e.estado,
                 e.carrera_asignada || 'No Asignada',
@@ -111,6 +126,7 @@ export default function PromediosReport({ estudiantes, searchQuery, setSearchQue
                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                     <input
                         type="text"
+                        aria-label="Buscar por carnet, nombre, colegio, carrera"
                         placeholder="Buscar por carnet, nombre, colegio, carrera..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -148,7 +164,11 @@ export default function PromediosReport({ estudiantes, searchQuery, setSearchQue
                                 <th className="w-[80px] p-4 text-center font-bold">Puesto</th>
                                 <th className="w-[120px] p-4 font-bold">Carnet (CI)</th>
                                 <th className="p-4 font-bold">Postulante</th>
-                                <th className="p-4 font-bold">Notas por Materia</th>
+                                {uniqueSubjects.map((sub) => (
+                                    <th key={sub} className="p-4 text-center font-bold">
+                                        {sub}
+                                    </th>
+                                ))}
                                 <th className="w-[110px] p-4 text-center font-bold">Prom. Final</th>
                                 <th className="w-[110px] p-4 text-center font-bold">Estado</th>
                                 <th className="p-4 font-bold">Asignación</th>
@@ -166,23 +186,31 @@ export default function PromediosReport({ estudiantes, searchQuery, setSearchQue
                                             <td className="p-4">
                                                 <div className="font-bold text-neutral-900 dark:text-neutral-100">{student.nombre_completo}</div>
                                             </td>
-                                            <td className="p-4">
-                                                <div className="flex flex-wrap gap-1">
-                                                    {student.notas_materias.map((nm, nIdx) => (
+                                            {uniqueSubjects.map((sub) => {
+                                                const notaObj = student.notas_materias?.find(
+                                                    (nm) => (nm.materia_sigla || nm.materia) === sub
+                                                );
+                                                if (!notaObj) {
+                                                    return (
+                                                        <td key={sub} className="p-4 text-center font-semibold text-neutral-400">
+                                                            -
+                                                        </td>
+                                                    );
+                                                }
+                                                return (
+                                                    <td key={sub} className="p-4 text-center font-bold">
                                                         <span
-                                                            key={nIdx}
-                                                            className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-bold ${
-                                                                nm.estado === 'APROBADO'
-                                                                    ? 'border-emerald-250 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/10 dark:text-emerald-400'
-                                                                    : 'border-rose-250 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/10 dark:text-rose-400'
-                                                            }`}
-                                                            title={nm.materia}
+                                                            className={
+                                                                notaObj.estado === 'APROBADO'
+                                                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                                                    : 'text-rose-600 dark:text-rose-400'
+                                                            }
                                                         >
-                                                            {nm.materia_sigla || nm.materia}: {nm.nota_final !== null ? nm.nota_final : 'S/N'}
+                                                            {notaObj.nota_final !== null ? notaObj.nota_final.toFixed(2) : 'S/N'}
                                                         </span>
-                                                    ))}
-                                                </div>
-                                            </td>
+                                                    </td>
+                                                );
+                                            })}
                                             <td className="p-4 text-center font-bold">
                                                 {student.nota_final !== null ? (
                                                     <span

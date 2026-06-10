@@ -129,7 +129,7 @@ export default function ReportsIndex({ cup, cups, estudiantes = [], postulantesA
     }[activeTab];
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Módulo Notas', href: '#' },
+        { title: 'Módulo Calificaciones', href: '#' },
         { title: 'Reportes', href: '/reportes' },
     ];
 
@@ -218,7 +218,7 @@ export default function ReportsIndex({ cup, cups, estudiantes = [], postulantesA
                     <div className="text-center mt-6">
                         <h1 className="text-lg font-bold tracking-normal uppercase text-neutral-900">{tabTitle}</h1>
                         <p className="text-xs text-neutral-600 mt-1">
-                            CUP #{cup?.ID_CUP} &mdash; Gestión {cup?.ANIO}/{cup?.SEMESTRE} &nbsp;|&nbsp; Nota Mínima de Aprobación: {cup?.NOTA_MINIMA ?? '60.00'}
+                            CUP #{cup?.ID_CUP} &mdash; Gestión {cup?.ANIO}/{cup?.SEMESTRE} &nbsp;|&nbsp; Calificación Mínima de Aprobación: {cup?.NOTA_MINIMA ?? '60.00'}
                         </p>
                     </div>
                 </div>
@@ -230,7 +230,7 @@ export default function ReportsIndex({ cup, cups, estudiantes = [], postulantesA
                             <GraduationCap className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Módulo de Notas — Reportes</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Módulo de Calificaciones — Reportes</h1>
                             <p className="text-muted-foreground mt-0.5 text-sm">
                                 Visualiza, exporta y genera reportes académicos de los postulantes inscritos en el CUP.
                             </p>

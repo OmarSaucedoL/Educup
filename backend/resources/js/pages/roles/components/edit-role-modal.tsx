@@ -35,23 +35,14 @@ export function EditRoleModal({ role, permisos, onClose }: EditRoleModalProps) {
     const submitTypeRef = useRef(false);
 
     const { data, setData, put, processing, errors, reset, clearErrors, transform } = useForm({
-        nombre: '',
-        permisos: [] as number[],
+        nombre: role?.NOMBRE || '',
+        permisos: role ? role.permisos.map(p => p.ID) : [] as number[],
     });
 
     transform((data) => ({
         ...data,
         aplicarATodos: submitTypeRef.current,
     }));
-
-    useEffect(() => {
-        if (role) {
-            setData({
-                nombre: role.NOMBRE,
-                permisos: role.permisos.map(p => p.ID),
-            });
-        }
-    }, [role, setData]);
 
     const handleOpenChange = (open: boolean) => {
         if (!open) {

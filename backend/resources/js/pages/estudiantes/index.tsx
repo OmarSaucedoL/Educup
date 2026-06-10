@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -67,9 +67,20 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
         });
     };
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get('/estudiantes', { search }, { preserveState: true, replace: true });
+    // Debounce search → Inertia GET
+    const doSearch = useCallback((value: string) => {
+        router.get('/estudiantes', { search: value }, {
+            preserveState: true,
+            replace: true,
+        });
+    }, []);
+
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearch(value);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => doSearch(value), 350);
     };
 
     const clearSearch = () => {
@@ -156,28 +167,26 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
 
                 {/* Filters Section */}
                 <div className="bg-white/50 dark:bg-neutral-900/50 backdrop-blur-md border border-neutral-200/60 dark:border-neutral-800 rounded-xl p-4 shadow-sm">
-                    <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
                             <input
                                 type="text"
+                                aria-label="Buscar estudiantes por carnet, nombre o apellido"
                                 placeholder="Buscar por carnet, nombre o apellido..."
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={handleSearchChange}
                                 className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg pl-10 pr-4 py-2 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-neutral-800 dark:text-neutral-200"
                             />
                         </div>
-                        <div className="flex gap-2">
-                            <Button type="submit" variant="default" className="shadow-sm font-semibold">
-                                Buscar
-                            </Button>
-                            {search && (
+                        {search && (
+                            <div className="flex gap-2">
                                 <Button type="button" variant="ghost" onClick={clearSearch} className="text-neutral-500 dark:text-neutral-400">
                                     <X className="h-4 w-4 mr-2" /> Limpiar
                                 </Button>
-                            )}
-                        </div>
-                    </form>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Table Container */}
@@ -272,30 +281,34 @@ export default function Index({ estudiantes, filters, activeCup }: Props) {
                 {estudiantes.links && estudiantes.links.length > 3 && (
                     <div className="flex justify-center mt-2">
                         <div className="flex flex-wrap gap-1 bg-white/40 dark:bg-neutral-900/40 p-1.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800">
-                            {estudiantes.links.map((link, idx) => {
-                                if (link.url === null) {
+                            {(() => {
+                                let ellipsisCount = 0;
+                                return estudiantes.links.map((link) => {
+                                    const key = link.label === '...' ? `ellipsis-${++ellipsisCount}` : link.label;
+                                    if (link.url === null) {
+                                        return (
+                                            <div
+                                                key={key}
+                                                className="px-3 py-1.5 text-xs text-neutral-400 dark:text-neutral-600 rounded-lg cursor-not-allowed select-none"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    }
                                     return (
-                                        <div
-                                            key={idx}
-                                            className="px-3 py-1.5 text-xs text-neutral-400 dark:text-neutral-600 rounded-lg cursor-not-allowed select-none"
+                                        <Link
+                                            key={key}
+                                            href={link.url}
+                                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                                                link.active
+                                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                                    : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                                            }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
+                                            preserveState
                                         />
                                     );
-                                }
-                                return (
-                                    <Link
-                                        key={idx}
-                                        href={link.url}
-                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                                            link.active
-                                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                        preserveState
-                                    />
-                                );
-                            })}
+                                });
+                            })()}
                         </div>
                     </div>
                 )}

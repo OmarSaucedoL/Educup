@@ -81,8 +81,8 @@ class CUPController extends Controller
                 'SEMESTRE' => $cup->SEMESTRE,
                 'NOTA_MINIMA' => $cup->NOTA_MINIMA,
                 'CUPOS' => $cup->CUPOS,
-                'FECHA_INICIO' => $cup->FECHA_INICIO ? $cup->FECHA_INICIO->format('Y-m-d') : null,
-                'FECHA_FIN' => $cup->FECHA_FIN ? $cup->FECHA_FIN->format('Y-m-d') : null,
+                'FECHA_INICIO' => $cup->FECHA_INICIO ? \Carbon\Carbon::parse($cup->FECHA_INICIO)->format('Y-m-d') : null,
+                'FECHA_FIN' => $cup->FECHA_FIN ? \Carbon\Carbon::parse($cup->FECHA_FIN)->format('Y-m-d') : null,
                 'USUARIO_ID' => $cup->USUARIO_ID,
                 'ESTADO' => $cup->ESTADO,
                 'carreras' => $cupCarreras,
@@ -99,6 +99,31 @@ class CUPController extends Controller
      */
     public function store(Request $request)
     {
+        $messages = [
+            'required' => 'El campo :attribute es obligatorio.',
+            'date' => 'El campo :attribute debe ser una fecha válida.',
+            'after_or_equal' => 'El campo :attribute debe ser posterior o igual a la fecha de inicio.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'numeric' => 'El campo :attribute debe ser numérico.',
+            'in' => 'El valor seleccionado para :attribute no es válido.',
+            'exists' => 'El valor de :attribute no existe en nuestros registros.',
+            'array' => 'El campo :attribute debe ser un arreglo o lista.',
+            'min' => 'El campo :attribute debe tener al menos :min.',
+            'max' => 'El campo :attribute no puede ser mayor a :max.',
+        ];
+
+        $attributes = [
+            'ANIO' => 'año',
+            'SEMESTRE' => 'semestre',
+            'NOTA_MINIMA' => 'nota mínima',
+            'FECHA_INICIO' => 'fecha de inicio',
+            'FECHA_FIN' => 'fecha de fin',
+            'USUARIO_ID' => 'encargado',
+            'ESTADO' => 'estado',
+            'carreras' => 'carreras',
+            'materias' => 'materias',
+        ];
+
         $validated = $request->validate([
             'ANIO' => 'required|integer',
             'SEMESTRE' => 'required|integer|in:1,2',
@@ -112,7 +137,7 @@ class CUPController extends Controller
             'carreras.*.CUPOS' => 'required|integer|min:1',
             'materias' => 'required|array|min:1|max:4',
             'materias.*' => 'required|integer|exists:MATERIA,ID_MATERIA',
-        ]);
+        ], $messages, $attributes);
 
         // Solo puede existir un CUP no concluido a la vez
         if ($validated['ESTADO'] !== 'Concluido') {
@@ -168,6 +193,69 @@ class CUPController extends Controller
     }
 
     /**
+     * Llama al procedimiento de asignación automática de aulas para el CUP.
+     */
+    public function asignarAulasAuto(string $idCup)
+    {
+        if (Cup::findOrFail($idCup)->ESTADO !== 'Inscripciones') {
+            return back()->withErrors(['error' => 'Acción no permitida: La asignación de aulas solo se puede realizar en estado Inscripciones.']);
+        }
+
+        try {
+            DB::statement('CALL public.p_asignacion_automatica_aulas(?)', [(int)$idCup]);
+
+            Bitacora::create([
+                'USUARIO_ID'     => \Auth::id(),
+                'SESSION_ID'     => request()->session()->getId(),
+                'ACCION'         => 'ASIGNAR',
+                'TABLA'          => 'CLASE',
+                'REGISTRO_ID'    => (int)$idCup,
+                'DESCRIPCION'    => "Asignación automática de aulas ejecutada para el CUP ID {$idCup}.",
+                'IP_DIRECCION'   => request()->ip(),
+                'FECHA_REGISTRO' => now(),
+            ]);
+
+            return redirect("/cup/{$idCup}/clases")->with('success', 'Asignación automática de aulas completada correctamente.');
+        } catch (\Exception $e) {
+            \Log::error('Error en asignacion automatica de aulas: ' . $e->getMessage());
+            return redirect("/cup/{$idCup}/clases")->withErrors(['error' => 'Error al ejecutar la asignación automática: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Remueve todas las aulas asignadas a las clases de un CUP.
+     */
+    public function removerAulas(string $idCup)
+    {
+        if (Cup::findOrFail($idCup)->ESTADO !== 'Inscripciones') {
+            return back()->withErrors(['error' => 'Acción no permitida: La remoción de aulas solo se puede realizar en estado Inscripciones.']);
+        }
+
+        try {
+            $affected = DB::table('CLASE')
+                ->where('ID_CUP', (int)$idCup)
+                ->whereNotNull('ID_AULA')
+                ->update(['ID_AULA' => null]);
+
+            Bitacora::create([
+                'USUARIO_ID'     => \Auth::id(),
+                'SESSION_ID'     => request()->session()->getId(),
+                'ACCION'         => 'ELIMINAR',
+                'TABLA'          => 'CLASE',
+                'REGISTRO_ID'    => (int)$idCup,
+                'DESCRIPCION'    => "Se removieron las aulas de {$affected} clase(s) del CUP ID {$idCup}.",
+                'IP_DIRECCION'   => request()->ip(),
+                'FECHA_REGISTRO' => now(),
+            ]);
+
+            return redirect("/cup/{$idCup}/clases")->with('success', "Se removieron las aulas de {$affected} clase(s) correctamente.");
+        } catch (\Exception $e) {
+            \Log::error('Error al remover aulas: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al remover aulas: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(string $id)
@@ -216,7 +304,7 @@ class CUPController extends Controller
         ]);
     }
 
-    public function estudiantes(\Illuminate\Http\Request $request, string $id)
+    public function estudiantes(Request $request, string $id)
     {
         $cup = Cup::findOrFail($id);
         $search = $request->input('search');
@@ -330,27 +418,89 @@ class CUPController extends Controller
     public function ejecutarCierre(string $id)
     {
         $cup = Cup::findOrFail($id);
+        $isRecalculation = $cup->ESTADO === 'Concluido';
+        $previousState = $cup->ESTADO;
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($cup) {
-            // 1. Ejecutar el procedimiento de cierre
-            \Illuminate\Support\Facades\DB::statement('CALL public.p_cerrar_gestion_cup(?)', [$cup->ID_CUP]);
+        try {
+            DB::transaction(function () use ($cup, $isRecalculation, $previousState) {
+                // If it's a recalculation, we need to:
+                // 1. Reset the previous assignments
+                // 2. Temporarily change the status to allow the procedure to execute
+                if ($isRecalculation) {
+                    // Clear previous assignments
+                    \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)
+                        ->update(['CARRERA' => null]);
+                    
+                    // Temporarily set status to allow procedure execution
+                    $cup->update(['ESTADO' => 'En curso']);
+                }
 
-            // 2. Cambiar el estado del CUP a Concluido
-            $cup->update(['ESTADO' => 'Concluido']);
+                try {
+                    // Execute the stored procedure
+                    DB::statement('CALL public.p_cerrar_gestion_cup(?)', [$cup->ID_CUP]);
+                } catch (\Exception $e) {
+                    // If procedure fails due to CUP state, try alternative approach
+                    if ($isRecalculation && (strpos($e->getMessage(), 'Concluido') !== false || 
+                        strpos($e->getMessage(), 'Operación denegada') !== false)) {
+                        throw new \Exception('El procedimiento de cierre detectó que el CUP ya está en estado final. Verifique que haya estudiantes elegibles para la asignación.');
+                    }
+                    throw $e;
+                }
 
-            // 3. Registrar en Bitácora
-            \App\Models\Bitacora::create([
-                'USUARIO_ID' => \Illuminate\Support\Facades\Auth::id(),
-                'ACCION' => 'ACTUALIZAR',
-                'TABLA' => 'CUP',
-                'REGISTRO_ID' => $cup->ID_CUP,
-                'DESCRIPCION' => "Se cerró la gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó el procedimiento p_cerrar_gestion_cup para la distribución meritocrática de cupos por carreras.",
-                'IP_DIRECCION' => request()->ip(),
-                'FECHA_REGISTRO' => now(),
-            ]);
-        });
+                // Ensure the status is set to Concluido after successful procedure execution
+                if ($cup->ESTADO !== 'Concluido') {
+                    $cup->update(['ESTADO' => 'Concluido']);
+                }
 
-        return redirect("/cup/{$cup->ID_CUP}/cierre")->with('success', 'El cierre de gestión del CUP y la asignación de plazas se ejecutó correctamente.');
+                // Register in Bitácora
+                $accion = $isRecalculation ? 'MODIFICACION' : 'EJECUTAR';
+                $descripcion = $isRecalculation
+                    ? "Se modificó el cierre de gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó nuevamente el procedimiento p_cerrar_gestion_cup para la redistribución meritocrática de cupos."
+                    : "Se cerró la gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó el procedimiento p_cerrar_gestion_cup para la distribución meritocrática de cupos por carreras.";
+                
+                Bitacora::create([
+                    'USUARIO_ID' => auth()->id(),
+                    'ACCION' => $accion,
+                    'TABLA' => 'CUP',
+                    'REGISTRO_ID' => $cup->ID_CUP,
+                    'DESCRIPCION' => $descripcion,
+                    'IP_DIRECCION' => request()->ip(),
+                    'FECHA_REGISTRO' => now(),
+                ]);
+            });
+
+            $successMessage = $isRecalculation
+                ? 'El cierre de gestión del CUP se re-calculó exitosamente. Las plazas fueron redistribuidas por orden de mérito.'
+                : 'El cierre de gestión del CUP y la asignación de plazas se ejecutó correctamente.';
+
+            return redirect("/cup/{$cup->ID_CUP}/cierre")->with('success', $successMessage);
+        } catch (\Exception $e) {
+            // Restore previous state on error if it was a recalculation
+            if ($isRecalculation) {
+                try {
+                    $cup->update(['ESTADO' => $previousState]);
+                } catch (\Exception $restoreError) {
+                    // Log error but continue with response
+                }
+            }
+            
+            // Determine error message
+            $errorMessage = 'Error al ejecutar el cierre de gestión.';
+            
+            if (strpos($e->getMessage(), 'El procedimiento de cierre detectó') !== false) {
+                $errorMessage = $e->getMessage();
+            } elseif (strpos($e->getMessage(), 'Operación denegada') !== false || 
+                     strpos($e->getMessage(), 'El CUP ya se encuentra concluido') !== false) {
+                $errorMessage = 'No se puede ejecutar el cierre: Verifique que el CUP tenga estudiantes elegibles para la asignación de plazas.';
+            } elseif (strpos($e->getMessage(), 'SQLSTATE') !== false) {
+                // Extract database error message if available
+                if (preg_match('/ERROR:\s*(.+?)(?:\n|$)/i', $e->getMessage(), $matches)) {
+                    $errorMessage = 'Error de base de datos: ' . $matches[1];
+                }
+            }
+            
+            return back()->with('error', $errorMessage)->withInput();
+        }
     }
 
     public function clases(string $id)
@@ -402,7 +552,7 @@ class CUPController extends Controller
             ->get();
 
         // Obtener docentes disponibles (solo los que pertenecen a este CUP y tienen materias autorizadas)
-        $docentesAutorizados = \App\Models\DocenteCupMat::whereHas('docenteCup', function($q) use ($id) {
+        $docentesAutorizados = DocenteCupMat::whereHas('docenteCup', function($q) use ($id) {
             $q->where('ID_CUP', $id);
         })
         ->with('docenteCup.docente.usuario')
@@ -592,6 +742,58 @@ class CUPController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    private function verificarCambiosCupConcluido(Cup $cup, Request $request): void
+    {
+        if ($cup->ESTADO !== 'Concluido' || $request->input('ESTADO') !== 'Concluido') {
+            return;
+        }
+
+        // Compare simple fields
+        $hasChanges = $request->input('ANIO') != $cup->ANIO ||
+                      $request->input('SEMESTRE') != $cup->SEMESTRE ||
+                      $request->input('NOTA_MINIMA') != $cup->NOTA_MINIMA ||
+                      $request->input('FECHA_INICIO') != ($cup->FECHA_INICIO ? \Carbon\Carbon::parse($cup->FECHA_INICIO)->format('Y-m-d') : null) ||
+                      $request->input('FECHA_FIN') != ($cup->FECHA_FIN ? \Carbon\Carbon::parse($cup->FECHA_FIN)->format('Y-m-d') : null) ||
+                      $request->input('USUARIO_ID') != $cup->USUARIO_ID;
+
+        if (!$hasChanges) {
+            // Compare careers
+            $existingCarreras = CarreraCup::where('ID_CUP', $cup->ID_CUP)
+                ->orderBy('ID_CARRERA')
+                ->get(['ID_CARRERA', 'CUPOS'])
+                ->toArray();
+
+            $newCarreras = collect($request->input('carreras'))
+                ->map(fn($c) => ['ID_CARRERA' => (int)$c['ID_CARRERA'], 'CUPOS' => (int)$c['CUPOS']])
+                ->sortBy('ID_CARRERA')
+                ->values()
+                ->toArray();
+
+            if ($existingCarreras != $newCarreras) {
+                $hasChanges = true;
+            }
+        }
+
+        if (!$hasChanges) {
+            // Compare subjects
+            $existingMaterias = MateriaCup::where('ID_CUP', $cup->ID_CUP)
+                ->pluck('ID_MATERIA')
+                ->toArray();
+
+            $newMaterias = array_map('intval', $request->input('materias') ?? []);
+
+            if (array_diff($existingMaterias, $newMaterias) || array_diff($newMaterias, $existingMaterias)) {
+                $hasChanges = true;
+            }
+        }
+
+        if ($hasChanges) {
+            throw ValidationException::withMessages([
+                'error' => 'Para modificar la información de un CUP concluido, primero debe cambiar su estado.'
+            ]);
+        }
+    }
+
     public function update(Request $request, string $id)
     {
         $cup = Cup::findOrFail($id);
@@ -605,56 +807,38 @@ class CUPController extends Controller
                 ->exists();
 
             if ($otroActivo) {
-                return back()->withErrors([
+                throw ValidationException::withMessages([
                     'ESTADO' => 'Ya existe un CUP activo en el sistema. Solo puede haber un CUP no concluido a la vez.'
                 ]);
             }
         }
 
-        if ($cup->ESTADO === 'Concluido' && $request->input('ESTADO') === 'Concluido') {
-            // Compare fields to check if modifications were attempted
-            $hasChanges = $request->input('ANIO') != $cup->ANIO ||
-                          $request->input('SEMESTRE') != $cup->SEMESTRE ||
-                          $request->input('NOTA_MINIMA') != $cup->NOTA_MINIMA ||
-                          $request->input('FECHA_INICIO') != ($cup->FECHA_INICIO ? $cup->FECHA_INICIO->format('Y-m-d') : null) ||
-                          $request->input('FECHA_FIN') != ($cup->FECHA_FIN ? $cup->FECHA_FIN->format('Y-m-d') : null) ||
-                          $request->input('USUARIO_ID') != $cup->USUARIO_ID;
+        $this->verificarCambiosCupConcluido($cup, $request);
 
-            if (!$hasChanges) {
-                // Compare careers
-                $existingCarreras = \App\Models\CarreraCup::where('ID_CUP', $cup->ID_CUP)
-                    ->orderBy('ID_CARRERA')
-                    ->get(['ID_CARRERA', 'CUPOS'])
-                    ->toArray();
+        $messages = [
+            'required' => 'El campo :attribute es obligatorio.',
+            'date' => 'El campo :attribute debe ser una fecha válida.',
+            'after_or_equal' => 'El campo :attribute debe ser posterior o igual a la fecha de inicio.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'numeric' => 'El campo :attribute debe ser numérico.',
+            'in' => 'El valor seleccionado para :attribute no es válido.',
+            'exists' => 'El valor de :attribute no existe en nuestros registros.',
+            'array' => 'El campo :attribute debe ser un arreglo o lista.',
+            'min' => 'El campo :attribute debe tener al menos :min.',
+            'max' => 'El campo :attribute no puede ser mayor a :max.',
+        ];
 
-                $newCarreras = collect($request->input('carreras'))
-                    ->map(fn($c) => ['ID_CARRERA' => (int)$c['ID_CARRERA'], 'CUPOS' => (int)$c['CUPOS']])
-                    ->sortBy('ID_CARRERA')
-                    ->values()
-                    ->toArray();
-
-                if ($existingCarreras != $newCarreras) {
-                    $hasChanges = true;
-                }
-            }
-
-            if (!$hasChanges) {
-                // Compare subjects
-                $existingMaterias = \App\Models\MateriaCup::where('ID_CUP', $cup->ID_CUP)
-                    ->pluck('ID_MATERIA')
-                    ->toArray();
-
-                $newMaterias = array_map('intval', $request->input('materias') ?? []);
-
-                if (array_diff($existingMaterias, $newMaterias) || array_diff($newMaterias, $existingMaterias)) {
-                    $hasChanges = true;
-                }
-            }
-
-            if ($hasChanges) {
-                return back()->withErrors(['error' => 'Para modificar la información de un CUP concluido, primero debe cambiar su estado.']);
-            }
-        }
+        $attributes = [
+            'ANIO' => 'año',
+            'SEMESTRE' => 'semestre',
+            'NOTA_MINIMA' => 'nota mínima',
+            'FECHA_INICIO' => 'fecha de inicio',
+            'FECHA_FIN' => 'fecha de fin',
+            'USUARIO_ID' => 'encargado',
+            'ESTADO' => 'estado',
+            'carreras' => 'carreras',
+            'materias' => 'materias',
+        ];
 
         $validated = $request->validate([
             'ANIO' => 'required|integer',
@@ -669,7 +853,7 @@ class CUPController extends Controller
             'carreras.*.CUPOS' => 'required|integer|min:1',
             'materias' => 'required|array|min:1|max:4',
             'materias.*' => 'required|integer|exists:MATERIA,ID_MATERIA',
-        ]);
+        ], $messages, $attributes);
 
         try {
             $carrerasIds = '{' . implode(',', collect($validated['carreras'])->pluck('ID_CARRERA')->toArray()) . '}';
@@ -742,12 +926,26 @@ class CUPController extends Controller
             ];
         }
 
+        // Obtener capacidad de los grupos si ya existen
+        $primerClase = Clase::where('ID_CUP', $idCup)->whereNotNull('ID_GRUPO')->first();
+        $estMinExistente = 20;
+        $estMaxExistente = 40;
+        if ($primerClase) {
+            $grupo = Grupo::find($primerClase->ID_GRUPO);
+            if ($grupo) {
+                $estMinExistente = $grupo->EST_MIN;
+                $estMaxExistente = $grupo->EST_MAX;
+            }
+        }
+
         return inertia('cup/crearGrupos', [
             'cup'       => $cup,
             'inscritos' => $inscritos,
             'conGrupo'  => $conGrupo,
             'sinGrupo'  => $sinGrupo,
             'turnos'    => $turnos,
+            'estMinExistente' => $estMinExistente,
+            'estMaxExistente' => $estMaxExistente,
         ]);
     }
 
@@ -812,26 +1010,26 @@ class CUPController extends Controller
             $sinCupo   = $result['p_sin_cupo'] ?? 0;
 
             if ($asignados === 0 && $sinCupo === 0) {
-                return redirect("/cup/{$idCup}")->with('success', 'No hay estudiantes rezagados para asignar.');
+                return back()->with('success', 'No hay estudiantes rezagados para asignar.');
             }
 
             $mensaje = "Se asignaron {$asignados} estudiantes rezagados a grupos existentes.";
             if ($sinCupo > 0) {
                 $mensaje .= " Sin embargo, {$sinCupo} estudiantes no pudieron ser asignados porque los grupos están llenos. Deberá crear más grupos o aumentar el límite máximo.";
-                return redirect("/cup/{$idCup}")->with('success', $mensaje)->with('warning', true);
+                return back()->with('success', $mensaje)->with('warning', true);
             }
 
-            return redirect("/cup/{$idCup}")->with('success', $mensaje);
+            return back()->with('success', $mensaje);
         } catch (\PDOException $e) {
             $mensaje = $e->getMessage();
             if (preg_match('/ERROR:\s*(.+?)(?:\n|CONTEXT|$)/i', $mensaje, $m)) {
                 $mensaje = trim($m[1]);
             }
             \Log::error('Error en p_asignar_rezagados: ' . $e->getMessage());
-            return redirect("/cup/{$idCup}")->withErrors(['error' => $mensaje]);
+            throw ValidationException::withMessages(['error' => $mensaje]);
         } catch (\Exception $e) {
             \Log::error('Error inesperado en asignarRezagados: ' . $e->getMessage());
-            return redirect("/cup/{$idCup}")->withErrors(['error' => 'Error inesperado: ' . $e->getMessage()]);
+            throw ValidationException::withMessages(['error' => 'Error inesperado: ' . $e->getMessage()]);
         }
     }
 
@@ -840,7 +1038,7 @@ class CUPController extends Controller
         try {
             DB::statement('CALL public.p_resetear_paquete_clases(?)', [(int)$idCup]);
 
-            return redirect("/cup/{$idCup}")->with(
+            return back()->with(
                 'success',
                 'Todas las clases y grupos del CUP han sido reseteados correctamente.'
             );
@@ -850,10 +1048,10 @@ class CUPController extends Controller
                 $mensaje = trim($m[1]);
             }
             \Log::error('Error en p_resetear_paquete_clases: ' . $e->getMessage());
-            return redirect("/cup/{$idCup}")->withErrors(['error' => $mensaje]);
+            throw ValidationException::withMessages(['error' => $mensaje]);
         } catch (\Exception $e) {
             \Log::error('Error inesperado en resetearPaqueteClases: ' . $e->getMessage());
-            return redirect("/cup/{$idCup}")->withErrors(['error' => 'Error inesperado: ' . $e->getMessage()]);
+            throw ValidationException::withMessages(['error' => 'Error inesperado: ' . $e->getMessage()]);
         }
     }
 
@@ -871,7 +1069,7 @@ class CUPController extends Controller
                 return back()->withErrors(['error' => 'No existen grupos creados para este CUP.']);
             }
 
-            \App\Models\Grupo::whereIn('ID_GRUPO', $grupoIds)->update([
+            Grupo::whereIn('ID_GRUPO', $grupoIds)->update([
                 'EST_MIN' => $validated['est_min'],
                 'EST_MAX' => $validated['est_max']
             ]);
@@ -889,8 +1087,8 @@ class CUPController extends Controller
      */
     public function asignacionAutomatica(string $idCup)
     {
-        if (Cup::findOrFail($idCup)->ESTADO === 'Concluido') {
-            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        if (Cup::findOrFail($idCup)->ESTADO !== 'Inscripciones') {
+            return back()->withErrors(['error' => 'Acción no permitida: La asignación de docentes solo se puede realizar en estado Inscripciones.']);
         }
 
         try {
@@ -919,8 +1117,8 @@ class CUPController extends Controller
      */
     public function removerDocentes(string $idCup)
     {
-        if (Cup::findOrFail($idCup)->ESTADO === 'Concluido') {
-            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        if (Cup::findOrFail($idCup)->ESTADO !== 'Inscripciones') {
+            return back()->withErrors(['error' => 'Acción no permitida: La remoción de docentes solo se puede realizar en estado Inscripciones.']);
         }
 
         try {

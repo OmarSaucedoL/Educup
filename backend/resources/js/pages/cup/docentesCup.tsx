@@ -94,12 +94,12 @@ export default function CupDocentesPage({ cup }: { cup: any }) {
 
                             // Obtener grupos únicos asignados al docente
                             const uniqueGroups = Array.from(
-                                new Map(
-                                    clases
-                                        .map((clase: any) => clase.grupo)
-                                        .filter(Boolean)
-                                        .map((grupo: any) => [grupo.ID_GRUPO, grupo])
-                                ).values()
+                                clases.reduce((map: Map<any, any>, clase: any) => {
+                                    if (clase?.grupo) {
+                                        map.set(clase.grupo.ID_GRUPO, clase.grupo);
+                                    }
+                                    return map;
+                                }, new Map()).values()
                             );
 
                             return (
@@ -110,7 +110,15 @@ export default function CupDocentesPage({ cup }: { cup: any }) {
                                     {/* Docente Header */}
                                     <div 
                                         onClick={() => toggleDocente(dc.ID)}
-                                        className="flex flex-col md:flex-row md:items-center gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/40 cursor-pointer select-none hover:bg-neutral-100/70 dark:hover:bg-neutral-900/60 transition-colors"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                toggleDocente(dc.ID);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        className="flex flex-col md:flex-row md:items-center gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/40 cursor-pointer select-none hover:bg-neutral-100/70 dark:hover:bg-neutral-900/60 transition-colors focus:outline-hidden focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 dark:focus:ring-neutral-700 dark:focus:ring-offset-neutral-950 rounded-t-xl"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800">
@@ -133,9 +141,9 @@ export default function CupDocentesPage({ cup }: { cup: any }) {
                                         <div className="md:ml-auto flex flex-wrap items-center justify-between md:justify-end gap-2 w-full md:w-auto">
                                             <div className="flex items-center gap-1.5">
                                                 {/* Badges de Grupos */}
-                                                {uniqueGroups.map((grupo: any, i: number) => (
+                                                {uniqueGroups.map((grupo: any) => (
                                                     <span
-                                                        key={i}
+                                                        key={grupo.ID_GRUPO}
                                                         className="inline-flex items-center gap-1 rounded-full border border-neutral-350 bg-neutral-200/50 px-2.5 py-0.5 text-[10px] font-bold text-neutral-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
                                                     >
                                                         <Users className="h-2.5 w-2.5 text-neutral-500 dark:text-neutral-400" />
@@ -149,14 +157,14 @@ export default function CupDocentesPage({ cup }: { cup: any }) {
 
                                                 {/* Badges de Nombre de Materias */}
                                                 <div className="flex flex-wrap gap-1">
-                                                    {materiasDc.map((m: any, i: number) => (
-                                                        <span
-                                                            key={i}
-                                                            className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-300"
-                                                        >
-                                                            {m?.NOMBRE ?? '—'}
-                                                        </span>
-                                                    ))}
+                                                     {materiasDc.map((m: any) => (
+                                                         <span
+                                                             key={m?.ID_MATERIA ?? m?.SIGLA ?? m?.NOMBRE}
+                                                             className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-300"
+                                                         >
+                                                             {m?.NOMBRE ?? '—'}
+                                                         </span>
+                                                     ))}
                                                 </div>
                                             </div>
 
@@ -204,17 +212,18 @@ export default function CupDocentesPage({ cup }: { cup: any }) {
                                                             )}
                                                             {horariosEnBloque.length > 0 && (
                                                                 <div className="flex flex-wrap gap-1.5">
-                                                                    {horariosEnBloque.map((heb: any, i: number) => {
-                                                                        const h = heb.horario;
-                                                                        return (
-                                                                            <span
-                                                                                key={i}
-                                                                                className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-bold text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-                                                                            >
-                                                                                {h?.DIA} {h?.HORA_INI} – {h?.HORA_FIN}
-                                                                            </span>
-                                                                        );
-                                                                    })}
+                                                                     {horariosEnBloque.map((heb: any) => {
+                                                                         const h = heb.horario;
+                                                                         const key = h ? `${h.DIA}-${h.HORA_INI}` : heb.ID;
+                                                                         return (
+                                                                             <span
+                                                                                 key={key}
+                                                                                 className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-bold text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                                                                             >
+                                                                                 {h?.DIA} {h?.HORA_INI} – {h?.HORA_FIN}
+                                                                             </span>
+                                                                         );
+                                                                     })}
                                                                 </div>
                                                             )}
                                                         </div>

@@ -64,7 +64,58 @@ Route::middleware(['auth'])->group(function () {
         }
 
         if (str_contains($rolNombre, 'ESTUDIANTE')) {
-            return Inertia::render('dashboard-estudiante');
+            $estudiante = \App\Models\Estudiante::where('USUARIO_ID', $user->ID)->first();
+            $cupsDisponibles = [];
+            $cup = null;
+            $clases = [];
+            $grupo = null;
+
+            if ($estudiante) {
+                // Obtener todos los CUPs en los que el estudiante se ha inscrito
+                $cupsDisponibles = \App\Models\Cup::whereHas('estudianteCups', function($q) use ($estudiante) {
+                    $q->where('ID_ESTUDIANTE', $estudiante->ID_ESTUDIANTE);
+                })->orderBy('ID_CUP', 'desc')->get();
+
+                if ($cupsDisponibles->count() > 0) {
+                    $selectedCupId = request('cup_id');
+                    if ($selectedCupId) {
+                        $cup = $cupsDisponibles->firstWhere('ID_CUP', $selectedCupId);
+                    }
+                    
+                    if (!$cup) {
+                        $cup = $cupsDisponibles->first();
+                    }
+
+                    // Buscar la inscripción en el CUP actual
+                    $estudianteCup = \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)
+                        ->where('ID_ESTUDIANTE', $estudiante->ID_ESTUDIANTE)
+                        ->first();
+                    
+                    if ($estudianteCup) {
+                        $clases = \App\Models\EstudianteClase::where('ESTUDIANTE_CUP_ID', $estudianteCup->ID)
+                            ->with([
+                                'clase.materia', 
+                                'clase.grupo', 
+                                'clase.docenteCup.docente.usuario', 
+                                'clase.bloqueHorario.horariosEnBloque.horario', 
+                                'clase.aula', 
+                                'calificaciones'
+                            ])
+                            ->get();
+
+                        if ($clases->count() > 0) {
+                            $grupo = $clases->first()->clase->grupo;
+                        }
+                    }
+                }
+            }
+
+            return Inertia::render('dashboard-estudiante', [
+                'cup' => $cup,
+                'cups_disponibles' => $cupsDisponibles,
+                'clases' => $clases,
+                'grupo' => $grupo
+            ]);
         }
 
         return Inertia::render('dashboard', [

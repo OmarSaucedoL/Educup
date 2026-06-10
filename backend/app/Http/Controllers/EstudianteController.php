@@ -218,7 +218,40 @@ class EstudianteController extends Controller
             $rules['COLEGIO_ID'] = 'required|integer|exists:COLEGIO,ID';
         }
 
-        $validated = $request->validate($rules);
+        $messages = [
+            'required' => 'El campo :attribute es obligatorio.',
+            'date' => 'El campo :attribute debe ser una fecha válida.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'string' => 'El campo :attribute debe ser un texto.',
+            'email' => 'El campo :attribute debe ser un correo electrónico válido.',
+            'unique' => 'El valor ingresado en :attribute ya existe en nuestros registros.',
+            'max' => 'El campo :attribute no puede exceder los :max caracteres.',
+            'in' => 'El valor seleccionado para :attribute no es válido.',
+            'exists' => 'El valor seleccionado para :attribute no existe.',
+            'required_if' => 'El campo :attribute es obligatorio bajo las condiciones dadas.'
+        ];
+
+        $attributes = [
+            'CARNET' => 'carnet de identidad',
+            'NOMBRE' => 'nombres',
+            'APELLIDO' => 'apellidos',
+            'FECHA_NAC' => 'fecha de nacimiento',
+            'SEXO' => 'sexo',
+            'CORREO' => 'correo electrónico',
+            'TELEFONO' => 'teléfono',
+            'DIRECCION' => 'dirección',
+            'TITULO_BACHILLER' => 'título de bachiller',
+            'ESTADO' => 'estado',
+            'CIUDAD_ID' => 'ciudad',
+            'COLEGIO_ID' => 'colegio',
+            'NUEVA_CIUDAD_NOMBRE' => 'nombre de la nueva ciudad',
+            'NUEVA_CIUDAD_DEPARTAMENTO' => 'departamento de la nueva ciudad',
+            'NUEVO_COLEGIO_NOMBRE' => 'nombre del nuevo colegio',
+            'OPCION_1' => 'primera opción de carrera',
+            'OPCION_2' => 'segunda opción de carrera',
+        ];
+
+        $validated = $request->validate($rules, $messages, $attributes);
 
         $activeCup = Cup::where('ESTADO', '!=', 'Concluido')->orderBy('ID_CUP', 'desc')->first();
 
@@ -347,7 +380,40 @@ class EstudianteController extends Controller
             $rules['COLEGIO_ID'] = 'required|integer|exists:COLEGIO,ID';
         }
 
-        $validated = $request->validate($rules);
+        $messages = [
+            'required' => 'El campo :attribute es obligatorio.',
+            'date' => 'El campo :attribute debe ser una fecha válida.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'string' => 'El campo :attribute debe ser un texto.',
+            'email' => 'El campo :attribute debe ser un correo electrónico válido.',
+            'unique' => 'El valor ingresado en :attribute ya existe en nuestros registros.',
+            'max' => 'El campo :attribute no puede exceder los :max caracteres.',
+            'in' => 'El valor seleccionado para :attribute no es válido.',
+            'exists' => 'El valor seleccionado para :attribute no existe.',
+            'required_if' => 'El campo :attribute es obligatorio bajo las condiciones dadas.'
+        ];
+
+        $attributes = [
+            'CARNET' => 'carnet de identidad',
+            'NOMBRE' => 'nombres',
+            'APELLIDO' => 'apellidos',
+            'FECHA_NAC' => 'fecha de nacimiento',
+            'SEXO' => 'sexo',
+            'CORREO' => 'correo electrónico',
+            'TELEFONO' => 'teléfono',
+            'DIRECCION' => 'dirección',
+            'TITULO_BACHILLER' => 'título de bachiller',
+            'ESTADO' => 'estado',
+            'CIUDAD_ID' => 'ciudad',
+            'COLEGIO_ID' => 'colegio',
+            'NUEVA_CIUDAD_NOMBRE' => 'nombre de la nueva ciudad',
+            'NUEVA_CIUDAD_DEPARTAMENTO' => 'departamento de la nueva ciudad',
+            'NUEVO_COLEGIO_NOMBRE' => 'nombre del nuevo colegio',
+            'OPCION_1' => 'primera opción de carrera',
+            'OPCION_2' => 'segunda opción de carrera',
+        ];
+
+        $validated = $request->validate($rules, $messages, $attributes);
 
         $activeCup = Cup::where('ESTADO', '!=', 'Concluido')->orderBy('ID_CUP', 'desc')->first();
 

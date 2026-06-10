@@ -103,21 +103,18 @@ export default function MateriasStats({
         let csvContent = '\uFEFF'; // UTF-8 BOM
 
         // Names of selected subjects
-        const selectedNames = materiasCatalogo
-            .filter((m) => selectedIds.includes(m.id))
-            .map((m) => m.nombre)
-            .join(', ');
+        const selectedNames = materiasCatalogo.flatMap((m) => (selectedIds.includes(m.id) ? [m.nombre] : [])).join(', ');
 
         // 1. Cabecera del Reporte de Filtros
         csvContent += `"REPORTE DE POSTULANTES CRÍTICOS (AND)"\r\n`;
         csvContent += `"Filtro Aplicado";"Alumnos reprobados en TODAS las materias seleccionadas simultáneamente"\r\n`;
         csvContent += `"Materias Evaluadas";"${selectedNames}"\r\n`;
-        csvContent += `"Nota Límite";"<= ${notaLimite}"\r\n`;
+        csvContent += `"Calificación Límite";"<= ${notaLimite}"\r\n`;
         csvContent += `"Total Críticos";"${postulantesCriticos.length}"\r\n`;
         csvContent += '\r\n'; // Fila en blanco
 
         // 2. Detalle de Postulantes
-        const headers = ['Carnet (CI)', 'Postulante', 'Computación (ID 1)', 'Matemática (ID 2)', 'Inglés (ID 3)', 'Física (ID 4)', 'Promedio Final'];
+        const headers = ['Carnet (CI)', 'Postulante', 'Computación', 'Matemática', 'Inglés', 'Física', 'Promedio Final'];
         csvContent += headers.map((h) => `"${h}"`).join(';') + '\r\n';
 
         filteredEstudiantes.forEach((e) => {
@@ -138,8 +135,23 @@ export default function MateriasStats({
 
     return (
         <div className="flex flex-col gap-6">
+            {/* Cabecera Principal */}
+            <div className="no-print flex flex-col gap-4 border-b border-neutral-200 pb-5 dark:border-neutral-800">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-md bg-primary/10 p-2">
+                        <AlertCircle className="text-primary h-5 w-5" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Estadísticas de Materias Críticas</h2>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                            Encuentra y exporta listados de estudiantes en riesgo académico según las materias y calificación límite configurada.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Panel de Filtros Interactivos (Oculto en Impresión) */}
-            <div className="no-print print:hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
+            <div className="no-print rounded-xl border border-neutral-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50 print:hidden">
                 <div className="mb-4 flex items-center gap-2 border-b border-neutral-100 pb-3 dark:border-neutral-800">
                     <Filter className="text-neutral-550 h-4.5 w-4.5 dark:text-neutral-400" />
                     <h3 className="text-sm font-bold tracking-wider text-neutral-800 uppercase dark:text-neutral-200">
@@ -151,7 +163,7 @@ export default function MateriasStats({
                     {/* Materias Checkboxes */}
                     <div className="flex flex-col gap-2 md:col-span-2">
                         <label className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">
-                            1. Seleccionar Materias Críticas (El alumno debe tener nota baja en TODAS las elegidas)
+                            1. Seleccionar Materias Críticas (El alumno debe tener calificación baja en TODAS las elegidas)
                         </label>
                         <div className="mt-1 flex flex-wrap gap-3">
                             {materiasCatalogo.map((m) => {
@@ -180,9 +192,12 @@ export default function MateriasStats({
 
                     {/* Nota Limite Input */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">2. Nota Máxima</label>
+                        <label htmlFor="nota-maxima" className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">
+                            2. Calificación Máxima
+                        </label>
                         <div className="flex gap-2">
                             <input
+                                id="nota-maxima"
                                 type="number"
                                 step="1"
                                 min="0"
@@ -209,44 +224,43 @@ export default function MateriasStats({
                     <div>
                         <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-200">No se han seleccionado materias</h4>
                         <p className="mt-1 max-w-sm text-xs text-neutral-400">
-                            Elige una o más materias arriba y define una nota máxima límite para visualizar la lista de postulantes en riesgo.
+                            Elige una o más materias arriba y define una calificación máxima límite para visualizar la lista de postulantes en riesgo.
                         </p>
                     </div>
                 </div>
             ) : (
                 <>
                     {/* Control Panel de Resultados (Search & Exports) */}
-                    <div className="no-print print:hidden mb-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="no-print mb-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
                         <div className="relative w-full max-w-md">
                             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                             <input
                                 type="text"
+                                aria-label="Buscar postulante por carnet o nombre"
                                 placeholder="Buscar postulante por carnet o nombre..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full rounded-lg border border-neutral-200 bg-white py-2 pr-4 pl-9 text-sm text-neutral-900 shadow-xs transition focus:border-neutral-900 focus:outline-hidden dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
                             />
                         </div>
-                        <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+                        <div className="flex shrink-0 flex-wrap items-center gap-2 self-end sm:self-auto">
                             <Button
                                 variant="outline"
-                                size="sm"
-                                onClick={exportToCSV}
+                                onClick={() => window.print()}
                                 disabled={postulantesCriticos.length === 0}
-                                className="flex h-9 items-center gap-1.5 border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                                className="gap-2 text-sm font-semibold bg-white dark:bg-neutral-950"
                             >
-                                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                                Exportar Excel (CSV)
+                                <Printer className="h-4 w-4" />
+                                Imprimir / PDF
                             </Button>
                             <Button
                                 variant="outline"
-                                size="sm"
-                                onClick={() => window.print()}
+                                onClick={exportToCSV}
                                 disabled={postulantesCriticos.length === 0}
-                                className="flex h-9 items-center gap-1.5 border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                                className="gap-2 text-sm font-semibold bg-white dark:bg-neutral-950"
                             >
-                                <Printer className="h-4 w-4 text-slate-600" />
-                                Imprimir / PDF
+                                <FileSpreadsheet className="h-4 w-4" />
+                                Exportar Excel
                             </Button>
                         </div>
                     </div>
@@ -258,14 +272,11 @@ export default function MateriasStats({
                                 <strong>Filtro Lógico:</strong> Alumnos reprobados simultáneamente
                             </div>
                             <div>
-                                <strong>Nota Máxima Evaluada:</strong> &lt;= {notaLimite}
+                                <strong>Calificación Máxima Evaluada:</strong> &lt;= {notaLimite}
                             </div>
                             <div className="col-span-2">
                                 <strong>Materias Filtro:</strong>{' '}
-                                {materiasCatalogo
-                                    .filter((m) => materiasSeleccionadas.includes(m.id))
-                                    .map((m) => m.nombre)
-                                    .join(', ')}
+                                {materiasCatalogo.flatMap((m) => (materiasSeleccionadas.includes(m.id) ? [m.nombre] : [])).join(', ')}
                             </div>
                             <div>
                                 <strong>Total Estudiantes Encontrados:</strong> {postulantesCriticos.length}
@@ -461,7 +472,7 @@ export default function MateriasStats({
 
                     {/* Pagination Controls */}
                     {totalPages > 1 && (
-                        <div className="no-print print:hidden flex items-center justify-between border-t border-neutral-200 pt-4 dark:border-neutral-800">
+                        <div className="no-print flex items-center justify-between border-t border-neutral-200 pt-4 dark:border-neutral-800 print:hidden">
                             <span className="text-xs text-neutral-500">
                                 Mostrando estudiantes <strong>{(currentPage - 1) * itemsPerPage + 1}</strong> al{' '}
                                 <strong>{Math.min(currentPage * itemsPerPage, filteredEstudiantes.length)}</strong> de{' '}

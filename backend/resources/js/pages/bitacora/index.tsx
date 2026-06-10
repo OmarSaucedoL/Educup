@@ -63,6 +63,40 @@ interface BitacoraProps {
     };
 }
 
+// Parse diff changes for UPDATE logs
+const parseChanges = (desc: string) => {
+    const index = desc.indexOf("Cambios: ");
+    if (index === -1) return null;
+    const changesStr = desc.substring(index + 9);
+    const parts = changesStr.split("; ");
+    return parts.map(part => {
+        const match = part.match(/\[(.*?)\]:\s*de\s*'(.*?)'\s*a\s*'(.*?)'/);
+        if (match) {
+            return {
+                field: match[1],
+                oldValue: match[2],
+                newValue: match[3]
+            };
+        }
+        return null;
+    }).filter((item): item is { field: string; oldValue: string; newValue: string } => item !== null);
+};
+
+const getActionBadgeColor = (action: string) => {
+    switch (action) {
+        case 'CREAR':
+        case 'LOGIN':
+            return 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50';
+        case 'ACTUALIZAR':
+            return 'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50';
+        case 'ELIMINAR':
+        case 'LOGOUT':
+            return 'border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50';
+        default:
+            return 'border-neutral-200 bg-neutral-50 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-400';
+    }
+};
+
 export default function Index({ bitacora, filters }: BitacoraProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
@@ -79,40 +113,6 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
     const clearFilters = () => {
         setSearch('');
         router.get('/bitacora', { search: '', accion: '' }, { preserveState: true, replace: true });
-    };
-
-    // Parse diff changes for UPDATE logs
-    const parseChanges = (desc: string) => {
-        const index = desc.indexOf("Cambios: ");
-        if (index === -1) return null;
-        const changesStr = desc.substring(index + 9);
-        const parts = changesStr.split("; ");
-        return parts.map(part => {
-            const match = part.match(/\[(.*?)\]:\s*de\s*'(.*?)'\s*a\s*'(.*?)'/);
-            if (match) {
-                return {
-                    field: match[1],
-                    oldValue: match[2],
-                    newValue: match[3]
-                };
-            }
-            return null;
-        }).filter((item): item is { field: string; oldValue: string; newValue: string } => item !== null);
-    };
-
-    const getActionBadgeColor = (action: string) => {
-        switch (action) {
-            case 'CREAR':
-            case 'LOGIN':
-                return 'border-green-200 bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50';
-            case 'ACTUALIZAR':
-                return 'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50';
-            case 'ELIMINAR':
-            case 'LOGOUT':
-                return 'border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50';
-            default:
-                return 'border-neutral-200 bg-neutral-50 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-400';
-        }
     };
 
     const categories = [
@@ -152,6 +152,7 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
                             <input
                                 type="text"
+                                aria-label="Buscar por descripción, tabla o usuario"
                                 placeholder="Buscar por descripción, tabla o usuario..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -286,30 +287,34 @@ export default function Index({ bitacora, filters }: BitacoraProps) {
                 {bitacora.links && bitacora.links.length > 3 && (
                     <div className="flex justify-center mt-2">
                         <div className="flex flex-wrap gap-1 bg-white/40 dark:bg-neutral-900/40 p-1.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800">
-                            {bitacora.links.map((link, idx) => {
-                                if (link.url === null) {
+                            {(() => {
+                                let ellipsisCount = 0;
+                                return bitacora.links.map((link) => {
+                                    const key = link.label === '...' ? `ellipsis-${++ellipsisCount}` : link.label;
+                                    if (link.url === null) {
+                                        return (
+                                            <div
+                                                key={key}
+                                                className="px-3 py-1.5 text-xs text-neutral-400 dark:text-neutral-600 rounded-lg cursor-not-allowed select-none"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    }
                                     return (
-                                        <div
-                                            key={idx}
-                                            className="px-3 py-1.5 text-xs text-neutral-400 dark:text-neutral-600 rounded-lg cursor-not-allowed select-none"
+                                        <Link
+                                            key={key}
+                                            href={link.url}
+                                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                                                link.active
+                                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                                    : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                                            }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
+                                            preserveState
                                         />
                                     );
-                                }
-                                return (
-                                    <Link
-                                        key={idx}
-                                        href={link.url}
-                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                                            link.active
-                                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                        preserveState
-                                    />
-                                );
-                            })}
+                                });
+                            })()}
                         </div>
                     </div>
                 )}

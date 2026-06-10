@@ -8,35 +8,37 @@ interface DashboardDocenteProps {
     clases: any[];
 }
 
-export default function DashboardDocente({ cup, clases }: DashboardDocenteProps) {
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) return '—';
-        try {
-            // dateStr comes in format "YYYY-MM-DD" or similar
-            const cleanStr = dateStr.split('T')[0];
-            const [year, month, day] = cleanStr.split('-');
-            const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-            return `${parseInt(day)} de ${months[parseInt(month) - 1]} de ${year}`;
-        } catch (e) {
-            return dateStr;
-        }
-    };
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
+    try {
+        // dateStr comes in format "YYYY-MM-DD" or similar
+        const cleanStr = dateStr.split('T')[0];
+        const [year, month, day] = cleanStr.split('-');
+        const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return `${parseInt(day)} de ${months[parseInt(month) - 1]} de ${year}`;
+    } catch (e) {
+        return dateStr;
+    }
+};
 
-    const formatClassSchedules = (clase: any) => {
-        const hebList = clase.bloqueHorario?.horariosEnBloque ?? clase.bloque_horario?.horarios_en_bloque ?? [];
-        if (hebList.length === 0) return 'Horario no definido';
-        
-        return hebList.map((heb: any) => {
-            const h = heb.horario;
-            if (!h) return '';
-            const formatTime = (timeStr: string) => {
-                if (!timeStr) return '';
-                const parts = timeStr.split(':');
-                return `${parts[0]}:${parts[1]}`;
-            };
-            return `${h.DIA} ${formatTime(h.HORA_INI)}-${formatTime(h.HORA_FIN)}`;
-        }).filter(Boolean).join(', ');
-    };
+const formatClassSchedules = (clase: any) => {
+    const hebList = clase.bloqueHorario?.horariosEnBloque ?? clase.bloque_horario?.horarios_en_bloque ?? [];
+    if (hebList.length === 0) return 'Horario no definido';
+    
+    return hebList.flatMap((heb: any) => {
+        const h = heb.horario;
+        if (!h) return [];
+        const formatTime = (timeStr: string) => {
+            if (!timeStr) return '';
+            const parts = timeStr.split(':');
+            return `${parts[0]}:${parts[1]}`;
+        };
+        const result = `${h.DIA} ${formatTime(h.HORA_INI)}-${formatTime(h.HORA_FIN)}`;
+        return result ? [result] : [];
+    }).join(', ');
+};
+
+export default function DashboardDocente({ cup, clases }: DashboardDocenteProps) {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard Docente', href: '/dashboard' },
@@ -105,7 +107,7 @@ export default function DashboardDocente({ cup, clases }: DashboardDocenteProps)
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-xs font-semibold tracking-wider text-neutral-500 uppercase flex items-center gap-1.5">
-                                    <GraduationCap className="h-3.5 w-3.5" /> Nota Mínima Aprobatoria
+                                    <GraduationCap className="h-3.5 w-3.5" /> Calificación Mínima Aprobatoria
                                 </span>
                                 <p className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
                                     {Number(cup.NOTA_MINIMA).toFixed(1)} puntos
@@ -189,7 +191,7 @@ export default function DashboardDocente({ cup, clases }: DashboardDocenteProps)
                                                             href={`/notas/clases/${clase.ID_CLASE}?cup_id=${cup.ID_CUP}`}
                                                             className="inline-flex h-8 items-center justify-center rounded-lg bg-neutral-900 px-3 text-xs font-bold text-neutral-50 shadow-xs hover:bg-neutral-850 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200 gap-1 group/btn"
                                                         >
-                                                            <span>Gestionar Notas</span>
+                                                            <span>Gestionar Calificaciones</span>
                                                             <ChevronRight className="h-3.5 w-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
                                                         </Link>
                                                     )}

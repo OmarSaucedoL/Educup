@@ -1,9 +1,12 @@
-import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Head, router } from '@inertiajs/react';
+import { BookOpen, Calendar, GraduationCap } from 'lucide-react';
 import { useState } from 'react';
-import { GraduationCap, Calendar, BookOpen } from 'lucide-react';
+import EstadisticaDocente from './components/estadistica-docente';
+import EstadisticaGrupo from './components/estadistica-grupo';
 import MateriasStats from './components/materias-stats';
+import EstadisticaAceptados from './components/estadistica-aceptados';
 
 interface MateriaItem {
     id: number;
@@ -19,6 +22,33 @@ interface StudentCriticalData {
     nota_ingles: number;
     nota_fisica: number;
     nota_final_promedio: number;
+}
+
+interface GrupoReporteData {
+    id_grupo: number;
+    nombre_grupo: string;
+    turno: string;
+    total_aprobados: number;
+    total_reprobados: number;
+    promedio_grupo: number | null;
+}
+
+interface DocenteReporteData {
+    codigo_docente: number;
+    nombre_docente: string;
+    clases_dadas: number;
+    grupos_asignados: number;
+    materias_dadas: string;
+    total_estudiantes: number;
+    total_aprobados: number;
+    total_reprobados: number;
+    promedio_por_materia: string;
+}
+
+interface AceptadoReporteData {
+    carnet: string;
+    nombre_completo: string;
+    carrera_asignada: string;
 }
 
 interface ReportsProps {
@@ -38,29 +68,111 @@ interface ReportsProps {
     materiasSeleccionadas?: number[];
     notaLimite?: number;
     materiasCatalogo?: MateriaItem[];
+    docentesCatalogo?: { id: number; nombre_completo: string }[];
+    gruposReporte?: GrupoReporteData[];
+    docentesReporte?: DocenteReporteData[];
+    historicoDocenteReporte?: {
+        docente: string;
+        grupo: string;
+        materia: string;
+        turno: string;
+        numero_estudiantes: number;
+        nota_promedio: number | null;
+        cup: string;
+    }[];
+    aceptadosReporte?: AceptadoReporteData[];
+    activeTab?: TabType;
+    gruposReportExecuted?: boolean;
+    docentesReportExecuted?: boolean;
+    historicoDocenteReportExecuted?: boolean;
+    aceptadosReportExecuted?: boolean;
 }
 
-type TabType = 'materias';
+type TabType = 'materias' | 'grupos' | 'docentes' | 'aceptados';
 
-export default function AcademicReportsIndex({ 
-    cup, 
-    cups, 
-    postulantesCriticos = [], 
-    materiasSeleccionadas = [], 
-    notaLimite = 51, 
-    materiasCatalogo = [] 
+export default function AcademicReportsIndex({
+    cup,
+    cups,
+    postulantesCriticos = [],
+    materiasSeleccionadas = [],
+    notaLimite = 51,
+    materiasCatalogo = [],
+    docentesCatalogo = [],
+    gruposReporte = [],
+    docentesReporte = [],
+    historicoDocenteReporte = [],
+    aceptadosReporte = [],
+    activeTab: initialTab = 'materias',
+    gruposReportExecuted = false,
+    docentesReportExecuted = false,
+    historicoDocenteReportExecuted = false,
+    aceptadosReportExecuted = false,
 }: ReportsProps) {
-    const [activeTab, setActiveTab] = useState<TabType>('materias');
+    const [activeTab, setActiveTab] = useState<TabType>(initialTab);
     const [selectedCupId, setSelectedCupId] = useState<number | null>(cup?.ID_CUP ?? null);
+    const [gruposReportExecutedState, setGruposReportExecutedState] = useState<boolean>(gruposReportExecuted);
+    const [docentesReportExecutedState, setDocentesReportExecutedState] = useState<boolean>(docentesReportExecuted);
+    const [historicoDocenteReportExecutedState, setHistoricoDocenteReportExecutedState] = useState<boolean>(historicoDocenteReportExecuted);
+    const [aceptadosReportExecutedState, setAceptadosReportExecutedState] = useState<boolean>(aceptadosReportExecuted);
 
-    // Handle CUP selector change
     const handleCupChange = (id: number) => {
         setSelectedCupId(id);
-        router.get('/reportes-academicos', { cup_id: id }, { preserveState: false });
+        router.get('/reportes-academicos', { cup_id: id, tab: activeTab }, { preserveState: false });
+    };
+
+    const handleExecuteGroupReport = () => {
+        const cupId = selectedCupId ?? cup?.ID_CUP;
+        if (!cupId) {
+            return;
+        }
+
+        setActiveTab('grupos');
+        setGruposReportExecutedState(true);
+        router.get('/reportes-academicos', { cup_id: cupId, tab: 'grupos', run_grupos_report: 1 }, { preserveState: false });
+    };
+
+    const handleExecuteDocenteReport = () => {
+        const cupId = selectedCupId ?? cup?.ID_CUP;
+        if (!cupId) {
+            return;
+        }
+
+        setActiveTab('docentes');
+        setDocentesReportExecutedState(true);
+        // Desactiva el estado del reporte histórico si se lanza el general
+        setHistoricoDocenteReportExecutedState(false);
+        router.get('/reportes-academicos', { cup_id: cupId, tab: 'docentes', run_docentes_report: 1 }, { preserveState: false });
+    };
+
+    const handleExecuteHistoricoDocenteReport = (id_docente: number) => {
+        const cupId = selectedCupId ?? cup?.ID_CUP;
+        if (!cupId) {
+            return;
+        }
+
+        setActiveTab('docentes');
+        setHistoricoDocenteReportExecutedState(true);
+        // Desactiva el estado del reporte general si se lanza el histórico
+        setDocentesReportExecutedState(false);
+        router.get('/reportes-academicos', { cup_id: cupId, tab: 'docentes', run_historico_docente: 1, id_docente }, { preserveState: false });
+    };
+
+    const handleExecuteAceptadosReport = () => {
+        const cupId = selectedCupId ?? cup?.ID_CUP;
+        if (!cupId) {
+            return;
+        }
+
+        setActiveTab('aceptados');
+        setAceptadosReportExecutedState(true);
+        router.get('/reportes-academicos', { cup_id: cupId, tab: 'aceptados', run_aceptados_report: 1 }, { preserveState: false });
     };
 
     const tabTitle = {
-        materias: 'Estadísticas de Materia'
+        materias: 'Estadísticas de Materia',
+        grupos: 'Estadísticas de Grupo',
+        docentes: 'Estadísticas Docente',
+        aceptados: 'Estadísticas de Aceptados',
     }[activeTab];
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -73,7 +185,9 @@ export default function AcademicReportsIndex({
             <Head title={`Reportes Académicos — ${tabTitle}`} />
 
             {/* ── CSS Hack para Impresión Física y PDF Limpios ── */}
-            <style dangerouslySetInnerHTML={{__html: `
+            <style
+                dangerouslySetInnerHTML={{
+                    __html: `
                 @media print {
                     /* Forzar que el contenedor principal ocupe todo el ancho sin márgenes */
                     main, .mx-auto, .rounded-xl, .border, .group\\/sidebar-wrapper {
@@ -90,14 +204,12 @@ export default function AcademicReportsIndex({
                     #print-report-container {
                         display: block !important;
                         visibility: visible !important;
-                        position: absolute;
-                        left: 0;
-                        top: 0;
                         width: 100%;
                     }
                     table {
                         width: 100% !important;
                         border-collapse: collapse !important;
+                        margin-top: 20px !important;
                     }
                     th, td {
                         border: 1px solid #d1d5db !important;
@@ -133,25 +245,28 @@ export default function AcademicReportsIndex({
                     .print-hidden { display: none !important; }
                     .print\\:hidden { display: none !important; }
                 }
-            `}} />
+            `,
+                }}
+            />
 
             <div id="print-report-container" className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-6 rounded-xl p-4">
-                
                 {/* Membrete Oficial para Impresión / PDF (Invisible en la pantalla normal) */}
-                <div className="hidden print:block border-b-2 border-neutral-800 pb-4 mb-6">
-                    <div className="flex justify-between items-start">
+                <div className="mb-6 hidden border-b-2 border-neutral-800 pb-4 print:block">
+                    <div className="flex items-start justify-between">
                         <div>
-                            <h2 className="text-sm font-bold tracking-wider uppercase text-neutral-800">Universidad Autónoma Gabriel René Moreno</h2>
-                            <p className="text-[10px] text-neutral-500 uppercase tracking-tight">Comisión CUP - Dirección Académica</p>
+                            <h2 className="text-sm font-bold tracking-wider text-neutral-800 uppercase">Universidad Autónoma Gabriel René Moreno</h2>
+                            <p className="text-[10px] tracking-tight text-neutral-500 uppercase">Comisión CUP - Dirección Académica</p>
                         </div>
                         <div className="text-right text-[10px] text-neutral-500">
-                            <p>Fecha de Impresión: {new Date().toLocaleDateString('es-BO')} {new Date().toLocaleTimeString('es-BO')}</p>
+                            <p>
+                                Fecha de Impresión: {new Date().toLocaleDateString('es-BO')} {new Date().toLocaleTimeString('es-BO')}
+                            </p>
                             <p>Generado por: Personal Autorizado</p>
                         </div>
                     </div>
-                    <div className="text-center mt-6">
-                        <h1 className="text-lg font-bold tracking-normal uppercase text-neutral-900">{tabTitle}</h1>
-                        <p className="text-xs text-neutral-600 mt-1">
+                    <div className="mt-6 text-center">
+                        <h1 className="text-lg font-bold tracking-normal text-neutral-900 uppercase">{tabTitle}</h1>
+                        <p className="mt-1 text-xs text-neutral-600">
                             CUP #{cup?.ID_CUP} &mdash; Gestión {cup?.ANIO}/{cup?.SEMESTRE}
                         </p>
                     </div>
@@ -160,7 +275,7 @@ export default function AcademicReportsIndex({
                 {/* Encabezado Interactivo en Pantalla */}
                 <div className="no-print flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-4">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900/60 shadow-xs">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 shadow-xs dark:border-neutral-800 dark:bg-neutral-900/60">
                             <GraduationCap className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
                         </div>
                         <div>
@@ -174,15 +289,15 @@ export default function AcademicReportsIndex({
                     {/* Selector de CUP */}
                     {cups.length > 0 && (
                         <div className="flex items-center gap-2 self-end sm:self-auto">
-                            <span className="text-xs font-semibold text-neutral-500 flex items-center gap-1 uppercase tracking-tight">
+                            <span className="flex items-center gap-1 text-xs font-semibold tracking-tight text-neutral-500 uppercase">
                                 <Calendar className="h-3.5 w-3.5" /> CUP de Gestión:
                             </span>
                             <select
                                 value={selectedCupId ?? ''}
-                                onChange={e => handleCupChange(Number(e.target.value))}
-                                className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-xs transition focus:border-primary focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                                onChange={(e) => handleCupChange(Number(e.target.value))}
+                                className="focus:border-primary rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-xs transition focus:outline-hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
                             >
-                                {cups.map(c => (
+                                {cups.map((c) => (
                                     <option key={c.ID_CUP} value={c.ID_CUP}>
                                         CUP #{c.ID_CUP} — {c.ANIO}/{c.SEMESTRE} ({c.ESTADO})
                                     </option>
@@ -205,16 +320,19 @@ export default function AcademicReportsIndex({
                         {/* Pestañas de Reportes */}
                         <div className="no-print border-b border-neutral-200 dark:border-neutral-800">
                             <div className="flex flex-wrap gap-1">
-                                {(['materias'] as TabType[]).map((tab) => {
+                                {(['materias', 'grupos', 'docentes', 'aceptados'] as TabType[]).map((tab) => {
                                     const labels = {
-                                        materias: 'Estadísticas de Materia'
+                                        materias: 'Estadísticas de Materia',
+                                        grupos: 'Estadísticas de Grupo',
+                                        docentes: 'Estadísticas Docente',
+                                        aceptados: 'Estadísticas de Aceptados',
                                     };
                                     const isActive = activeTab === tab;
                                     return (
                                         <button
                                             key={tab}
                                             onClick={() => setActiveTab(tab)}
-                                            className={`px-4 py-2 text-sm font-bold relative transition-colors duration-200 -mb-[1px] border-b-2 ${
+                                            className={`relative -mb-[1px] border-b-2 px-4 py-2 text-sm font-bold transition-colors duration-200 ${
                                                 isActive
                                                     ? 'border-neutral-850 text-neutral-900 dark:border-neutral-200 dark:text-neutral-100'
                                                     : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300'
@@ -230,12 +348,40 @@ export default function AcademicReportsIndex({
                         {/* Contenido de la Pestaña Activa */}
                         <div className="flex flex-col gap-4">
                             {activeTab === 'materias' && (
-                                <MateriasStats 
-                                    cup={cup} 
+                                <MateriasStats
+                                    cup={cup}
                                     postulantesCriticos={postulantesCriticos}
                                     materiasSeleccionadas={materiasSeleccionadas}
                                     notaLimite={notaLimite}
                                     materiasCatalogo={materiasCatalogo}
+                                />
+                            )}
+                            {activeTab === 'grupos' && (
+                                <EstadisticaGrupo
+                                    cup={cup}
+                                    gruposReporte={gruposReporte}
+                                    onRunReport={handleExecuteGroupReport}
+                                    reportExecuted={gruposReportExecutedState}
+                                />
+                            )}
+                            {activeTab === 'docentes' && (
+                                <EstadisticaDocente
+                                    cup={cup}
+                                    docentesCatalogo={docentesCatalogo}
+                                    docentesReporte={docentesReporte}
+                                    historicoDocenteReporte={historicoDocenteReporte}
+                                    onRunReport={handleExecuteDocenteReport}
+                                    onRunHistoricoReport={handleExecuteHistoricoDocenteReport}
+                                    reportExecuted={docentesReportExecutedState}
+                                    historicoReportExecuted={historicoDocenteReportExecutedState}
+                                />
+                            )}
+                            {activeTab === 'aceptados' && (
+                                <EstadisticaAceptados
+                                    cup={cup}
+                                    aceptadosReporte={aceptadosReporte}
+                                    onRunReport={handleExecuteAceptadosReport}
+                                    reportExecuted={aceptadosReportExecutedState}
                                 />
                             )}
                         </div>

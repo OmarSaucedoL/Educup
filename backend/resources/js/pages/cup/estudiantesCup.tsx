@@ -106,6 +106,7 @@ export default function EstudiantesCupPage({ cup, estudianteCups, filters }: Est
                             <Search className="absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
                             <input
                                 type="text"
+                                aria-label="Buscar estudiantes por nombre, apellido o carnet (CI)"
                                 placeholder="Buscar por nombre, apellido o carnet (CI)..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -135,7 +136,7 @@ export default function EstudiantesCupPage({ cup, estudianteCups, filters }: Est
                                     <th className="h-12 w-[150px] px-4 text-left align-middle font-semibold">Carnet (CI)</th>
                                     <th className="h-12 w-[150px] px-4 text-left align-middle font-semibold">Fecha Insc.</th>
                                     <th className="h-12 w-[130px] px-4 text-center align-middle font-semibold">Estado</th>
-                                    <th className="h-12 w-[120px] px-4 text-right align-middle font-semibold">Nota Final</th>
+                                    <th className="h-12 w-[120px] px-4 text-right align-middle font-semibold">Calificación Final</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
@@ -185,7 +186,7 @@ export default function EstudiantesCupPage({ cup, estudianteCups, filters }: Est
                                                     </span>
                                                 </td>
 
-                                                {/* Nota Final */}
+                                                {/* Calificación Final */}
                                                 <td className="p-4 text-right align-middle font-extrabold text-neutral-900 dark:text-neutral-100">
                                                     {ec.NOTA_FINAL ? parseFloat(ec.NOTA_FINAL).toFixed(2) : '—'}
                                                 </td>
@@ -211,30 +212,34 @@ export default function EstudiantesCupPage({ cup, estudianteCups, filters }: Est
                 {estudianteCups.links && estudianteCups.links.length > 3 && (
                     <div className="flex justify-center">
                         <div className="flex flex-wrap gap-1 rounded-xl border border-neutral-200/60 bg-white/40 p-1.5 dark:border-neutral-800 dark:bg-neutral-900/40">
-                            {estudianteCups.links.map((link, idx) => {
-                                if (link.url === null) {
+                            {(() => {
+                                let ellipsisCount = 0;
+                                return estudianteCups.links.map((link) => {
+                                    const key = link.label === '...' ? `ellipsis-${++ellipsisCount}` : link.label;
+                                    if (link.url === null) {
+                                        return (
+                                            <div
+                                                key={key}
+                                                className="cursor-not-allowed rounded-lg px-3 py-1.5 text-xs text-neutral-400 select-none dark:text-neutral-600"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    }
                                     return (
-                                        <div
-                                            key={idx}
-                                            className="cursor-not-allowed rounded-lg px-3 py-1.5 text-xs text-neutral-400 select-none dark:text-neutral-600"
+                                        <Link
+                                            key={key}
+                                            href={link.url}
+                                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                                                link.active
+                                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                                    : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
+                                            }`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
+                                            preserveState
                                         />
                                     );
-                                }
-                                return (
-                                    <Link
-                                        key={idx}
-                                        href={link.url}
-                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                                            link.active
-                                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                                : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                        preserveState
-                                    />
-                                );
-                            })}
+                                });
+                            })()}
                         </div>
                     </div>
                 )}

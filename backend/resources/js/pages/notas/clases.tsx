@@ -55,13 +55,13 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Módulo Notas', href: '#' },
+        { title: 'Módulo Calificaciones', href: '#' },
         { title: 'Clases', href: '/notas/clases' },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Notas — Clases" />
+            <Head title="Calificaciones — Clases" />
 
             <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col gap-6 rounded-xl p-4">
 
@@ -72,9 +72,9 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                             <BookMarked className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Módulo de Notas — Clases</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Módulo de Calificaciones — Clases</h1>
                             <p className="text-muted-foreground mt-0.5 text-sm">
-                                Selecciona un grupo para ver sus materias y gestionar las notas de los estudiantes.
+                                Selecciona un grupo para ver sus materias y gestionar las calificaciones de los estudiantes.
                             </p>
                         </div>
                     </div>
@@ -148,7 +148,15 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                                             {/* Header del dropdown */}
                                             <div
                                                 onClick={() => toggleGroup(grupoId)}
-                                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer select-none gap-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        toggleGroup(grupoId);
+                                                    }
+                                                }}
+                                                role="button"
+                                                tabIndex={0}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer select-none gap-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors focus:outline-hidden focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 dark:focus:ring-neutral-700 dark:focus:ring-offset-neutral-950 rounded-t-xl"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900/60 text-neutral-800 dark:text-neutral-200">
@@ -242,7 +250,7 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                                                                             <td className="py-3.5 pl-4 text-right align-middle">
                                                                                 <Button variant="default" size="sm" asChild className="h-8 gap-1.5 text-xs font-semibold bg-neutral-900 text-neutral-50 hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200">
                                                                                     <Link href={`/notas/clases/${c.ID_CLASE}?cup_id=${cup.ID_CUP}`}>
-                                                                                        Gestionar Notas
+                                                                                        Gestionar Calificaciones
                                                                                     </Link>
                                                                                 </Button>
                                                                             </td>

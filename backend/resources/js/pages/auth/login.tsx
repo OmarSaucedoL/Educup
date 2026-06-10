@@ -35,23 +35,22 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-        <AuthLayout title="Inicia Sesión" description="Ingrese su correo electrónico y contraseña para iniciar sesión">
+        <AuthLayout title="Inicia Sesión" description="Ingrese su usuario o correo electrónico y contraseña para iniciar sesión">
             <Head title="Inicia Sesión" />
 
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Correo Electronico</Label>
+                        <Label htmlFor="email">Usuario o Correo Electrónico</Label>
                         <Input
                             id="email"
-                            type="email"
+                            type="text"
                             required
                             autoFocus
-                            tabIndex={1}
-                            autoComplete="email"
+                            autoComplete="username"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
-                            placeholder="email@example.com"
+                            placeholder="usuario o correo@ejemplo.com"
                         />
                         <InputError message={errors.email} />
                     </div>
@@ -63,7 +62,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 <TextLink
                                     href={route('password.request')}
                                     className="ml-auto text-sm"
-                                    tabIndex={5}
                                 >
                                     ¿Olvidaste tu contraseña?
                                 </TextLink>
@@ -73,7 +71,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             id="password"
                             type="password"
                             required
-                            tabIndex={2}
                             autoComplete="current-password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
@@ -82,7 +79,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <InputError message={errors.password} />
                     </div>
 
-                    <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
+                    <Button type="submit" className="mt-4 w-full" disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Iniciar Sesión
                     </Button>

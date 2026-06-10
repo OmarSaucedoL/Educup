@@ -13,17 +13,17 @@ return new class extends Migration
     {
         DB::statement(<<<SQL
             CREATE OR REPLACE PROCEDURE p_inscribir_estudiante_cup(
-                p_id_estudiante INT,
-                p_id_cup INT,
-                p_opcion_1_carrera_cup_id INT,
-                p_opcion_2_carrera_cup_id INT
+                p_id_estudiante BIGINT,
+                p_id_cup BIGINT,
+                p_opcion_1_carrera_cup_id BIGINT,
+                p_opcion_2_carrera_cup_id BIGINT
             )
             LANGUAGE plpgsql
             AS $$
             DECLARE
                 v_estudiante_estado VARCHAR(50);
                 v_cup_estado VARCHAR(50);
-                v_estudiante_cup_id INT;
+                v_estudiante_cup_id BIGINT;
             BEGIN
                 -- Validación 1: Bloqueo de Graduados (Aprobados)
                 SELECT "ESTADO" INTO v_estudiante_estado
@@ -90,6 +90,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('DROP PROCEDURE IF EXISTS p_inscribir_estudiante_cup(INT, INT, INT, INT);');
+        DB::statement('DROP PROCEDURE IF EXISTS p_inscribir_estudiante_cup(BIGINT, BIGINT, BIGINT, BIGINT);');
     }
 };

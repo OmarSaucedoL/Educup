@@ -63,9 +63,6 @@ export function CupForm({
         materias: isEdit ? (cup.materias || []) : [],
     });
 
-    const [selectedCarreras, setSelectedCarreras] = useState<{ ID_CARRERA: number; CUPOS: number }[]>(isEdit ? (cup.carreras || []) : []);
-    const [selectedMateriaIds, setSelectedMateriaIds] = useState<number[]>(isEdit ? (cup.materias || []) : []);
-
     const isLocked = isEdit ? (cup.ESTADO === 'Concluido' && data.ESTADO === 'Concluido') : false;
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -83,44 +80,51 @@ export function CupForm({
         },
     ];
 
-    useEffect(() => {
-        const sum = selectedCarreras.reduce((acc, curr) => acc + (curr.CUPOS || 0), 0);
-        setData(currData => ({
-            ...currData,
-            carreras: selectedCarreras,
-            CUPOS: sum
-        }));
-    }, [selectedCarreras, setData]);
-
-    useEffect(() => {
-        setData('materias', selectedMateriaIds);
-    }, [selectedMateriaIds, setData]);
-
     const handleCareerToggle = (carreraId: number) => {
-        setSelectedCarreras(prev => {
-            const exists = prev.find(c => c.ID_CARRERA === carreraId);
+        setData(currData => {
+            const exists = currData.carreras.find(c => c.ID_CARRERA === carreraId);
+            let nextCarreras;
             if (exists) {
-                return prev.filter(c => c.ID_CARRERA !== carreraId);
+                nextCarreras = currData.carreras.filter(c => c.ID_CARRERA !== carreraId);
             } else {
-                return [...prev, { ID_CARRERA: carreraId, CUPOS: 50 }]; // Default 50 cupos
+                nextCarreras = [...currData.carreras, { ID_CARRERA: carreraId, CUPOS: 50 }]; // Default 50 cupos
             }
+            const sum = nextCarreras.reduce((acc, curr) => acc + (curr.CUPOS || 0), 0);
+            return {
+                ...currData,
+                carreras: nextCarreras,
+                CUPOS: sum
+            };
         });
     };
 
     const handleCareerQuotaChange = (carreraId: number, quota: number) => {
-        setSelectedCarreras(prev =>
-            prev.map(c => (c.ID_CARRERA === carreraId ? { ...c, CUPOS: quota } : c))
-        );
+        setData(currData => {
+            const nextCarreras = currData.carreras.map(c =>
+                c.ID_CARRERA === carreraId ? { ...c, CUPOS: quota } : c
+            );
+            const sum = nextCarreras.reduce((acc, curr) => acc + (curr.CUPOS || 0), 0);
+            return {
+                ...currData,
+                carreras: nextCarreras,
+                CUPOS: sum
+            };
+        });
     };
 
     const handleMateriaToggle = (materiaId: number) => {
-        setSelectedMateriaIds(prev => {
-            if (prev.includes(materiaId)) {
-                return prev.filter(id => id !== materiaId);
+        setData(currData => {
+            let nextMaterias;
+            if (currData.materias.includes(materiaId)) {
+                nextMaterias = currData.materias.filter(id => id !== materiaId);
             } else {
-                if (prev.length >= 4) return prev; // Limit to max 4 subjects
-                return [...prev, materiaId];
+                if (currData.materias.length >= 4) return currData; // Limit to max 4 subjects
+                nextMaterias = [...currData.materias, materiaId];
             }
+            return {
+                ...currData,
+                materias: nextMaterias
+            };
         });
     };
 
@@ -206,7 +210,7 @@ export function CupForm({
                                 {/* NOTA MÍNIMA & TOTAL CUPOS */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="NOTA_MINIMA" className="text-sm font-semibold">Nota Mínima de Aprobación *</Label>
+                                        <Label htmlFor="NOTA_MINIMA" className="text-sm font-semibold">Calificación Mínima de Aprobación *</Label>
                                         <Input
                                             id="NOTA_MINIMA"
                                             type="number"
@@ -274,7 +278,7 @@ export function CupForm({
                                 {/* SELECCIÓN DE CARRERAS CON SUS CUPOS */}
                                 <CarrerasSection
                                     carreras={carreras}
-                                    selectedCarreras={selectedCarreras}
+                                    selectedCarreras={data.carreras}
                                     handleCareerToggle={handleCareerToggle}
                                     handleCareerQuotaChange={handleCareerQuotaChange}
                                     processing={processing}
@@ -285,7 +289,7 @@ export function CupForm({
                                 {/* SELECCIÓN DE MATERIAS (MAX 4) */}
                                 <MateriasSection
                                     materias={materias}
-                                    selectedMateriaIds={selectedMateriaIds}
+                                    selectedMateriaIds={data.materias}
                                     handleMateriaToggle={handleMateriaToggle}
                                     processing={processing}
                                     isLocked={isLocked}
@@ -309,7 +313,7 @@ export function CupForm({
                                 <div className="flex gap-3 mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-6">
                                     <Button
                                         type="submit"
-                                        disabled={processing || selectedCarreras.length === 0 || selectedMateriaIds.length === 0}
+                                        disabled={processing || data.carreras.length === 0 || data.materias.length === 0}
                                         className="flex-1 h-11 text-sm shadow-md"
                                     >
                                         {processing ? (

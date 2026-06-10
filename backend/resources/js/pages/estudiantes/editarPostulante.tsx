@@ -498,7 +498,7 @@ function HistorySection({
                             {/* Details Grid */}
                             <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 text-xs">
                                 <div>
-                                    <span className="block text-neutral-400 font-semibold mb-0.5">Nota Final:</span>
+                                    <span className="block text-neutral-400 font-semibold mb-0.5">Calificación Final:</span>
                                     <span className="font-extrabold text-neutral-800 dark:text-neutral-200 text-sm">
                                         {hc.NOTA_FINAL != null 
                                             ? `${parseFloat(hc.NOTA_FINAL.toString()).toFixed(2)} pts` 
@@ -525,7 +525,7 @@ function HistorySection({
                                     <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 text-xs">
                                         <span className="block text-neutral-400 font-semibold mb-1.5">Opciones Postuladas:</span>
                                         <div className="flex flex-col gap-1.5">
-                                            {[...options].sort((a, b) => a.OPCION - b.OPCION).map((op) => (
+                                            {options.toSorted((a, b) => a.OPCION - b.OPCION).map((op) => (
                                                 <div key={op.ID} className="flex justify-between items-center bg-neutral-100/50 dark:bg-neutral-800/40 p-1.5 rounded text-[11px] font-medium border border-neutral-200/40 dark:border-neutral-800/55">
                                                     <span className="text-neutral-500 font-bold shrink-0">Opción {op.OPCION}:</span>
                                                     <span className="text-neutral-700 dark:text-neutral-300 font-semibold text-right truncate pl-2">
@@ -685,6 +685,17 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
 
     const hasHistory = isEdit && historialCups && historialCups.length > 0;
 
+    const initialEstado = (() => {
+        const base = postulante?.ESTADO || 'ACTIVO';
+        if (!activeCup && base === 'ACTIVO') {
+            return 'INACTIVO';
+        }
+        return base;
+    })();
+
+    const initialOpcion1 = initialEstado === 'ACTIVO' ? (postulante?.OPCION_1?.toString() || '') : '';
+    const initialOpcion2 = initialEstado === 'ACTIVO' ? (postulante?.OPCION_2?.toString() || '') : '';
+
     const { data, setData, post, put, processing, errors } = useForm({
         CARNET: postulante?.CARNET || '',
         NOMBRE: postulante?.NOMBRE || '',
@@ -695,28 +706,28 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
         TELEFONO: postulante?.TELEFONO || '',
         DIRECCION: postulante?.DIRECCION || '',
         TITULO_BACHILLER: postulante?.TITULO_BACHILLER || '',
-        ESTADO: postulante?.ESTADO || 'ACTIVO',
+        ESTADO: initialEstado,
         COLEGIO_ID: postulante?.COLEGIO_ID?.toString() || '',
         CIUDAD_ID: postulante?.CIUDAD_ID?.toString() || '',
         NUEVA_CIUDAD_NOMBRE: '',
         NUEVA_CIUDAD_DEPARTAMENTO: 'SANTA CRUZ',
         NUEVO_COLEGIO_NOMBRE: '',
-        OPCION_1: postulante?.OPCION_1?.toString() || '',
-        OPCION_2: postulante?.OPCION_2?.toString() || '',
+        OPCION_1: initialOpcion1,
+        OPCION_2: initialOpcion2,
     });
 
-    useEffect(() => {
-        if (!activeCup && data.ESTADO === 'ACTIVO') {
-            setData('ESTADO', 'INACTIVO');
+    const handleEstadoChange = (newEstado: 'ACTIVO' | 'INACTIVO' | 'APROBADO') => {
+        if (newEstado !== 'ACTIVO') {
+            setData(prev => ({
+                ...prev,
+                ESTADO: newEstado,
+                OPCION_1: '',
+                OPCION_2: '',
+            }));
+        } else {
+            setData('ESTADO', newEstado);
         }
-    }, [activeCup, data.ESTADO, setData]);
-
-    useEffect(() => {
-        if (data.ESTADO !== 'ACTIVO') {
-            setData('OPCION_1', '');
-            setData('OPCION_2', '');
-        }
-    }, [data.ESTADO, setData]);
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Gestión Académica', href: '#' },
@@ -854,7 +865,7 @@ export default function EditarPostulante({ postulante, colegios, ciudades, carre
                                                             key={s}
                                                             type="button"
                                                             disabled={processing || isDisabled}
-                                                            onClick={() => setData('ESTADO', s)}
+                                                            onClick={() => handleEstadoChange(s)}
                                                             className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${
                                                                 data.ESTADO === s
                                                                     ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20 shadow-sm'

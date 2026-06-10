@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { AlertTriangle, BookMarked, BookOpen, CheckCircle2, ChevronLeft, Plus, Save, Search, Sliders, Trash2, User, Users, FileSpreadsheet, Printer } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface GestionarNotasProps {
     clase: any;
@@ -15,7 +15,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
     const [searchQuery, setSearchQuery] = useState('');
     const [showConfig, setShowConfig] = useState(false);
     const [commaWarning, setCommaWarning] = useState(false);
-    const [warningTimeout, setWarningTimeout] = useState<any>(null);
+    const warningTimeoutRef = useRef<any>(null);
 
     // Configuración de evaluaciones (Nombre y Ponderación)
     const [components, setComponents] = useState<{ nombre: string; ponderacion: number }[]>(() => {
@@ -56,13 +56,13 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
         // Detectar si el usuario presionó la coma
         if (val.includes(',')) {
             setCommaWarning(true);
-            if (warningTimeout) {
-                clearTimeout(warningTimeout);
+            if (warningTimeoutRef.current) {
+                clearTimeout(warningTimeoutRef.current);
             }
             const tId = window.setTimeout(() => {
                 setCommaWarning(false);
             }, 3000);
-            setWarningTimeout(tId);
+            warningTimeoutRef.current = tId;
             return;
         }
 
@@ -227,7 +227,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
     const exportNotasExcel = () => {
         let csvContent = "\uFEFF"; // UTF-8 BOM
         const compHeaders = components.map(c => `${c.nombre} (${c.ponderacion}%)`);
-        const headers = ["Carnet (CI)", "Postulante", ...compHeaders, "Nota Final", "Estado"];
+        const headers = ["Carnet (CI)", "Postulante", ...compHeaders, "Calificación Final", "Estado"];
         csvContent += headers.join(";") + "\r\n";
         
         filteredStudents.forEach(ec => {
@@ -288,8 +288,8 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Módulo Notas', href: '/notas/clases' },
-        { title: 'Gestionar Notas', href: '#' },
+        { title: 'Módulo Calificaciones', href: '/notas/clases' },
+        { title: 'Gestionar Calificaciones', href: '#' },
     ];
 
     const docenteNombre = clase.docente_cup?.docente?.usuario
@@ -300,7 +300,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Gestionar Notas — ${clase.materia?.NOMBRE}`} />
+            <Head title={`Gestionar Calificaciones — ${clase.materia?.NOMBRE}`} />
 
             <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col gap-6 rounded-xl p-4">
 
@@ -311,7 +311,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                             <BookMarked className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Gestionar Notas</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Gestionar Calificaciones</h1>
                             <p className="text-muted-foreground mt-0.5 text-sm">
                                 {clase.materia?.NOMBRE} — Grupo: {clase.grupo?.NOMBRE} (
                                 {clase.bloqueHorario?.TURNO ?? clase.bloque_horario?.TURNO ?? 'No definido'})
@@ -359,7 +359,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                             <h4 className="text-sm font-semibold">Modo de Solo Lectura</h4>
                             <p className="text-xs mt-0.5 leading-relaxed">
                                 Esta convocatoria del CUP se encuentra en estado <strong>"{clase.cup?.ESTADO ?? 'Finalizado'}"</strong>.
-                                Solo se pueden asignar o modificar notas cuando el CUP se encuentra en estado <strong>"En curso"</strong>.
+                                Solo se pueden asignar o modificar calificaciones cuando el CUP se encuentra en estado <strong>"En curso"</strong>.
                             </p>
                         </div>
                     </div>
@@ -369,7 +369,15 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                 <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50 print:hidden">
                     <div
                         onClick={() => setShowConfig(!showConfig)}
-                        className="flex cursor-pointer items-center justify-between border-b border-neutral-100 p-4 transition-colors select-none hover:bg-neutral-50 dark:border-neutral-800/80 dark:hover:bg-neutral-900/30"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setShowConfig(!showConfig);
+                            }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        className="flex cursor-pointer items-center justify-between border-b border-neutral-100 p-4 transition-colors select-none hover:bg-neutral-50 dark:border-neutral-800/80 dark:hover:bg-neutral-900/30 focus:outline-hidden focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 dark:focus:ring-neutral-700 dark:focus:ring-offset-neutral-950 rounded-t-xl"
                     >
                         <div className="flex items-center gap-2">
                             <Sliders className="h-5 w-5 text-neutral-700 dark:text-neutral-300" />
@@ -408,9 +416,10 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
 
                             <div className="flex flex-col gap-3">
                                 {components.map((comp, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
+                                    <div key={comp.nombre} className="flex items-center gap-3">
                                         <input
                                             type="text"
+                                            aria-label="Nombre de la evaluación"
                                             value={comp.nombre}
                                             disabled={!isCupEnCurso}
                                             onChange={(e) => updateComponent(idx, e.target.value, comp.ponderacion)}
@@ -420,6 +429,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                         <div className="flex w-32 shrink-0 items-center gap-1.5">
                                             <input
                                                 type="number"
+                                                aria-label="Ponderación de la evaluación en porcentaje"
                                                 value={comp.ponderacion === 0 ? '' : comp.ponderacion}
                                                 disabled={!isCupEnCurso}
                                                 onChange={(e) => updateComponent(idx, comp.nombre, Number(e.target.value))}
@@ -457,7 +467,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                 <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
                     {/* Filtros de Planilla y Exportación */}
                     <div className="flex flex-col gap-3 border-b border-neutral-100 p-4 md:flex-row md:items-center md:justify-between dark:border-neutral-800/80">
-                        <span className="text-sm font-bold text-neutral-800 dark:text-neutral-200">Planilla de Notas</span>
+                        <span className="text-sm font-bold text-neutral-800 dark:text-neutral-200">Planilla de Calificaciones</span>
                         
                         <div className="flex flex-wrap items-center gap-2">
                             {/* Buscar */}
@@ -465,6 +475,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                 <Search className="absolute top-2.5 left-3 h-4 w-4 text-neutral-400" />
                                 <input
                                     type="text"
+                                    aria-label="Buscar postulante"
                                     placeholder="Buscar postulante..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -484,7 +495,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                 Excel Lista
                             </Button>
 
-                            {/* Exportar Planilla de Notas (Excel) */}
+                            {/* Exportar Planilla de Calificaciones (Excel) */}
                             <Button
                                 type="button"
                                 variant="outline"
@@ -493,7 +504,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                 className="flex items-center gap-1.5 h-8 font-semibold text-xs border-neutral-200 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
                             >
                                 <FileSpreadsheet className="h-4 w-4 text-blue-600" />
-                                Excel Notas
+                                Excel Calificaciones
                             </Button>
 
 
@@ -508,8 +519,8 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                     <tr className="border-neutral-250/50 border-b bg-neutral-50/50 text-left text-xs font-semibold tracking-wider text-neutral-500 uppercase dark:border-neutral-800 dark:bg-neutral-900/30">
                                         <th className="w-24 p-4 text-left font-semibold">CI</th>
                                         <th className="p-4 text-left font-semibold">Postulante</th>
-                                        {components.map((comp, idx) => (
-                                            <th key={idx} className="w-36 p-4 text-center font-semibold">
+                                        {components.map((comp) => (
+                                            <th key={comp.nombre} className="w-36 p-4 text-center font-semibold">
                                                 <div className="max-w-[120px] truncate" title={`${comp.nombre} (${comp.ponderacion}%)`}>
                                                     {comp.nombre}
                                                 </div>
@@ -518,7 +529,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                 </div>
                                             </th>
                                         ))}
-                                        <th className="w-28 p-4 text-center font-semibold">Nota Final</th>
+                                        <th className="w-28 p-4 text-center font-semibold">Calificación Final</th>
                                         <th className="w-28 p-4 text-center font-semibold">Estado</th>
                                     </tr>
                                 </thead>
@@ -542,14 +553,16 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                         </div>
                                                     </td>
  
-                                                    {/* Notas individuales de evaluación */}
-                                                    {components.map((comp, idx) => {
+                                                    {/* Calificaciones individuales de evaluación */}
+                                                    {components.map((comp) => {
                                                         const currentVal = grades[ec.ID]?.[comp.nombre] ?? '';
                                                         return (
-                                                            <td key={idx} className="p-4 text-center align-middle">
+                                                            <td key={comp.nombre} className="p-4 text-center align-middle">
+                                                                <span className="sr-only">{`Calificación de ${student ? `${student.APELLIDO} ${student.NOMBRE}` : 'Estudiante'} para ${comp.nombre}`}</span>
                                                                 <div className="inline-flex items-center justify-center">
                                                                     <input
                                                                         type="text"
+                                                                        aria-label={`Calificación de ${student ? `${student.APELLIDO} ${student.NOMBRE}` : 'Estudiante'} para ${comp.nombre}`}
                                                                         value={currentVal}
                                                                         disabled={!isCupEnCurso}
                                                                         onChange={(e) => handleGradeChange(ec.ID, comp.nombre, e.target.value)}
@@ -561,7 +574,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                         );
                                                     })}
  
-                                                    {/* Nota Final */}
+                                                    {/* Calificación Final */}
                                                     <td className="p-4 text-center align-middle text-base font-bold">
                                                         <span
                                                             className={

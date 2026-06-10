@@ -22,6 +22,8 @@ Route::post('/cup/{id}/cierre', [CUPController::class, 'ejecutarCierre'])->middl
 Route::post('/cup/{id}/docentes', [CUPController::class, 'asignarDocentes'])->middleware('permiso:ASIGNAR_DOCENTES_CUP');
 Route::post('/cup/{id}/asignar-docentes-auto', [CUPController::class, 'asignacionAutomatica'])->middleware('permiso:ASIGNAR_DOCENTES_CUP');
 Route::delete('/cup/{id}/remover-docentes', [CUPController::class, 'removerDocentes'])->middleware('permiso:ASIGNAR_DOCENTES_CUP');
+Route::post('/cup/{id}/asignar-aulas-auto', [CUPController::class, 'asignarAulasAuto'])->middleware('permiso:ASIGNAR_AULAS_CUP');
+Route::delete('/cup/{id}/remover-aulas', [CUPController::class, 'removerAulas'])->middleware('permiso:ASIGNAR_AULAS_CUP');
 Route::get('/cup/{id}/clases/crear', [CUPController::class, 'crearClasesForm'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
 Route::post('/cup/{id}/clases', [CUPController::class, 'crearPaqueteClases'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');
 Route::post('/cup/{id}/clases/rezagados', [CUPController::class, 'asignarRezagados'])->middleware('permiso:GESTIONAR_GRUPOS_CLASES');

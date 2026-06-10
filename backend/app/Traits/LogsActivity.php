@@ -8,6 +8,18 @@ use Illuminate\Support\Facades\Auth;
 trait LogsActivity
 {
     /**
+     * Get the fields that should be tracked for this model.
+     * Override this method in your model to specify which fields to track.
+     * If not overridden, all fields except system/sensitive ones are tracked.
+     *
+     * @return array|null Array of field names to track, or null to track all (except system fields)
+     */
+    protected static function getTrackedFields()
+    {
+        return null; // Track all by default
+    }
+
+    /**
      * Boot the trait and register Eloquent event listeners.
      */
     protected static function bootLogsActivity()
@@ -18,11 +30,19 @@ trait LogsActivity
 
         static::updated(function ($model) {
             $changed = [];
+            $trackedFields = $model::getTrackedFields();
+            
             foreach ($model->getChanges() as $key => $value) {
+                // Skip if we have a tracked fields list and this field is not in it
+                if ($trackedFields !== null && !in_array($key, $trackedFields)) {
+                    continue;
+                }
+
                 // Ignore internal and sensitive fields
                 if (in_array(strtoupper($key), ['CONTRASENIA', 'PASSWORD', 'REMEMBER_TOKEN', 'FECHA_CREACION', 'FECHA_MOD'])) {
                     continue;
                 }
+                
                 $original = $model->getOriginal($key);
                 
                 $origStr = is_bool($original) ? ($original ? 'true' : 'false') : (string)$original;
@@ -30,14 +50,11 @@ trait LogsActivity
                 $changed[] = "[{$key}]: de '{$origStr}' a '{$valStr}'";
             }
 
-            $description = "Se actualizó el registro con ID {$model->getKey()} en la tabla '{$model->getTable()}'.";
+            // Only log if there are actual changes to track
             if (!empty($changed)) {
-                $description .= " Cambios: " . implode('; ', $changed);
-            } else {
-                $description .= " No se detectaron cambios en campos rastreables.";
+                $description = "Se actualizó el registro con ID {$model->getKey()} en la tabla '{$model->getTable()}'. Cambios: " . implode('; ', $changed);
+                static::logActivity($model, 'ACTUALIZAR', $description);
             }
-
-            static::logActivity($model, 'ACTUALIZAR', $description);
         });
 
         static::deleted(function ($model) {

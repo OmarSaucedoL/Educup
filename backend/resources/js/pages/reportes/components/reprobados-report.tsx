@@ -141,6 +141,7 @@ export default function ReprobadosReport({ postulantesReprobados = [], searchQue
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                     <input
                         type="text"
+                        aria-label="Buscar por carnet, nombre o colegio"
                         placeholder="Buscar por carnet, nombre o colegio..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}

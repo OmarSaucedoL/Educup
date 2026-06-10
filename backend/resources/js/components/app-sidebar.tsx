@@ -41,12 +41,12 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Módulo Notas',
+        title: 'Módulo Calificaciones',
         url: '#',
         icon: BookMarked,
         items: [
             {
-                title: 'Registrar Notas',
+                title: 'Registrar Calificaciones',
                 url: '/notas/clases',
             },
             {
@@ -107,8 +107,13 @@ export function AppSidebar() {
         itemsToRender = [
             {
                 title: 'Mis clases',
-                url: '#', // TODO: Update with real URL later
+                url: '/dashboard',
                 icon: BookOpen,
+            },
+            {
+                title: 'Comprobante',
+                url: '/comprobante',
+                icon: BookMarked,
             }
         ];
     }

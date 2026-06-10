@@ -240,11 +240,13 @@ export default function RolesIndex({ roles, permisos = EMPTY_PERMISOS }: { roles
                     </div>
                 </div>
 
-                <EditRoleModal 
-                    role={editingRole} 
-                    permisos={permisos} 
-                    onClose={() => setEditingRole(null)} 
-                />
+                {editingRole && (
+                    <EditRoleModal 
+                        role={editingRole} 
+                        permisos={permisos} 
+                        onClose={() => setEditingRole(null)} 
+                    />
+                )}
             </div>
         </AppLayout>
     );

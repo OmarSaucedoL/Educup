@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 export type Appearance = 'light' | 'dark' | 'system';
 
@@ -26,19 +26,40 @@ export function initializeTheme() {
     mediaQuery.addEventListener('change', handleSystemThemeChange);
 }
 
-export function useAppearance() {
-    const [appearance, setAppearance] = useState<Appearance>('system');
+const appearanceStore = {
+    subscribe(callback: () => void) {
+        if (typeof window === 'undefined') return () => {};
+        window.addEventListener('storage', callback);
+        window.addEventListener('appearance-change', callback);
+        return () => {
+            window.removeEventListener('storage', callback);
+            window.removeEventListener('appearance-change', callback);
+        };
+    },
+    getSnapshot() {
+        if (typeof window === 'undefined') return 'system';
+        return (localStorage.getItem('appearance') as Appearance) || 'system';
+    },
+    getServerSnapshot() {
+        return 'system';
+    }
+};
 
-    const updateAppearance = (mode: Appearance) => {
-        setAppearance(mode);
-        localStorage.setItem('appearance', mode);
-        applyTheme(mode);
-    };
+const updateAppearance = (mode: Appearance) => {
+    localStorage.setItem('appearance', mode);
+    applyTheme(mode);
+    window.dispatchEvent(new Event('appearance-change'));
+};
+
+export function useAppearance() {
+    const appearance = useSyncExternalStore(
+        appearanceStore.subscribe,
+        appearanceStore.getSnapshot,
+        appearanceStore.getServerSnapshot
+    );
 
     useEffect(() => {
-        const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
-        updateAppearance(savedAppearance || 'system');
-
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
         return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
     }, []);
 

@@ -9,9 +9,9 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
-interface CrearMateriaForm {
+type CrearMateriaForm = {
     NOMBRE: string;
-}
+};
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
