@@ -33,9 +33,14 @@ interface PaginatedUsuarios {
     links: PaginationLink[];
 }
 
-const goToPage = (url: string | null) => {
-    if (!url) return;
-    router.visit(url, { preserveState: true });
+const getRelativeUrl = (url: string | null): string => {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url);
+        return parsed.pathname + parsed.search;
+    } catch (e) {
+        return url;
+    }
 };
 
 export default function Index({
@@ -280,30 +285,46 @@ export default function Index({
                             </span>
                             <div className="flex items-center gap-1">
                                 {/* Prev */}
-                                <button
-                                    onClick={() => goToPage(usuarios.links[0]?.url ?? null)}
-                                    disabled={current_page === 1}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
-                                    aria-label="Página anterior"
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </button>
+                                {usuarios.links[0]?.url ? (
+                                    <Link
+                                        href={getRelativeUrl(usuarios.links[0].url)}
+                                        preserveState
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-colors hover:bg-muted"
+                                        aria-label="Página anterior"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Link>
+                                ) : (
+                                    <span
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-xs opacity-40 cursor-not-allowed"
+                                        aria-label="Página anterior"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </span>
+                                )}
 
                                 {/* Numbered pages — skip the first (prev) and last (next) links */}
                                 {(() => {
                                     let ellipsisCount = 0;
                                     return usuarios.links.slice(1, -1).map((link) => {
                                         const key = link.label === '...' ? `ellipsis-${++ellipsisCount}` : link.label;
-                                        return (
-                                            <button
+                                        const relativeUrl = getRelativeUrl(link.url);
+                                        return link.url && !link.active ? (
+                                            <Link
                                                 key={key}
-                                                onClick={() => goToPage(link.url)}
-                                                disabled={!link.url || link.active}
+                                                href={relativeUrl}
+                                                preserveState
                                                 aria-label={link.label === '...' ? 'Páginas intermedias' : `Página ${link.label}`}
-                                                className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-md border px-2 text-xs font-medium transition-colors ${
+                                                className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-md border px-2 text-xs font-medium transition-colors hover:bg-muted"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        ) : (
+                                            <span
+                                                key={key}
+                                                className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-md border px-2 text-xs font-medium ${
                                                     link.active
-                                                        ? 'border-primary bg-primary text-primary-foreground pointer-events-none'
-                                                        : 'hover:bg-muted disabled:opacity-40'
+                                                        ? 'border-primary bg-primary text-primary-foreground select-none'
+                                                        : 'opacity-40 cursor-not-allowed'
                                                 }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
@@ -312,14 +333,23 @@ export default function Index({
                                 })()}
 
                                 {/* Next */}
-                                <button
-                                    onClick={() => goToPage(usuarios.links[usuarios.links.length - 1]?.url ?? null)}
-                                    disabled={current_page === last_page}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
-                                    aria-label="Página siguiente"
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </button>
+                                {usuarios.links[usuarios.links.length - 1]?.url ? (
+                                    <Link
+                                        href={getRelativeUrl(usuarios.links[usuarios.links.length - 1].url)}
+                                        preserveState
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-colors hover:bg-muted"
+                                        aria-label="Página siguiente"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Link>
+                                ) : (
+                                    <span
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-xs opacity-40 cursor-not-allowed"
+                                        aria-label="Página siguiente"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </span>
+                                )}
                             </div>
                         </div>
                     )}
