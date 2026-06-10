@@ -45,7 +45,7 @@ class InscripcionPublicaController extends Controller
             'ciudades'       => $ciudades,
             'carreras'       => $carreras,
             'activeCup'      => $activeCup,
-            'paypalClientId' => getenv('PAYPAL_CLIENT_ID') ?: config('services.paypal.client_id', ''),
+            'paypalClientId' => getenv('PAYPAL_CLIENT_ID') ?: config('services.paypal.client_id') ?: 'ASWDOgCKeUFpkFAVbBVS95PFzP1djtURGd3XBJiRjkQ2FWBK57d5FZYqtVnt7lrbFY4Y3OhHQO_1hJZ5',
         ]);
     }
 
