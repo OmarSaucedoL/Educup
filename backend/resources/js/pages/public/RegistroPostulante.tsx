@@ -305,7 +305,7 @@ export default function RegistroPostulante({ colegios, ciudades, carreras, activ
                                                 <InputError message={errors.FECHA_NAC} />
                                             </div>
                                             <div className="grid gap-2">
-                                                <Label className="text-sm font-semibold">Sexo *</Label>
+                                                <span className="text-sm font-semibold block mb-2">Sexo *</span>
                                                 <div className="mt-0.5 flex gap-2">
                                                     {(['M', 'F'] as const).map((s) => (
                                                         <button
