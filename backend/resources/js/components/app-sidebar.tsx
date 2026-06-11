@@ -109,6 +109,11 @@ export function AppSidebar() {
                 title: 'Mis clases',
                 url: '#', // TODO: Update with real URL later
                 icon: BookOpen,
+            },
+            {
+                title: 'Comprobante',
+                url: '/comprobante',
+                icon: BookMarked,
             }
         ];
     }

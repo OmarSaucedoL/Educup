@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EstudianteController;
+use App\Http\Controllers\ComprobanteController;
 
+Route::get('/comprobante', [ComprobanteController::class, 'index'])->name('comprobante.index');
 Route::get('/estudiantes', [EstudianteController::class, 'index'])->middleware('permiso:VER_ESTUDIANTES');
 Route::get('/estudiantes/crearEstudiante', [EstudianteController::class, 'create'])->middleware('permiso:VER_ESTUDIANTES');
 Route::get('/estudiantes/importar', function () {

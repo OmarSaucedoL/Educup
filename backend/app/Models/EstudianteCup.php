@@ -51,4 +51,9 @@ class EstudianteCup extends Model
     {
         return $this->hasMany(EstudianteClase::class, 'ESTUDIANTE_CUP_ID', 'ID');
     }
+
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(Pago::class, 'ESTUDIANTE_CUP_ID', 'ID');
+    }
 }
