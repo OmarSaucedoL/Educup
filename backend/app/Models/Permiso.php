@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\LogsActivity;
 
 class Permiso extends Model
 {
+    use LogsActivity;
     protected $table = 'PERMISOS';
     protected $primaryKey = 'ID';
     public $timestamps = false;

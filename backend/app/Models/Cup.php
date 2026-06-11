@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\LogsActivity;
 
 class Cup extends Model
 {
+    use LogsActivity;
     protected $table = 'CUP';
     protected $primaryKey = 'ID_CUP';
     public $timestamps = false;

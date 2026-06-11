@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\LogsActivity;
 
 class Rol extends Model
 {
+    use LogsActivity;
     protected $table = 'ROL';
     protected $primaryKey = 'ID';
     public $timestamps = false;

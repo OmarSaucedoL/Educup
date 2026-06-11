@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\LogsActivity;
 
 class Grupo extends Model
 {
+    use LogsActivity;
     protected $table = 'GRUPO';
     protected $primaryKey = 'ID_GRUPO';
     public $timestamps = false;

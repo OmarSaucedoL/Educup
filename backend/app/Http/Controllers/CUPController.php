@@ -365,9 +365,9 @@ class CUPController extends Controller
                 }
 
                 // Register in Bitácora
-                $accion = $isRecalculation ? 'RE-EJECUTAR' : 'EJECUTAR';
+                $accion = $isRecalculation ? 'MODIFICACION' : 'EJECUTAR';
                 $descripcion = $isRecalculation
-                    ? "Se re-calculó el cierre de gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó nuevamente el procedimiento p_cerrar_gestion_cup para la redistribución meritocrática de cupos."
+                    ? "Se modificó el cierre de gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó nuevamente el procedimiento p_cerrar_gestion_cup para la redistribución meritocrática de cupos."
                     : "Se cerró la gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó el procedimiento p_cerrar_gestion_cup para la distribución meritocrática de cupos por carreras.";
                 
                 Bitacora::create([

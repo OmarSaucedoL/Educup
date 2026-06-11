@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\LogsActivity;
 
 class Docente extends Model
 {
+    use LogsActivity;
     protected $table = 'DOCENTE';
     protected $primaryKey = 'CODIGO_DOCENTE';
     public $incrementing = false;

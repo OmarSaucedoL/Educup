@@ -65,11 +65,12 @@ class ReporteAcademicoController extends Controller
             ];
         });
 
-        $activeTab = in_array($request->input('tab'), ['materias', 'grupos'], true)
+        $activeTab = in_array($request->input('tab'), ['materias', 'grupos', 'docentes'], true)
             ? $request->input('tab')
             : 'materias';
 
         $shouldRunGroupReport = $request->boolean('run_grupos_report', false);
+        $shouldRunDocentesReport = $request->boolean('run_docentes_report', false);
 
         $gruposReporte = [];
         if ($cup && $activeTab === 'grupos' && $shouldRunGroupReport) {
@@ -90,6 +91,28 @@ class ReporteAcademicoController extends Controller
             }, $rawGrupos);
         }
 
+        $docentesReporte = [];
+        if ($cup && $activeTab === 'docentes' && $shouldRunDocentesReport) {
+            $rawDocentes = \Illuminate\Support\Facades\DB::select(
+                'SELECT * FROM public.f_reporte_general_docente(?)',
+                [$cup->ID_CUP]
+            );
+
+            $docentesReporte = array_map(function ($row) {
+                return [
+                    'codigo_docente' => (int)$row->codigo_docente,
+                    'nombre_docente' => $row->nombre_docente,
+                    'clases_dadas' => (int)$row->clases_dadas,
+                    'grupos_asignados' => (int)$row->grupos_asignados,
+                    'materias_dadas' => $row->materias_dadas,
+                    'total_estudiantes' => (int)$row->total_estudiantes,
+                    'total_aprobados' => (int)$row->total_aprobados,
+                    'total_reprobados' => (int)$row->total_reprobados,
+                    'promedio_por_materia' => $row->promedio_por_materia,
+                ];
+            }, $rawDocentes);
+        }
+
         return inertia('reportes-academicos/index', [
             'cup' => $cup,
             'cups' => $cups,
@@ -98,8 +121,11 @@ class ReporteAcademicoController extends Controller
             'notaLimite' => $notaLimite,
             'materiasCatalogo' => $materiasCatalogo,
             'gruposReporte' => $gruposReporte,
+            'docentesReporte' => $docentesReporte,
             'activeTab' => $activeTab,
             'gruposReportExecuted' => $shouldRunGroupReport,
+            'docentesReportExecuted' => $shouldRunDocentesReport,
         ]);
+
     }
 }

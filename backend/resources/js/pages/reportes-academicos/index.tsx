@@ -3,6 +3,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { BookOpen, Calendar, GraduationCap } from 'lucide-react';
 import { useState } from 'react';
+import EstadisticaDocente from './components/estadistica-docente';
 import EstadisticaGrupo from './components/estadistica-grupo';
 import MateriasStats from './components/materias-stats';
 
@@ -31,6 +32,18 @@ interface GrupoReporteData {
     promedio_grupo: number | null;
 }
 
+interface DocenteReporteData {
+    codigo_docente: number;
+    nombre_docente: string;
+    clases_dadas: number;
+    grupos_asignados: number;
+    materias_dadas: string;
+    total_estudiantes: number;
+    total_aprobados: number;
+    total_reprobados: number;
+    promedio_por_materia: string;
+}
+
 interface ReportsProps {
     cup: {
         ID_CUP: number;
@@ -49,11 +62,13 @@ interface ReportsProps {
     notaLimite?: number;
     materiasCatalogo?: MateriaItem[];
     gruposReporte?: GrupoReporteData[];
+    docentesReporte?: DocenteReporteData[];
     activeTab?: TabType;
     gruposReportExecuted?: boolean;
+    docentesReportExecuted?: boolean;
 }
 
-type TabType = 'materias' | 'grupos';
+type TabType = 'materias' | 'grupos' | 'docentes';
 
 export default function AcademicReportsIndex({
     cup,
@@ -63,12 +78,15 @@ export default function AcademicReportsIndex({
     notaLimite = 51,
     materiasCatalogo = [],
     gruposReporte = [],
+    docentesReporte = [],
     activeTab: initialTab = 'materias',
     gruposReportExecuted = false,
+    docentesReportExecuted = false,
 }: ReportsProps) {
     const [activeTab, setActiveTab] = useState<TabType>(initialTab);
     const [selectedCupId, setSelectedCupId] = useState<number | null>(cup?.ID_CUP ?? null);
-    const [reportExecuted, setReportExecuted] = useState<boolean>(gruposReportExecuted);
+    const [gruposReportExecutedState, setGruposReportExecutedState] = useState<boolean>(gruposReportExecuted);
+    const [docentesReportExecutedState, setDocentesReportExecutedState] = useState<boolean>(docentesReportExecuted);
 
     const handleCupChange = (id: number) => {
         setSelectedCupId(id);
@@ -82,13 +100,25 @@ export default function AcademicReportsIndex({
         }
 
         setActiveTab('grupos');
-        setReportExecuted(true);
+        setGruposReportExecutedState(true);
         router.get('/reportes-academicos', { cup_id: cupId, tab: 'grupos', run_grupos_report: 1 }, { preserveState: false });
+    };
+
+    const handleExecuteDocenteReport = () => {
+        const cupId = selectedCupId ?? cup?.ID_CUP;
+        if (!cupId) {
+            return;
+        }
+
+        setActiveTab('docentes');
+        setDocentesReportExecutedState(true);
+        router.get('/reportes-academicos', { cup_id: cupId, tab: 'docentes', run_docentes_report: 1 }, { preserveState: false });
     };
 
     const tabTitle = {
         materias: 'Estadísticas de Materia',
         grupos: 'Estadísticas de Grupo',
+        docentes: 'Estadísticas Docente',
     }[activeTab];
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -238,10 +268,11 @@ export default function AcademicReportsIndex({
                         {/* Pestañas de Reportes */}
                         <div className="no-print border-b border-neutral-200 dark:border-neutral-800">
                             <div className="flex flex-wrap gap-1">
-                                {(['materias', 'grupos'] as TabType[]).map((tab) => {
+                                {(['materias', 'grupos', 'docentes'] as TabType[]).map((tab) => {
                                     const labels = {
                                         materias: 'Estadísticas de Materia',
                                         grupos: 'Estadísticas de Grupo',
+                                        docentes: 'Estadísticas Docente',
                                     };
                                     const isActive = activeTab === tab;
                                     return (
@@ -277,7 +308,15 @@ export default function AcademicReportsIndex({
                                     cup={cup}
                                     gruposReporte={gruposReporte}
                                     onRunReport={handleExecuteGroupReport}
-                                    reportExecuted={reportExecuted}
+                                    reportExecuted={gruposReportExecutedState}
+                                />
+                            )}
+                            {activeTab === 'docentes' && (
+                                <EstadisticaDocente
+                                    cup={cup}
+                                    docentesReporte={docentesReporte}
+                                    onRunReport={handleExecuteDocenteReport}
+                                    reportExecuted={docentesReportExecutedState}
                                 />
                             )}
                         </div>
