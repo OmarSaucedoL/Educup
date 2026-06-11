@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { Edit, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { Edit, Search, Filter } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import EditarDocenteModal from './EditarDocenteModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -20,18 +20,68 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Index({ docentes }: { docentes: any[] }) {
     const [selectedDocente, setSelectedDocente] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterEstado, setFilterEstado] = useState('TODOS');
+
+    const filteredDocentes = useMemo(() => {
+        return docentes.filter((docente) => {
+            const isActivo = docente.usuario?.ESTADO === 'ACTIVO' || docente.usuario?.ESTADO === 1;
+            const estadoActual = isActivo ? 'ACTIVO' : 'INACTIVO';
+            
+            // Filter by Estado
+            if (filterEstado !== 'TODOS' && estadoActual !== filterEstado) {
+                return false;
+            }
+            
+            // Filter by Search Term
+            if (searchTerm) {
+                const search = searchTerm.toLowerCase();
+                const nombreCompleto = `${docente.usuario?.NOMBRE || ''} ${docente.usuario?.APELLIDO || ''}`.toLowerCase();
+                const carnet = (docente.usuario?.CARNET || '').toString().toLowerCase();
+                const username = (docente.usuario?.USERNAME || '').toLowerCase();
+                
+                if (!nombreCompleto.includes(search) && !carnet.includes(search) && !username.includes(search)) {
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+    }, [docentes, searchTerm, filterEstado]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gestión de Docentes" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="mb-6 flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
                     <h1 className="text-2xl font-semibold tracking-tight">Gestión de Docentes</h1>
-                    <Button asChild>
-                        <Link href="/docentes/crearDocente">
-                            <Plus className="mr-2 h-4 w-4" /> Registrar Docente
-                        </Link>
-                    </Button>
+                    
+                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                        <div className="relative w-full sm:w-64">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <input
+                                type="text"
+                                placeholder="Buscar docente..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-9"
+                            />
+                        </div>
+                        
+                        <div className="relative w-full sm:w-auto flex items-center">
+                            <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                            <select
+                                value={filterEstado}
+                                onChange={(e) => setFilterEstado(e.target.value)}
+                                className="flex h-9 w-full sm:w-36 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring pl-9"
+                            >
+                                <option value="TODOS" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Todos</option>
+                                <option value="ACTIVO" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Activos</option>
+                                <option value="INACTIVO" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="border-sidebar-border/70 dark:border-sidebar-border bg-card text-card-foreground relative flex-1 rounded-xl border shadow-sm">
@@ -49,8 +99,8 @@ export default function Index({ docentes }: { docentes: any[] }) {
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
-                                {docentes && docentes.length > 0 ? (
-                                    docentes.map((docente) => (
+                                {filteredDocentes && filteredDocentes.length > 0 ? (
+                                    filteredDocentes.map((docente) => (
                                         <tr
                                             key={docente.CODIGO_DOCENTE}
                                             className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors"
@@ -101,7 +151,7 @@ export default function Index({ docentes }: { docentes: any[] }) {
                                 ) : (
                                     <tr>
                                         <td colSpan={7} className="text-muted-foreground p-4 text-center align-middle">
-                                            No hay docentes registrados.
+                                            No se encontraron docentes con esos filtros.
                                         </td>
                                     </tr>
                                 )}

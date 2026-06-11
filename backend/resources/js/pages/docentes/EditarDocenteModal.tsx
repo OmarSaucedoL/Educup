@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { User, Mail, Shield, UserCheck, BookOpen, Calendar, Clock, Users, Building2, ChevronDown, ChevronUp } from 'lucide-react';
+import { User, Mail, Shield, UserCheck, BookOpen, Calendar, Clock, Users, Building2, ChevronDown, ChevronUp, Phone } from 'lucide-react';
 import { useState } from 'react';
 
 interface EditarDocenteModalProps {
@@ -184,12 +184,20 @@ export default function EditarDocenteModal({ open, onOpenChange, selectedDocente
                                         {selectedDocente.usuario?.CARNET ?? '—'}
                                     </span>
                                 </div>
-                                <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50 col-span-2">
+                                <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50 col-span-2 sm:col-span-1">
                                     <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
                                         <Mail className="h-3 w-3 text-primary" /> Correo
                                     </span>
                                     <span className="text-xs font-extrabold text-neutral-700 dark:text-neutral-300 truncate">
                                         {selectedDocente.usuario?.CORREO ?? '—'}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50 col-span-2 sm:col-span-1">
+                                    <span className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1">
+                                        <Phone className="h-3 w-3 text-primary" /> Teléfono
+                                    </span>
+                                    <span className="text-xs font-extrabold text-neutral-700 dark:text-neutral-300 truncate">
+                                        {selectedDocente.usuario?.TELEFONO ?? '—'}
                                     </span>
                                 </div>
                                 <div className="flex flex-col gap-0.5 bg-neutral-50/30 dark:bg-neutral-900/10 p-2.5 rounded-lg border border-neutral-100/50 dark:border-neutral-800/50 col-span-2">

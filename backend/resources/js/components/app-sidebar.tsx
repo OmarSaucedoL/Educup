@@ -107,7 +107,7 @@ export function AppSidebar() {
         itemsToRender = [
             {
                 title: 'Mis clases',
-                url: '#', // TODO: Update with real URL later
+                url: '/dashboard',
                 icon: BookOpen,
             },
             {

@@ -56,7 +56,7 @@ export default function Comprobante({ cup, cups_disponibles, pago, estudiante, o
                                 className="h-9 rounded-md border-0 bg-transparent py-0 pl-2 pr-8 text-sm font-semibold focus:ring-0 cursor-pointer"
                             >
                                 {cups_disponibles.map((c: any) => (
-                                    <option key={c.ID_CUP} value={c.ID_CUP}>
+                                    <option key={c.ID_CUP} value={c.ID_CUP} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                         CUP #{c.ID_CUP} — {c.ANIO}/{c.SEMESTRE}
                                     </option>
                                 ))}

@@ -70,7 +70,7 @@ export default function ImportarUsuarios() {
                                         Asegúrate de que la primera fila contenga exactamente estos encabezados en minúscula:
                                         <br />
                                         <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 mt-2 inline-block">
-                                            username, contrasenia, carnet, nombre, apellido, correo, rol
+                                            username, contrasenia, carnet, nombre, apellido, correo, telefono, rol
                                         </code>
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-3">

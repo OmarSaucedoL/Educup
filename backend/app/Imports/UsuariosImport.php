@@ -43,6 +43,7 @@ class UsuariosImport implements ToModel, WithHeadingRow
             'NOMBRE'         => strtoupper(trim($row['nombre'] ?? '')),
             'APELLIDO'       => strtoupper(trim($row['apellido'] ?? '')),
             'CORREO'         => $correo,
+            'TELEFONO'       => trim($row['telefono'] ?? ''),
             'ESTADO'         => 1, // Por defecto ACTIVO (1)
             'FECHA_CREACION' => now(),
             'ROL_ID'         => $rol->ID,
