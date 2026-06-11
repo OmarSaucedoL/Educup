@@ -21,6 +21,7 @@ interface Usuario {
     APELLIDO: string;
     CORREO: string;
     CARNET: string | null;
+    TELEFONO: number | null;
     ESTADO: number;
     ROL_ID: number | null;
 }
@@ -31,6 +32,7 @@ type EditarUsuarioForm = {
     APELLIDO: string;
     CORREO: string;
     CARNET: string;
+    TELEFONO: string;
     CONTRASENIA: string;
     ESTADO: string;
     ROL_ID: string;
@@ -54,6 +56,7 @@ export default function EditarUsuario({ usuario, roles }: { usuario: Usuario; ro
         APELLIDO: usuario.APELLIDO || '',
         CORREO: usuario.CORREO || '',
         CARNET: usuario.CARNET || '',
+        TELEFONO: usuario.TELEFONO ? usuario.TELEFONO.toString() : '',
         CONTRASENIA: '',
         ESTADO: usuario.ESTADO.toString(),
         ROL_ID: usuario.ROL_ID ? usuario.ROL_ID.toString() : '',
@@ -127,25 +130,50 @@ export default function EditarUsuario({ usuario, roles }: { usuario: Usuario; ro
                                             <Input
                                                 id="CARNET"
                                                 type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
                                                 value={data.CARNET}
-                                                onChange={(e) => setData('CARNET', e.target.value)}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '');
+                                                    setData('CARNET', value);
+                                                }}
                                                 disabled={processing}
                                             />
                                             <InputError message={errors.CARNET} />
                                         </div>
                                     </div>
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="CORREO">Correo Electrónico</Label>
-                                        <Input
-                                            id="CORREO"
-                                            type="email"
-                                            required
-                                            value={data.CORREO}
-                                            onChange={(e) => setData('CORREO', e.target.value)}
-                                            disabled={processing}
-                                        />
-                                        <InputError message={errors.CORREO} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="CORREO">Correo Electrónico</Label>
+                                            <Input
+                                                id="CORREO"
+                                                type="email"
+                                                required
+                                                value={data.CORREO}
+                                                onChange={(e) => setData('CORREO', e.target.value)}
+                                                disabled={processing}
+                                            />
+                                            <InputError message={errors.CORREO} />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="TELEFONO">Teléfono</Label>
+                                            <Input
+                                                id="TELEFONO"
+                                                type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                value={data.TELEFONO}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '');
+                                                    setData('TELEFONO', value);
+                                                }}
+                                                disabled={processing}
+                                                placeholder="Solo números"
+                                            />
+                                            <InputError message={errors.TELEFONO} />
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -157,7 +185,7 @@ export default function EditarUsuario({ usuario, roles }: { usuario: Usuario; ro
                                                 value={data.CONTRASENIA}
                                                 onChange={(e) => setData('CONTRASENIA', e.target.value)}
                                                 disabled={processing}
-                                                placeholder="Dejar en blanco para no cambiar"
+                                                placeholder="En blanco o nueva pass (min 8, mayús, núm, símb)"
                                             />
                                             <InputError message={errors.CONTRASENIA} />
                                         </div>

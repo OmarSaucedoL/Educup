@@ -137,111 +137,52 @@ class InscripcionPublicaController extends Controller
                 throw new \Exception("El pago no ha sido completado exitosamente.");
             }
 
-            DB::beginTransaction();
+            // Realizar la transacción completa en PostgreSQL
+            $rawPassword = $validated['CARNET'] . '@' . strtoupper(substr($validated['NOMBRE'], 0, 1)) . strtolower(substr($validated['APELLIDO'], 0, 1));
+            $hashedPassword = Hash::make($rawPassword);
 
-            // 1. Obtener o crear el Rol ESTUDIANTE
-            $rolEstudiante = Rol::firstOrCreate(['NOMBRE' => 'ESTUDIANTE']);
-
-            if ($usuarioRegistrado = Usuario::where('CARNET', $validated['CARNET'])->first()) {
-                $usuario = $usuarioRegistrado;
-            } else {
-                $rawPassword = $validated['CARNET'] . '@' . strtoupper(substr($validated['NOMBRE'], 0, 1)) . strtolower(substr($validated['APELLIDO'], 0, 1));
-                $usuario = Usuario::create([
-                    'USERNAME' => $validated['CARNET'],
-                    'CONTRASENIA' => Hash::make($rawPassword),
-                    'CARNET' => $validated['CARNET'],
-                    'NOMBRE' => strtoupper(trim($validated['NOMBRE'])),
-                    'APELLIDO' => strtoupper(trim($validated['APELLIDO'])),
-                    'CORREO' => strtolower(trim($validated['CORREO'])),
-                    'ESTADO' => 'ACTIVO',
-                    'FECHA_CREACION' => Carbon::now(),
-                    'ROL_ID' => $rolEstudiante->ID
-                ]);
-            }
-
-            // 3. Procesar nueva Ciudad y Colegio si se especificaron
-            $ciudadId = $validated['CIUDAD_ID'] ?? null;
-            if (!empty($validated['NUEVA_CIUDAD_NOMBRE'])) {
-                $ciudad = Ciudad::firstOrCreate(
-                    ['NOMBRE' => strtoupper(trim($validated['NUEVA_CIUDAD_NOMBRE']))],
-                    ['DEPARTAMENTO' => strtoupper(trim($validated['NUEVA_CIUDAD_DEPARTAMENTO'] ?? 'SANTA CRUZ'))]
-                );
-                $ciudadId = $ciudad->ID;
-            }
-
-            $colegioId = $validated['COLEGIO_ID'] ?? null;
-            if (!empty($validated['NUEVO_COLEGIO_NOMBRE'])) {
-                $colegio = Colegio::firstOrCreate(
-                    ['NOMBRE' => strtoupper(trim($validated['NUEVO_COLEGIO_NOMBRE']))]
-                );
-                $colegioId = $colegio->ID;
-            }
-
-            // 4. Crear registro de Estudiante
-            // Se puede asociar el estudiante a su usuario si hay una llave foránea o compartiendo datos.
-            // Actualmente la tabla ESTUDIANTE tiene su propio ID_ESTUDIANTE.
-            $estudiante = Estudiante::create([
-                'CARNET'           => $validated['CARNET'],
-                'NOMBRE'           => strtoupper(trim($validated['NOMBRE'])),
-                'APELLIDO'         => strtoupper(trim($validated['APELLIDO'])),
-                'FECHA_NAC'        => $validated['FECHA_NAC'],
-                'SEXO'             => strtoupper(trim($validated['SEXO'])),
-                'DIRECCION'        => isset($validated['DIRECCION']) ? strtoupper(trim($validated['DIRECCION'])) : null,
-                'TELEFONO'         => $validated['TELEFONO'] ?? null,
-                'CORREO'           => strtolower(trim($validated['CORREO'])),
-                'TITULO_BACHILLER' => strtoupper(trim($validated['TITULO_BACHILLER'])),
-                'ESTADO'           => 'ACTIVO',
-                'COLEGIO_ID'       => $colegioId,
-                'CIUDAD_ID'        => $ciudadId,
-                'USUARIO_ID'       => $usuario->ID,
-            ]);
-
-            // 5. Inscribir usando el procedimiento almacenado
             try {
-                DB::statement('CALL p_inscribir_estudiante_cup(?, ?, ?, ?)', [
-                    $estudiante->ID_ESTUDIANTE,
+                $usuarioId = DB::selectOne('
+                    SELECT public.f_registro_completo_postulante(
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    ) as usuario_id
+                ', [
+                    $validated['CARNET'],
+                    $validated['NOMBRE'],
+                    $validated['APELLIDO'],
+                    $validated['FECHA_NAC'],
+                    $validated['SEXO'],
+                    $validated['CORREO'],
+                    $validated['TELEFONO'] ?? null,
+                    $validated['DIRECCION'] ?? null,
+                    $validated['TITULO_BACHILLER'],
+                    $validated['CIUDAD_ID'] !== 'NEW' ? $validated['CIUDAD_ID'] : null,
+                    $validated['CIUDAD_ID'] === 'NEW' ? $validated['NUEVA_CIUDAD_NOMBRE'] : null,
+                    $validated['CIUDAD_ID'] === 'NEW' ? ($validated['NUEVA_CIUDAD_DEPARTAMENTO'] ?? null) : null,
+                    $validated['COLEGIO_ID'] !== 'NEW' ? $validated['COLEGIO_ID'] : null,
+                    $validated['COLEGIO_ID'] === 'NEW' ? $validated['NUEVO_COLEGIO_NOMBRE'] : null,
                     $activeCup->ID_CUP,
                     $validated['OPCION_1'],
-                    $validated['OPCION_2']
-                ]);
-            } catch (\Illuminate\Database\QueryException $qe) {
+                    $validated['OPCION_2'],
+                    $orderId,
+                    10.00,
+                    $hashedPassword
+                ])->usuario_id;
+            } catch (\Exception $qe) {
                 $errorMsg = $qe->getMessage();
-                $mensajeLimpio = 'Error al inscribir al estudiante.';
                 if (preg_match('/ERROR:\s*(.+?)(?:\n|Contexto|$)/i', $errorMsg, $matches)) {
-                    $mensajeLimpio = trim($matches[1]);
-                } else {
-                    $mensajeLimpio = $errorMsg;
+                    throw new \Exception(trim($matches[1]));
                 }
-                throw new \Exception($mensajeLimpio);
+                throw $qe;
             }
 
-            // 6. Obtener el ID de la inscripción generada
-            $inscripcion = EstudianteCup::where('ID_ESTUDIANTE', $estudiante->ID_ESTUDIANTE)
-                ->where('ID_CUP', $activeCup->ID_CUP)
-                ->first();
-
-            if (!$inscripcion) {
-                throw new \Exception("No se pudo confirmar la inscripción en la base de datos.");
-            }
-
-            // 7. Registrar el Pago
-            Pago::create([
-                'ESTUDIANTE_CUP_ID' => $inscripcion->ID,
-                'PAYPAL_ORDER_ID'   => $orderId,
-                'MONTO'             => 10.00,
-                'ESTADO'            => 'COMPLETADO',
-            ]);
-
-            DB::commit();
-
-            // 6. Iniciar sesión automáticamente
-            Auth::login($usuario);
+            // Iniciar sesión automáticamente
+            Auth::loginUsingId($usuarioId);
 
             return redirect('/dashboard')->with('success', 'Te has registrado correctamente y ya estás inscrito al CUP.');
         } catch (\Exception $e) {
-            DB::rollBack();
             throw ValidationException::withMessages([
-                'CARNET' => $e->getMessage()
+                'general' => $e->getMessage()
             ]);
         }
     }

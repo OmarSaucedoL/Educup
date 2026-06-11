@@ -69,6 +69,7 @@ class Usuario extends Authenticatable
         'NOMBRE',
         'APELLIDO',
         'CORREO',
+        'TELEFONO',
         'ESTADO',
         'FECHA_CREACION',
         'ROL_ID'

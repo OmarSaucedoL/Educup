@@ -21,6 +21,7 @@ type CrearUsuarioForm = {
     CORREO: string;
     CARNET: string;
     CONTRASENIA: string;
+    TELEFONO: string;
     ROL_ID: string;
 };
 
@@ -42,6 +43,7 @@ export default function CrearUsuario({ roles }: { roles: Role[] }) {
         APELLIDO: '',
         CORREO: '',
         CARNET: '',
+        TELEFONO: '',
         CONTRASENIA: '',
         ROL_ID: '',
     });
@@ -120,9 +122,14 @@ export default function CrearUsuario({ roles }: { roles: Role[] }) {
                                             <Input
                                                 id="CARNET"
                                                 type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
                                                 required
                                                 value={data.CARNET}
-                                                onChange={(e) => setData('CARNET', e.target.value)}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '');
+                                                    setData('CARNET', value);
+                                                }}
                                                 disabled={processing}
                                                 placeholder="Ej. 1234567"
                                             />
@@ -130,18 +137,38 @@ export default function CrearUsuario({ roles }: { roles: Role[] }) {
                                         </div>
                                     </div>
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="CORREO">Correo Electrónico</Label>
-                                        <Input
-                                            id="CORREO"
-                                            type="email"
-                                            required
-                                            value={data.CORREO}
-                                            onChange={(e) => setData('CORREO', e.target.value)}
-                                            disabled={processing}
-                                            placeholder="correo@ejemplo.com"
-                                        />
-                                        <InputError message={errors.CORREO} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="CORREO">Correo Electrónico</Label>
+                                            <Input
+                                                id="CORREO"
+                                                type="email"
+                                                required
+                                                value={data.CORREO}
+                                                onChange={(e) => setData('CORREO', e.target.value)}
+                                                disabled={processing}
+                                                placeholder="correo@ejemplo.com"
+                                            />
+                                            <InputError message={errors.CORREO} />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="TELEFONO">Teléfono</Label>
+                                            <Input
+                                                id="TELEFONO"
+                                                type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                value={data.TELEFONO}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '');
+                                                    setData('TELEFONO', value);
+                                                }}
+                                                disabled={processing}
+                                                placeholder="Solo números"
+                                            />
+                                            <InputError message={errors.TELEFONO} />
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -154,7 +181,7 @@ export default function CrearUsuario({ roles }: { roles: Role[] }) {
                                                 value={data.CONTRASENIA}
                                                 onChange={(e) => setData('CONTRASENIA', e.target.value)}
                                                 disabled={processing}
-                                                placeholder="Mínimo 6 caracteres"
+                                                placeholder="Mín. 8 caracteres, 1 mayús, 1 núm, 1 símb."
                                             />
                                             <InputError message={errors.CONTRASENIA} />
                                         </div>
