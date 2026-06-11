@@ -330,27 +330,89 @@ class CUPController extends Controller
     public function ejecutarCierre(string $id)
     {
         $cup = Cup::findOrFail($id);
+        $isRecalculation = $cup->ESTADO === 'Concluido';
+        $previousState = $cup->ESTADO;
 
-        DB::transaction(function () use ($cup) {
-            // 1. Ejecutar el procedimiento de cierre
-            DB::statement('CALL public.p_cerrar_gestion_cup(?)', [$cup->ID_CUP]);
+        try {
+            DB::transaction(function () use ($cup, $isRecalculation, $previousState) {
+                // If it's a recalculation, we need to:
+                // 1. Reset the previous assignments
+                // 2. Temporarily change the status to allow the procedure to execute
+                if ($isRecalculation) {
+                    // Clear previous assignments
+                    \App\Models\EstudianteCup::where('ID_CUP', $cup->ID_CUP)
+                        ->update(['CARRERA' => null]);
+                    
+                    // Temporarily set status to allow procedure execution
+                    $cup->update(['ESTADO' => 'En curso']);
+                }
 
-            // 2. Cambiar el estado del CUP a Concluido
-            $cup->update(['ESTADO' => 'Concluido']);
+                try {
+                    // Execute the stored procedure
+                    DB::statement('CALL public.p_cerrar_gestion_cup(?)', [$cup->ID_CUP]);
+                } catch (\Exception $e) {
+                    // If procedure fails due to CUP state, try alternative approach
+                    if ($isRecalculation && (strpos($e->getMessage(), 'Concluido') !== false || 
+                        strpos($e->getMessage(), 'Operación denegada') !== false)) {
+                        throw new \Exception('El procedimiento de cierre detectó que el CUP ya está en estado final. Verifique que haya estudiantes elegibles para la asignación.');
+                    }
+                    throw $e;
+                }
 
-            // 3. Registrar en Bitácora
-            Bitacora::create([
-                'USUARIO_ID' => auth()->id(),
-                'ACCION' => 'ACTUALIZAR',
-                'TABLA' => 'CUP',
-                'REGISTRO_ID' => $cup->ID_CUP,
-                'DESCRIPCION' => "Se cerró la gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó el procedimiento p_cerrar_gestion_cup para la distribución meritocrática de cupos por carreras.",
-                'IP_DIRECCION' => request()->ip(),
-                'FECHA_REGISTRO' => now(),
-            ]);
-        });
+                // Ensure the status is set to Concluido after successful procedure execution
+                if ($cup->ESTADO !== 'Concluido') {
+                    $cup->update(['ESTADO' => 'Concluido']);
+                }
 
-        return redirect("/cup/{$cup->ID_CUP}/cierre")->with('success', 'El cierre de gestión del CUP y la asignación de plazas se ejecutó correctamente.');
+                // Register in Bitácora
+                $accion = $isRecalculation ? 'RE-EJECUTAR' : 'EJECUTAR';
+                $descripcion = $isRecalculation
+                    ? "Se re-calculó el cierre de gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó nuevamente el procedimiento p_cerrar_gestion_cup para la redistribución meritocrática de cupos."
+                    : "Se cerró la gestión para el CUP ID: {$cup->ID_CUP}. Se ejecutó el procedimiento p_cerrar_gestion_cup para la distribución meritocrática de cupos por carreras.";
+                
+                Bitacora::create([
+                    'USUARIO_ID' => auth()->id(),
+                    'ACCION' => $accion,
+                    'TABLA' => 'CUP',
+                    'REGISTRO_ID' => $cup->ID_CUP,
+                    'DESCRIPCION' => $descripcion,
+                    'IP_DIRECCION' => request()->ip(),
+                    'FECHA_REGISTRO' => now(),
+                ]);
+            });
+
+            $successMessage = $isRecalculation
+                ? 'El cierre de gestión del CUP se re-calculó exitosamente. Las plazas fueron redistribuidas por orden de mérito.'
+                : 'El cierre de gestión del CUP y la asignación de plazas se ejecutó correctamente.';
+
+            return redirect("/cup/{$cup->ID_CUP}/cierre")->with('success', $successMessage);
+        } catch (\Exception $e) {
+            // Restore previous state on error if it was a recalculation
+            if ($isRecalculation) {
+                try {
+                    $cup->update(['ESTADO' => $previousState]);
+                } catch (\Exception $restoreError) {
+                    // Log error but continue with response
+                }
+            }
+            
+            // Determine error message
+            $errorMessage = 'Error al ejecutar el cierre de gestión.';
+            
+            if (strpos($e->getMessage(), 'El procedimiento de cierre detectó') !== false) {
+                $errorMessage = $e->getMessage();
+            } elseif (strpos($e->getMessage(), 'Operación denegada') !== false || 
+                     strpos($e->getMessage(), 'El CUP ya se encuentra concluido') !== false) {
+                $errorMessage = 'No se puede ejecutar el cierre: Verifique que el CUP tenga estudiantes elegibles para la asignación de plazas.';
+            } elseif (strpos($e->getMessage(), 'SQLSTATE') !== false) {
+                // Extract database error message if available
+                if (preg_match('/ERROR:\s*(.+?)(?:\n|$)/i', $e->getMessage(), $matches)) {
+                    $errorMessage = 'Error de base de datos: ' . $matches[1];
+                }
+            }
+            
+            return back()->with('error', $errorMessage)->withInput();
+        }
     }
 
     public function clases(string $id)

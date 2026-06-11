@@ -103,9 +103,7 @@ export default function MateriasStats({
         let csvContent = '\uFEFF'; // UTF-8 BOM
 
         // Names of selected subjects
-        const selectedNames = materiasCatalogo
-            .flatMap((m) => selectedIds.includes(m.id) ? [m.nombre] : [])
-            .join(', ');
+        const selectedNames = materiasCatalogo.flatMap((m) => (selectedIds.includes(m.id) ? [m.nombre] : [])).join(', ');
 
         // 1. Cabecera del Reporte de Filtros
         csvContent += `"REPORTE DE POSTULANTES CRÍTICOS (AND)"\r\n`;
@@ -116,7 +114,7 @@ export default function MateriasStats({
         csvContent += '\r\n'; // Fila en blanco
 
         // 2. Detalle de Postulantes
-        const headers = ['Carnet (CI)', 'Postulante', 'Computación (ID 1)', 'Matemática (ID 2)', 'Inglés (ID 3)', 'Física (ID 4)', 'Promedio Final'];
+        const headers = ['Carnet (CI)', 'Postulante', 'Computación', 'Matemática', 'Inglés', 'Física', 'Promedio Final'];
         csvContent += headers.map((h) => `"${h}"`).join(';') + '\r\n';
 
         filteredEstudiantes.forEach((e) => {
@@ -138,7 +136,7 @@ export default function MateriasStats({
     return (
         <div className="flex flex-col gap-6">
             {/* Panel de Filtros Interactivos (Oculto en Impresión) */}
-            <div className="no-print print:hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
+            <div className="no-print rounded-xl border border-neutral-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50 print:hidden">
                 <div className="mb-4 flex items-center gap-2 border-b border-neutral-100 pb-3 dark:border-neutral-800">
                     <Filter className="text-neutral-550 h-4.5 w-4.5 dark:text-neutral-400" />
                     <h3 className="text-sm font-bold tracking-wider text-neutral-800 uppercase dark:text-neutral-200">
@@ -179,7 +177,9 @@ export default function MateriasStats({
 
                     {/* Nota Limite Input */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="nota-maxima" className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">2. Nota Máxima</label>
+                        <label htmlFor="nota-maxima" className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">
+                            2. Nota Máxima
+                        </label>
                         <div className="flex gap-2">
                             <input
                                 id="nota-maxima"
@@ -216,7 +216,7 @@ export default function MateriasStats({
             ) : (
                 <>
                     {/* Control Panel de Resultados (Search & Exports) */}
-                    <div className="no-print print:hidden mb-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="no-print mb-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
                         <div className="relative w-full max-w-md">
                             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                             <input
@@ -263,9 +263,7 @@ export default function MateriasStats({
                             </div>
                             <div className="col-span-2">
                                 <strong>Materias Filtro:</strong>{' '}
-                                {materiasCatalogo
-                                    .flatMap((m) => materiasSeleccionadas.includes(m.id) ? [m.nombre] : [])
-                                    .join(', ')}
+                                {materiasCatalogo.flatMap((m) => (materiasSeleccionadas.includes(m.id) ? [m.nombre] : [])).join(', ')}
                             </div>
                             <div>
                                 <strong>Total Estudiantes Encontrados:</strong> {postulantesCriticos.length}
@@ -461,7 +459,7 @@ export default function MateriasStats({
 
                     {/* Pagination Controls */}
                     {totalPages > 1 && (
-                        <div className="no-print print:hidden flex items-center justify-between border-t border-neutral-200 pt-4 dark:border-neutral-800">
+                        <div className="no-print flex items-center justify-between border-t border-neutral-200 pt-4 dark:border-neutral-800 print:hidden">
                             <span className="text-xs text-neutral-500">
                                 Mostrando estudiantes <strong>{(currentPage - 1) * itemsPerPage + 1}</strong> al{' '}
                                 <strong>{Math.min(currentPage * itemsPerPage, filteredEstudiantes.length)}</strong> de{' '}

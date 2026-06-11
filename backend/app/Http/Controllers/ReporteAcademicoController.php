@@ -65,6 +65,31 @@ class ReporteAcademicoController extends Controller
             ];
         });
 
+        $activeTab = in_array($request->input('tab'), ['materias', 'grupos'], true)
+            ? $request->input('tab')
+            : 'materias';
+
+        $shouldRunGroupReport = $request->boolean('run_grupos_report', false);
+
+        $gruposReporte = [];
+        if ($cup && $activeTab === 'grupos' && $shouldRunGroupReport) {
+            $rawGrupos = \Illuminate\Support\Facades\DB::select(
+                'SELECT * FROM public.f_reporte_general_grupo(?)',
+                [$cup->ID_CUP]
+            );
+
+            $gruposReporte = array_map(function ($row) {
+                return [
+                    'id_grupo' => (int)$row->id_grupo,
+                    'nombre_grupo' => $row->nombre_grupo,
+                    'turno' => $row->turno,
+                    'total_aprobados' => (int)$row->total_aprobados,
+                    'total_reprobados' => (int)$row->total_reprobados,
+                    'promedio_grupo' => $row->promedio_grupo !== null ? (float)$row->promedio_grupo : null,
+                ];
+            }, $rawGrupos);
+        }
+
         return inertia('reportes-academicos/index', [
             'cup' => $cup,
             'cups' => $cups,
@@ -72,6 +97,9 @@ class ReporteAcademicoController extends Controller
             'materiasSeleccionadas' => $selectedMaterias,
             'notaLimite' => $notaLimite,
             'materiasCatalogo' => $materiasCatalogo,
+            'gruposReporte' => $gruposReporte,
+            'activeTab' => $activeTab,
+            'gruposReportExecuted' => $shouldRunGroupReport,
         ]);
     }
 }
