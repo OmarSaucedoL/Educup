@@ -72,9 +72,9 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                             <BookMarked className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Módulo de Notas — Clases</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Módulo de Calificaciones — Clases</h1>
                             <p className="text-muted-foreground mt-0.5 text-sm">
-                                Selecciona un grupo para ver sus materias y gestionar las notas de los estudiantes.
+                                Selecciona un grupo para ver sus materias y gestionar las calificaciones de los estudiantes.
                             </p>
                         </div>
                     </div>

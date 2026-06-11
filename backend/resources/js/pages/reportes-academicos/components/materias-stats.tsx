@@ -135,6 +135,21 @@ export default function MateriasStats({
 
     return (
         <div className="flex flex-col gap-6">
+            {/* Cabecera Principal */}
+            <div className="no-print flex flex-col gap-4 border-b border-neutral-200 pb-5 dark:border-neutral-800">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-md bg-primary/10 p-2">
+                        <AlertCircle className="text-primary h-5 w-5" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Estadísticas de Materias Críticas</h2>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                            Encuentra y exporta listados de estudiantes en riesgo académico según las materias y nota límite configurada.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Panel de Filtros Interactivos (Oculto en Impresión) */}
             <div className="no-print rounded-xl border border-neutral-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50 print:hidden">
                 <div className="mb-4 flex items-center gap-2 border-b border-neutral-100 pb-3 dark:border-neutral-800">
@@ -228,26 +243,24 @@ export default function MateriasStats({
                                 className="w-full rounded-lg border border-neutral-200 bg-white py-2 pr-4 pl-9 text-sm text-neutral-900 shadow-xs transition focus:border-neutral-900 focus:outline-hidden dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
                             />
                         </div>
-                        <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+                        <div className="flex shrink-0 flex-wrap items-center gap-2 self-end sm:self-auto">
                             <Button
                                 variant="outline"
-                                size="sm"
-                                onClick={exportToCSV}
+                                onClick={() => window.print()}
                                 disabled={postulantesCriticos.length === 0}
-                                className="flex h-9 items-center gap-1.5 border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                                className="gap-2 text-sm font-semibold bg-white dark:bg-neutral-950"
                             >
-                                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                                Exportar Excel (CSV)
+                                <Printer className="h-4 w-4" />
+                                Imprimir / PDF
                             </Button>
                             <Button
                                 variant="outline"
-                                size="sm"
-                                onClick={() => window.print()}
+                                onClick={exportToCSV}
                                 disabled={postulantesCriticos.length === 0}
-                                className="flex h-9 items-center gap-1.5 border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                                className="gap-2 text-sm font-semibold bg-white dark:bg-neutral-950"
                             >
-                                <Printer className="h-4 w-4 text-slate-600" />
-                                Imprimir / PDF
+                                <FileSpreadsheet className="h-4 w-4" />
+                                Exportar Excel
                             </Button>
                         </div>
                     </div>

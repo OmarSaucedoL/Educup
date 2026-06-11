@@ -60,28 +60,36 @@ export default function EstadisticaAceptados({ cup, aceptadosReporte = [], onRun
     return (
         <div className="flex flex-col gap-6">
             {/* Controles Superiores */}
-            <div className="no-print flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2">
-                    <Users className="text-primary h-4 w-4" />
+            <div className="no-print flex flex-col gap-4 border-b border-neutral-200 pb-5 dark:border-neutral-800">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-md bg-primary/10 p-2">
+                        <Users className="text-primary h-5 w-5" />
+                    </div>
                     <div>
-                        <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">Reporte de Aceptados — CUP #{cup?.ID_CUP}</p>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400">Listado de postulantes que ingresaron a una carrera.</p>
+                        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Reporte de Aceptados</h2>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Listado de postulantes que ingresaron a una carrera en el CUP actual.</p>
                     </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    {onRunReport && (
-                        <Button onClick={onRunReport} variant="default" className="gap-2 text-sm font-semibold">
-                            Generar Reporte de Aceptados
+
+                <div className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-neutral-50/50 p-4 dark:border-neutral-800/60 dark:bg-neutral-900/20 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-3">
+                        {onRunReport && (
+                            <Button onClick={onRunReport} variant="default" className="gap-2 text-sm font-semibold shadow-sm">
+                                Generar Reporte de Aceptados (CUP #{cup?.ID_CUP})
+                            </Button>
+                        )}
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 pt-3 dark:border-neutral-800 sm:border-0 sm:pt-0">
+                        <Button onClick={handlePrint} disabled={isPrinting} variant="outline" className="gap-2 text-sm font-semibold bg-white dark:bg-neutral-950">
+                            <Printer className="h-4 w-4" />
+                            Imprimir / PDF
                         </Button>
-                    )}
-                    <Button onClick={handlePrint} disabled={isPrinting} variant="outline" className="gap-2 text-sm font-semibold">
-                        <Printer className="h-4 w-4" />
-                        Imprimir / PDF
-                    </Button>
-                    <Button variant="outline" onClick={exportToCSV} disabled={aceptadosReporte.length === 0} className="gap-2 text-sm font-semibold">
-                        <FileSpreadsheet className="h-4 w-4" />
-                        Exportar Excel
-                    </Button>
+                        <Button variant="outline" onClick={exportToCSV} disabled={aceptadosReporte.length === 0} className="gap-2 text-sm font-semibold bg-white dark:bg-neutral-950">
+                            <FileSpreadsheet className="h-4 w-4" />
+                            Exportar Excel
+                        </Button>
+                    </div>
                 </div>
             </div>
 

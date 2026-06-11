@@ -68,12 +68,23 @@ interface ReportsProps {
     materiasSeleccionadas?: number[];
     notaLimite?: number;
     materiasCatalogo?: MateriaItem[];
+    docentesCatalogo?: { id: number; nombre_completo: string }[];
     gruposReporte?: GrupoReporteData[];
     docentesReporte?: DocenteReporteData[];
+    historicoDocenteReporte?: {
+        docente: string;
+        grupo: string;
+        materia: string;
+        turno: string;
+        numero_estudiantes: number;
+        nota_promedio: number | null;
+        cup: string;
+    }[];
     aceptadosReporte?: AceptadoReporteData[];
     activeTab?: TabType;
     gruposReportExecuted?: boolean;
     docentesReportExecuted?: boolean;
+    historicoDocenteReportExecuted?: boolean;
     aceptadosReportExecuted?: boolean;
 }
 
@@ -86,18 +97,22 @@ export default function AcademicReportsIndex({
     materiasSeleccionadas = [],
     notaLimite = 51,
     materiasCatalogo = [],
+    docentesCatalogo = [],
     gruposReporte = [],
     docentesReporte = [],
+    historicoDocenteReporte = [],
     aceptadosReporte = [],
     activeTab: initialTab = 'materias',
     gruposReportExecuted = false,
     docentesReportExecuted = false,
+    historicoDocenteReportExecuted = false,
     aceptadosReportExecuted = false,
 }: ReportsProps) {
     const [activeTab, setActiveTab] = useState<TabType>(initialTab);
     const [selectedCupId, setSelectedCupId] = useState<number | null>(cup?.ID_CUP ?? null);
     const [gruposReportExecutedState, setGruposReportExecutedState] = useState<boolean>(gruposReportExecuted);
     const [docentesReportExecutedState, setDocentesReportExecutedState] = useState<boolean>(docentesReportExecuted);
+    const [historicoDocenteReportExecutedState, setHistoricoDocenteReportExecutedState] = useState<boolean>(historicoDocenteReportExecuted);
     const [aceptadosReportExecutedState, setAceptadosReportExecutedState] = useState<boolean>(aceptadosReportExecuted);
 
     const handleCupChange = (id: number) => {
@@ -124,7 +139,22 @@ export default function AcademicReportsIndex({
 
         setActiveTab('docentes');
         setDocentesReportExecutedState(true);
+        // Desactiva el estado del reporte histórico si se lanza el general
+        setHistoricoDocenteReportExecutedState(false);
         router.get('/reportes-academicos', { cup_id: cupId, tab: 'docentes', run_docentes_report: 1 }, { preserveState: false });
+    };
+
+    const handleExecuteHistoricoDocenteReport = (id_docente: number) => {
+        const cupId = selectedCupId ?? cup?.ID_CUP;
+        if (!cupId) {
+            return;
+        }
+
+        setActiveTab('docentes');
+        setHistoricoDocenteReportExecutedState(true);
+        // Desactiva el estado del reporte general si se lanza el histórico
+        setDocentesReportExecutedState(false);
+        router.get('/reportes-academicos', { cup_id: cupId, tab: 'docentes', run_historico_docente: 1, id_docente }, { preserveState: false });
     };
 
     const handleExecuteAceptadosReport = () => {
@@ -174,14 +204,12 @@ export default function AcademicReportsIndex({
                     #print-report-container {
                         display: block !important;
                         visibility: visible !important;
-                        position: absolute;
-                        left: 0;
-                        top: 0;
                         width: 100%;
                     }
                     table {
                         width: 100% !important;
                         border-collapse: collapse !important;
+                        margin-top: 20px !important;
                     }
                     th, td {
                         border: 1px solid #d1d5db !important;
@@ -339,9 +367,13 @@ export default function AcademicReportsIndex({
                             {activeTab === 'docentes' && (
                                 <EstadisticaDocente
                                     cup={cup}
+                                    docentesCatalogo={docentesCatalogo}
                                     docentesReporte={docentesReporte}
+                                    historicoDocenteReporte={historicoDocenteReporte}
                                     onRunReport={handleExecuteDocenteReport}
+                                    onRunHistoricoReport={handleExecuteHistoricoDocenteReport}
                                     reportExecuted={docentesReportExecutedState}
+                                    historicoReportExecuted={historicoDocenteReportExecutedState}
                                 />
                             )}
                             {activeTab === 'aceptados' && (

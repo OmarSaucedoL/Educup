@@ -41,12 +41,12 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Módulo Notas',
+        title: 'Módulo Calificaciones',
         url: '#',
         icon: BookMarked,
         items: [
             {
-                title: 'Registrar Notas',
+                title: 'Registrar Calificaciones',
                 url: '/notas/clases',
             },
             {

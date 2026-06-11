@@ -124,9 +124,9 @@ export default function Welcome() {
                                     </div>
                                     <span className="text-[13.5px] leading-relaxed">
                                         <strong className="block font-semibold text-neutral-900 dark:text-white">Calificaciones</strong>
-                                        <span className="text-neutral-500 dark:text-neutral-400">
-                                            Registra y consolida las notas de los estudiantes para cada materia y convocatoria CUP.
-                                        </span>
+                                        <div className="text-sm/relaxed">
+                                            Registra y consolida las calificaciones de los estudiantes para cada materia y convocatoria CUP.
+                                        </div>
                                     </span>
                                 </li>
                             </ul>

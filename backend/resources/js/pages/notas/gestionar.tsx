@@ -288,8 +288,8 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Módulo Notas', href: '/notas/clases' },
-        { title: 'Gestionar Notas', href: '#' },
+        { title: 'Módulo Calificaciones', href: '/notas/clases' },
+        { title: 'Gestionar Calificaciones', href: '#' },
     ];
 
     const docenteNombre = clase.docente_cup?.docente?.usuario
@@ -359,7 +359,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                             <h4 className="text-sm font-semibold">Modo de Solo Lectura</h4>
                             <p className="text-xs mt-0.5 leading-relaxed">
                                 Esta convocatoria del CUP se encuentra en estado <strong>"{clase.cup?.ESTADO ?? 'Finalizado'}"</strong>.
-                                Solo se pueden asignar o modificar notas cuando el CUP se encuentra en estado <strong>"En curso"</strong>.
+                                Solo se pueden asignar o modificar calificaciones cuando el CUP se encuentra en estado <strong>"En curso"</strong>.
                             </p>
                         </div>
                     </div>
