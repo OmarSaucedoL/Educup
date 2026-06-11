@@ -65,12 +65,13 @@ class ReporteAcademicoController extends Controller
             ];
         });
 
-        $activeTab = in_array($request->input('tab'), ['materias', 'grupos', 'docentes'], true)
+        $activeTab = in_array($request->input('tab'), ['materias', 'grupos', 'docentes', 'aceptados'], true)
             ? $request->input('tab')
             : 'materias';
 
         $shouldRunGroupReport = $request->boolean('run_grupos_report', false);
         $shouldRunDocentesReport = $request->boolean('run_docentes_report', false);
+        $shouldRunAceptadosReport = $request->boolean('run_aceptados_report', false);
 
         $gruposReporte = [];
         if ($cup && $activeTab === 'grupos' && $shouldRunGroupReport) {
@@ -113,6 +114,22 @@ class ReporteAcademicoController extends Controller
             }, $rawDocentes);
         }
 
+        $aceptadosReporte = [];
+        if ($cup && $activeTab === 'aceptados' && $shouldRunAceptadosReport) {
+            $rawAceptados = \Illuminate\Support\Facades\DB::select(
+                'SELECT * FROM public.f_reporte_general_aceptados(?)',
+                [$cup->ID_CUP]
+            );
+
+            $aceptadosReporte = array_map(function ($row) {
+                return [
+                    'carnet' => $row->carnet,
+                    'nombre_completo' => $row->nombre_completo,
+                    'carrera_asignada' => $row->carrera_asignada,
+                ];
+            }, $rawAceptados);
+        }
+
         return inertia('reportes-academicos/index', [
             'cup' => $cup,
             'cups' => $cups,
@@ -122,9 +139,11 @@ class ReporteAcademicoController extends Controller
             'materiasCatalogo' => $materiasCatalogo,
             'gruposReporte' => $gruposReporte,
             'docentesReporte' => $docentesReporte,
+            'aceptadosReporte' => $aceptadosReporte,
             'activeTab' => $activeTab,
             'gruposReportExecuted' => $shouldRunGroupReport,
             'docentesReportExecuted' => $shouldRunDocentesReport,
+            'aceptadosReportExecuted' => $shouldRunAceptadosReport,
         ]);
 
     }

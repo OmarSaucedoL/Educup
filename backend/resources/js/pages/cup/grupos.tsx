@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { BookOpen, ChevronLeft, Clock, Info, Users, UserCheck, UserX } from 'lucide-react';
+import { BookOpen, ChevronLeft, Clock, Info, Users, UserCheck, UserX, Building, Building2 } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -29,6 +29,8 @@ interface HeaderSectionProps {
     isProcessing: boolean;
     onShowConfirm: () => void;
     onShowRemover: () => void;
+    onShowAulasConfirm: () => void;
+    onShowRemoverAulas: () => void;
 }
 
 function HeaderSection({
@@ -37,6 +39,8 @@ function HeaderSection({
     isProcessing,
     onShowConfirm,
     onShowRemover,
+    onShowAulasConfirm,
+    onShowRemoverAulas,
 }: HeaderSectionProps) {
     return (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -70,28 +74,55 @@ function HeaderSection({
                     </div>
                 </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-                <Button 
-                    variant="default" 
-                    onClick={onShowConfirm} 
-                    disabled={isProcessing || cup.ESTADO === 'Concluido'}
-                    title={cup.ESTADO === 'Concluido' ? 'Acción no permitida en CUP concluido' : ''}
-                    className="gap-1.5 text-sm font-semibold bg-neutral-900 text-neutral-50 hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
-                >
-                    <UserCheck className="h-4 w-4" /> 
-                    {isProcessing ? 'Procesando...' : 'Asignar Docentes'}
-                </Button>
-                <Button 
-                    variant="outline"
-                    onClick={onShowRemover}
-                    disabled={isProcessing || cup.ESTADO === 'Concluido'}
-                    title={cup.ESTADO === 'Concluido' ? 'Acción no permitida en CUP concluido' : ''}
-                    className="gap-1.5 text-sm font-semibold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-950/40"
-                >
-                    <UserX className="h-4 w-4" />
-                    Remover Docentes
-                </Button>
-                <Button variant="outline" asChild className="gap-1.5 text-sm font-semibold">
+            <div className="flex items-center gap-4 shrink-0">
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="default" 
+                            onClick={onShowConfirm} 
+                            disabled={isProcessing || cup.ESTADO !== 'Inscripciones'}
+                            title={cup.ESTADO !== 'Inscripciones' ? 'Acción permitida solo en etapa de Inscripciones' : ''}
+                            className="gap-1.5 text-sm font-semibold bg-neutral-900 text-neutral-50 hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200 w-44 justify-start"
+                        >
+                            <UserCheck className="h-4 w-4" /> 
+                            {isProcessing ? 'Procesando...' : 'Asignar Docentes'}
+                        </Button>
+                        <Button 
+                            variant="outline"
+                            onClick={onShowRemover}
+                            disabled={isProcessing || cup.ESTADO !== 'Inscripciones'}
+                            title={cup.ESTADO !== 'Inscripciones' ? 'Acción permitida solo en etapa de Inscripciones' : ''}
+                            className="gap-1.5 text-sm font-semibold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-950/40 w-48 justify-start"
+                        >
+                            <UserX className="h-4 w-4" />
+                            Remover Docentes
+                        </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="default" 
+                            onClick={onShowAulasConfirm} 
+                            disabled={isProcessing || cup.ESTADO !== 'Inscripciones'}
+                            title={cup.ESTADO !== 'Inscripciones' ? 'Acción permitida solo en etapa de Inscripciones' : ''}
+                            className="gap-1.5 text-sm font-semibold bg-neutral-900 text-neutral-50 hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200 w-44 justify-start"
+                        >
+                            <Building className="h-4 w-4" /> 
+                            {isProcessing ? 'Procesando...' : 'Asignar Aulas'}
+                        </Button>
+                        <Button 
+                            variant="outline"
+                            onClick={onShowRemoverAulas}
+                            disabled={isProcessing || cup.ESTADO !== 'Inscripciones'}
+                            title={cup.ESTADO !== 'Inscripciones' ? 'Acción permitida solo en etapa de Inscripciones' : ''}
+                            className="gap-1.5 text-sm font-semibold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-950/40 w-48 justify-start"
+                        >
+                            <Building2 className="h-4 w-4" />
+                            Remover Aulas
+                        </Button>
+                    </div>
+                </div>
+                <div className="w-px h-16 bg-neutral-300 dark:bg-neutral-700"></div>
+                <Button variant="outline" asChild className="gap-1.5 text-sm font-semibold h-full py-5">
                     <Link href={`/cup/${cup.ID_CUP}`}>
                         <ChevronLeft className="h-4 w-4" /> Volver a CUP
                     </Link>
@@ -334,11 +365,82 @@ function RemoverConfirmDialog({ open, onOpenChange, onConfirm }: RemoverConfirmD
     );
 }
 
+interface AsignacionAulasConfirmDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onConfirm: () => void;
+}
+
+function AsignacionAulasConfirmDialog({ open, onOpenChange, onConfirm }: AsignacionAulasConfirmDialogProps) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Asignación Automática de Aulas</DialogTitle>
+                    <DialogDescription>
+                        ¿Está seguro de que desea realizar la asignación automática de aulas para este CUP? 
+                        Esto buscará aulas disponibles y las asignará a todos los grupos, asegurándose de que 
+                        un mismo grupo en el mismo turno comparta el aula.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancelar
+                    </Button>
+                    <Button 
+                        variant="default"
+                        onClick={onConfirm}
+                        className="bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+                    >
+                        Confirmar Asignación
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+interface RemoverAulasConfirmDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onConfirm: () => void;
+}
+
+function RemoverAulasConfirmDialog({ open, onOpenChange, onConfirm }: RemoverAulasConfirmDialogProps) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="text-orange-600 dark:text-orange-400">Remover Todas las Aulas</DialogTitle>
+                    <DialogDescription>
+                        Esta acción quitará el aula asignada a <strong>todas las clases</strong> de este CUP. Las clases quedarán sin aula y deberán ser reasignadas. Esta operación no se puede deshacer.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancelar
+                    </Button>
+                    <Button 
+                        variant="destructive"
+                        onClick={onConfirm}
+                        className="bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600"
+                    >
+                        <Building2 className="h-4 w-4 mr-1.5" />
+                        Sí, remover aulas
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function VerClasesPage({ cup, cupsList = DEFAULT_CUPS_LIST }: { cup: any, cupsList?: any[] }) {
     const todasLasClases: any[] = cup.clases ?? [];
     const [isProcessing, setIsProcessing] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [showRemoverDialog, setShowRemoverDialog] = useState(false);
+    const [showAulasConfirmDialog, setShowAulasConfirmDialog] = useState(false);
+    const [showRemoverAulasDialog, setShowRemoverAulasDialog] = useState(false);
 
     const handleAsignacionAutomatica = () => {
         setShowConfirmDialog(false);
@@ -352,6 +454,22 @@ export default function VerClasesPage({ cup, cupsList = DEFAULT_CUPS_LIST }: { c
         setShowRemoverDialog(false);
         setIsProcessing(true);
         router.delete(`/cup/${cup.ID_CUP}/remover-docentes`, {
+            onFinish: () => setIsProcessing(false)
+        });
+    };
+
+    const handleAsignacionAulasAutomatica = () => {
+        setShowAulasConfirmDialog(false);
+        setIsProcessing(true);
+        router.post(`/cup/${cup.ID_CUP}/asignar-aulas-auto`, {}, {
+            onFinish: () => setIsProcessing(false)
+        });
+    };
+
+    const handleRemoverAulas = () => {
+        setShowRemoverAulasDialog(false);
+        setIsProcessing(true);
+        router.delete(`/cup/${cup.ID_CUP}/remover-aulas`, {
             onFinish: () => setIsProcessing(false)
         });
     };
@@ -412,6 +530,8 @@ export default function VerClasesPage({ cup, cupsList = DEFAULT_CUPS_LIST }: { c
                     isProcessing={isProcessing}
                     onShowConfirm={() => setShowConfirmDialog(true)}
                     onShowRemover={() => setShowRemoverDialog(true)}
+                    onShowAulasConfirm={() => setShowAulasConfirmDialog(true)}
+                    onShowRemoverAulas={() => setShowRemoverAulasDialog(true)}
                 />
 
                 <SummaryCardsSection
@@ -435,6 +555,18 @@ export default function VerClasesPage({ cup, cupsList = DEFAULT_CUPS_LIST }: { c
                 open={showRemoverDialog}
                 onOpenChange={setShowRemoverDialog}
                 onConfirm={handleRemoverDocentes}
+            />
+
+            <AsignacionAulasConfirmDialog
+                open={showAulasConfirmDialog}
+                onOpenChange={setShowAulasConfirmDialog}
+                onConfirm={handleAsignacionAulasAutomatica}
+            />
+
+            <RemoverAulasConfirmDialog
+                open={showRemoverAulasDialog}
+                onOpenChange={setShowRemoverAulasDialog}
+                onConfirm={handleRemoverAulas}
             />
         </AppLayout>
     );

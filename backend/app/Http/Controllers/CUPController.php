@@ -168,6 +168,69 @@ class CUPController extends Controller
     }
 
     /**
+     * Llama al procedimiento de asignación automática de aulas para el CUP.
+     */
+    public function asignarAulasAuto(string $idCup)
+    {
+        if (Cup::findOrFail($idCup)->ESTADO !== 'Inscripciones') {
+            return back()->withErrors(['error' => 'Acción no permitida: La asignación de aulas solo se puede realizar en estado Inscripciones.']);
+        }
+
+        try {
+            DB::statement('CALL public.p_asignacion_automatica_aulas(?)', [(int)$idCup]);
+
+            Bitacora::create([
+                'USUARIO_ID'     => \Auth::id(),
+                'SESSION_ID'     => request()->session()->getId(),
+                'ACCION'         => 'ASIGNAR',
+                'TABLA'          => 'CLASE',
+                'REGISTRO_ID'    => (int)$idCup,
+                'DESCRIPCION'    => "Asignación automática de aulas ejecutada para el CUP ID {$idCup}.",
+                'IP_DIRECCION'   => request()->ip(),
+                'FECHA_REGISTRO' => now(),
+            ]);
+
+            return redirect("/cup/{$idCup}/clases")->with('success', 'Asignación automática de aulas completada correctamente.');
+        } catch (\Exception $e) {
+            \Log::error('Error en asignacion automatica de aulas: ' . $e->getMessage());
+            return redirect("/cup/{$idCup}/clases")->withErrors(['error' => 'Error al ejecutar la asignación automática: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Remueve todas las aulas asignadas a las clases de un CUP.
+     */
+    public function removerAulas(string $idCup)
+    {
+        if (Cup::findOrFail($idCup)->ESTADO !== 'Inscripciones') {
+            return back()->withErrors(['error' => 'Acción no permitida: La remoción de aulas solo se puede realizar en estado Inscripciones.']);
+        }
+
+        try {
+            $affected = DB::table('CLASE')
+                ->where('ID_CUP', (int)$idCup)
+                ->whereNotNull('ID_AULA')
+                ->update(['ID_AULA' => null]);
+
+            Bitacora::create([
+                'USUARIO_ID'     => \Auth::id(),
+                'SESSION_ID'     => request()->session()->getId(),
+                'ACCION'         => 'ELIMINAR',
+                'TABLA'          => 'CLASE',
+                'REGISTRO_ID'    => (int)$idCup,
+                'DESCRIPCION'    => "Se removieron las aulas de {$affected} clase(s) del CUP ID {$idCup}.",
+                'IP_DIRECCION'   => request()->ip(),
+                'FECHA_REGISTRO' => now(),
+            ]);
+
+            return redirect("/cup/{$idCup}/clases")->with('success', "Se removieron las aulas de {$affected} clase(s) correctamente.");
+        } catch (\Exception $e) {
+            \Log::error('Error al remover aulas: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al remover aulas: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(string $id)
@@ -974,8 +1037,8 @@ class CUPController extends Controller
      */
     public function asignacionAutomatica(string $idCup)
     {
-        if (Cup::findOrFail($idCup)->ESTADO === 'Concluido') {
-            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        if (Cup::findOrFail($idCup)->ESTADO !== 'Inscripciones') {
+            return back()->withErrors(['error' => 'Acción no permitida: La asignación de docentes solo se puede realizar en estado Inscripciones.']);
         }
 
         try {
@@ -1004,8 +1067,8 @@ class CUPController extends Controller
      */
     public function removerDocentes(string $idCup)
     {
-        if (Cup::findOrFail($idCup)->ESTADO === 'Concluido') {
-            return back()->withErrors(['error' => 'Acción no permitida: El CUP ya se encuentra concluido.']);
+        if (Cup::findOrFail($idCup)->ESTADO !== 'Inscripciones') {
+            return back()->withErrors(['error' => 'Acción no permitida: La remoción de docentes solo se puede realizar en estado Inscripciones.']);
         }
 
         try {

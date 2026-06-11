@@ -6,6 +6,7 @@ import { useState } from 'react';
 import EstadisticaDocente from './components/estadistica-docente';
 import EstadisticaGrupo from './components/estadistica-grupo';
 import MateriasStats from './components/materias-stats';
+import EstadisticaAceptados from './components/estadistica-aceptados';
 
 interface MateriaItem {
     id: number;
@@ -44,6 +45,12 @@ interface DocenteReporteData {
     promedio_por_materia: string;
 }
 
+interface AceptadoReporteData {
+    carnet: string;
+    nombre_completo: string;
+    carrera_asignada: string;
+}
+
 interface ReportsProps {
     cup: {
         ID_CUP: number;
@@ -63,12 +70,14 @@ interface ReportsProps {
     materiasCatalogo?: MateriaItem[];
     gruposReporte?: GrupoReporteData[];
     docentesReporte?: DocenteReporteData[];
+    aceptadosReporte?: AceptadoReporteData[];
     activeTab?: TabType;
     gruposReportExecuted?: boolean;
     docentesReportExecuted?: boolean;
+    aceptadosReportExecuted?: boolean;
 }
 
-type TabType = 'materias' | 'grupos' | 'docentes';
+type TabType = 'materias' | 'grupos' | 'docentes' | 'aceptados';
 
 export default function AcademicReportsIndex({
     cup,
@@ -79,14 +88,17 @@ export default function AcademicReportsIndex({
     materiasCatalogo = [],
     gruposReporte = [],
     docentesReporte = [],
+    aceptadosReporte = [],
     activeTab: initialTab = 'materias',
     gruposReportExecuted = false,
     docentesReportExecuted = false,
+    aceptadosReportExecuted = false,
 }: ReportsProps) {
     const [activeTab, setActiveTab] = useState<TabType>(initialTab);
     const [selectedCupId, setSelectedCupId] = useState<number | null>(cup?.ID_CUP ?? null);
     const [gruposReportExecutedState, setGruposReportExecutedState] = useState<boolean>(gruposReportExecuted);
     const [docentesReportExecutedState, setDocentesReportExecutedState] = useState<boolean>(docentesReportExecuted);
+    const [aceptadosReportExecutedState, setAceptadosReportExecutedState] = useState<boolean>(aceptadosReportExecuted);
 
     const handleCupChange = (id: number) => {
         setSelectedCupId(id);
@@ -115,10 +127,22 @@ export default function AcademicReportsIndex({
         router.get('/reportes-academicos', { cup_id: cupId, tab: 'docentes', run_docentes_report: 1 }, { preserveState: false });
     };
 
+    const handleExecuteAceptadosReport = () => {
+        const cupId = selectedCupId ?? cup?.ID_CUP;
+        if (!cupId) {
+            return;
+        }
+
+        setActiveTab('aceptados');
+        setAceptadosReportExecutedState(true);
+        router.get('/reportes-academicos', { cup_id: cupId, tab: 'aceptados', run_aceptados_report: 1 }, { preserveState: false });
+    };
+
     const tabTitle = {
         materias: 'Estadísticas de Materia',
         grupos: 'Estadísticas de Grupo',
         docentes: 'Estadísticas Docente',
+        aceptados: 'Estadísticas de Aceptados',
     }[activeTab];
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -268,11 +292,12 @@ export default function AcademicReportsIndex({
                         {/* Pestañas de Reportes */}
                         <div className="no-print border-b border-neutral-200 dark:border-neutral-800">
                             <div className="flex flex-wrap gap-1">
-                                {(['materias', 'grupos', 'docentes'] as TabType[]).map((tab) => {
+                                {(['materias', 'grupos', 'docentes', 'aceptados'] as TabType[]).map((tab) => {
                                     const labels = {
                                         materias: 'Estadísticas de Materia',
                                         grupos: 'Estadísticas de Grupo',
                                         docentes: 'Estadísticas Docente',
+                                        aceptados: 'Estadísticas de Aceptados',
                                     };
                                     const isActive = activeTab === tab;
                                     return (
@@ -317,6 +342,14 @@ export default function AcademicReportsIndex({
                                     docentesReporte={docentesReporte}
                                     onRunReport={handleExecuteDocenteReport}
                                     reportExecuted={docentesReportExecutedState}
+                                />
+                            )}
+                            {activeTab === 'aceptados' && (
+                                <EstadisticaAceptados
+                                    cup={cup}
+                                    aceptadosReporte={aceptadosReporte}
+                                    onRunReport={handleExecuteAceptadosReport}
+                                    reportExecuted={aceptadosReportExecutedState}
                                 />
                             )}
                         </div>

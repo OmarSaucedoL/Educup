@@ -115,6 +115,7 @@ class DatabaseSeeder extends Seeder
             'CREAR_AULAS'               => 'INFRAESTRUCTURA',
             'EDITAR_AULAS'              => 'INFRAESTRUCTURA',
             'ELIMINAR_AULAS'            => 'INFRAESTRUCTURA',
+            'ASIGNAR_AULAS_CUP'         => 'INFRAESTRUCTURA',
             'VER_HORARIOS'              => 'INFRAESTRUCTURA',
             'CREAR_HORARIOS'            => 'INFRAESTRUCTURA',
             'EDITAR_HORARIOS'           => 'INFRAESTRUCTURA',
