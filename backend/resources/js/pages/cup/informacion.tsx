@@ -236,7 +236,7 @@ function SummaryCardsSection({ cup }: SummaryCardsSectionProps) {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
                 { label: 'Cupos Totales', value: cup.CUPOS, icon: Users, color: 'text-blue-500' },
-                { label: 'Nota Mínima', value: cup.NOTA_MINIMA, icon: GraduationCap, color: 'text-violet-500' },
+                { label: 'Calificación Mínima', value: cup.NOTA_MINIMA, icon: GraduationCap, color: 'text-violet-500' },
                 {
                     label: 'Fecha Inicio',
                     value: cup.FECHA_INICIO

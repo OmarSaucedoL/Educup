@@ -106,7 +106,7 @@ export default function EstadisticaDocente({
     const exportToCSVHistorico = () => {
         if (historicoDocenteReporte.length === 0) return;
 
-        const headers = ['Docente', 'CUP', 'Materia', 'Grupo', 'Turno', 'Total Estudiantes', 'Nota Promedio'];
+        const headers = ['Docente', 'CUP', 'Materia', 'Grupo', 'Turno', 'Total Estudiantes', 'Calificación Promedio'];
         const rows = historicoDocenteReporte.map((h) => [
             h.docente,
             h.cup,
@@ -232,7 +232,7 @@ export default function EstadisticaDocente({
                                     <th className="px-4 py-3 text-center font-semibold text-neutral-900 dark:text-neutral-100">Grupo</th>
                                     <th className="px-4 py-3 text-center font-semibold text-neutral-900 dark:text-neutral-100">Turno</th>
                                     <th className="px-4 py-3 text-center font-semibold text-neutral-900 dark:text-neutral-100">Total Estudiantes</th>
-                                    <th className="px-4 py-3 text-center font-semibold text-neutral-900 dark:text-neutral-100">Nota Promedio</th>
+                                    <th className="px-4 py-3 text-center font-semibold text-neutral-900 dark:text-neutral-100">Calificación Promedio</th>
                                 </tr>
                             </thead>
                             <tbody>

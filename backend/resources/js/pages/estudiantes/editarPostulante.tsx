@@ -498,7 +498,7 @@ function HistorySection({
                             {/* Details Grid */}
                             <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 text-xs">
                                 <div>
-                                    <span className="block text-neutral-400 font-semibold mb-0.5">Nota Final:</span>
+                                    <span className="block text-neutral-400 font-semibold mb-0.5">Calificación Final:</span>
                                     <span className="font-extrabold text-neutral-800 dark:text-neutral-200 text-sm">
                                         {hc.NOTA_FINAL != null 
                                             ? `${parseFloat(hc.NOTA_FINAL.toString()).toFixed(2)} pts` 

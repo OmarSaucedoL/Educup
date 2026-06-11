@@ -70,7 +70,7 @@ return new class extends Migration
             END IF;
 
             -- 4. Buscar o crear Usuario utilizando f_insertar_usuario
-            SELECT "ID" INTO v_usuario_id FROM "USUARIO" WHERE "CARNET" = CAST(p_carnet AS VARCHAR) LIMIT 1;
+            SELECT "ID" INTO v_usuario_id FROM "USUARIO" WHERE "CARNET" = p_carnet LIMIT 1;
             IF v_usuario_id IS NULL THEN
                 v_usuario_id := public.f_insertar_usuario(
                     CAST(LOWER(p_nombre || p_carnet) AS VARCHAR),

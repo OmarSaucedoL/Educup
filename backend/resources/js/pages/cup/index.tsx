@@ -59,7 +59,7 @@ export default function Index({ cups, hayActivo }: { cups: any[]; hayActivo: boo
                                 <tr className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Gestión / Semestre</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Cupos</th>
-                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Nota Mínima</th>
+                                    <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Calificación Mínima</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Fecha de Inicio</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Fecha de Fin</th>
                                     <th className="text-muted-foreground h-12 px-4 text-left align-middle font-medium">Estado</th>

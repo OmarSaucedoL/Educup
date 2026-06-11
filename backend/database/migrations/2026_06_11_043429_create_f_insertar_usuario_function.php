@@ -38,7 +38,7 @@ return new class extends Migration
             END IF;
 
             IF p_carnet IS NOT NULL THEN
-                IF EXISTS (SELECT 1 FROM "USUARIO" WHERE "CARNET" = CAST(p_carnet AS VARCHAR)) THEN
+                IF EXISTS (SELECT 1 FROM "USUARIO" WHERE "CARNET" = p_carnet) THEN
                     RAISE EXCEPTION \'El carnet de identidad "%" ya está registrado por otro usuario.\', p_carnet;
                 END IF;
             END IF;
@@ -48,7 +48,7 @@ return new class extends Migration
                 "USERNAME", "CONTRASENIA", "CARNET", "NOMBRE", "APELLIDO", 
                 "CORREO", "TELEFONO", "ESTADO", "FECHA_CREACION", "ROL_ID"
             ) VALUES (
-                p_username, p_contrasenia, CAST(p_carnet AS VARCHAR), p_nombre, p_apellido, 
+                p_username, p_contrasenia, p_carnet, p_nombre, p_apellido, 
                 p_correo, p_telefono, COALESCE(p_estado, \'ACTIVO\'), CURRENT_TIMESTAMP, p_rol_id
             ) RETURNING "ID" INTO v_nuevo_id;
 

@@ -136,7 +136,7 @@ export default function EstudiantesCupPage({ cup, estudianteCups, filters }: Est
                                     <th className="h-12 w-[150px] px-4 text-left align-middle font-semibold">Carnet (CI)</th>
                                     <th className="h-12 w-[150px] px-4 text-left align-middle font-semibold">Fecha Insc.</th>
                                     <th className="h-12 w-[130px] px-4 text-center align-middle font-semibold">Estado</th>
-                                    <th className="h-12 w-[120px] px-4 text-right align-middle font-semibold">Nota Final</th>
+                                    <th className="h-12 w-[120px] px-4 text-right align-middle font-semibold">Calificación Final</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
@@ -186,7 +186,7 @@ export default function EstudiantesCupPage({ cup, estudianteCups, filters }: Est
                                                     </span>
                                                 </td>
 
-                                                {/* Nota Final */}
+                                                {/* Calificación Final */}
                                                 <td className="p-4 text-right align-middle font-extrabold text-neutral-900 dark:text-neutral-100">
                                                     {ec.NOTA_FINAL ? parseFloat(ec.NOTA_FINAL).toFixed(2) : '—'}
                                                 </td>

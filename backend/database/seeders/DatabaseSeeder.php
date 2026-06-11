@@ -51,6 +51,8 @@ class DatabaseSeeder extends Seeder
         // ==========================================
         $rolAdmin = DB::table('ROL')->insertGetId(['NOMBRE' => 'ADMINISTRADOR'], 'ID');
         $rolDocente = DB::table('ROL')->insertGetId(['NOMBRE' => 'DOCENTE'], 'ID');
+        $rolEstudiante = DB::table('ROL')->insertGetId(['NOMBRE' => 'ESTUDIANTE'], 'ID');
+        $rolCoordinador = DB::table('ROL')->insertGetId(['NOMBRE' => 'COORDINADOR'], 'ID');
 
         // Módulos del sistema
         $modulos = [
@@ -167,61 +169,38 @@ class DatabaseSeeder extends Seeder
         }
 
         // Administrador Principal del Sistema (OMAR.ADMIN)
-        $uAdminId = DB::table('USUARIO')->insertGetId([
-            'USERNAME' => 'OMAR.ADMIN',
-            'CONTRASENIA' => Hash::make('contraseña'),
-            'CARNET' => 8432111,
-            'NOMBRE' => 'OMAR ALY',
-            'APELLIDO' => 'SAUCEDO LINO',
-            'CORREO' => 'admin@cup.edu',
-            'ESTADO' => 'ACTIVO',
-            'FECHA_CREACION' => Carbon::now(),
-            'ROL_ID' => $rolAdmin
-        ], 'ID');
-
-        // Seed direct permissions for admin
-        $allPermisos = DB::table('PERMISOS')->pluck('ID');
-        foreach ($allPermisos as $permId) {
-            DB::table('PERMISOS_USUARIO')->insert([
-                'USUARIO_ID' => $uAdminId,
-                'PERMISOS_ID' => $permId,
-                'ESTADO' => 'ACTIVO',
-                'FECHA_MOD' => Carbon::now()
-            ]);
-        }
+        $uAdminId = DB::selectOne('
+            SELECT public.f_insertar_usuario(?, ?, ?, ?, ?, ?, ?, ?, ?) as nuevo_id
+        ', [
+            'OMAR.ADMIN',
+            Hash::make('Contrasenia1!'),
+            8432111,
+            'OMAR ALY',
+            'SAUCEDO LINO',
+            'admin@cup.edu',
+            null,
+            'ACTIVO',
+            $rolAdmin
+        ])->nuevo_id;
 
         // Generación de 10 Docentes con la estructura de cuentas DOCENTE_1 a DOCENTE_10
         $docenteUserIds = [];
         for ($i = 1; $i <= 10; $i++) {
-            $uDocId = DB::table('USUARIO')->insertGetId([
-                'USERNAME' => "DOCENTE_{$i}",
-                'CONTRASENIA' => Hash::make('Docente'),
-                'CARNET' => 4567890 + $i,
-                'NOMBRE' => "DOCENTE {$i}",
-                'APELLIDO' => "APELLIDO {$i}",
-                'CORREO' => "docente{$i}@cup.edu",
-                'ESTADO' => 'ACTIVO',
-                'FECHA_CREACION' => Carbon::now(),
-                'ROL_ID' => $rolDocente
-            ], 'ID');
+            $uDocId = DB::selectOne('
+                SELECT public.f_insertar_usuario(?, ?, ?, ?, ?, ?, ?, ?, ?) as nuevo_id
+            ', [
+                "DOCENTE_{$i}",
+                Hash::make('DocenteSeguro1!'),
+                4567890 + $i,
+                "DOCENTE {$i}",
+                "APELLIDO {$i}",
+                "docente{$i}@cup.edu",
+                70000000 + $i,
+                'ACTIVO',
+                $rolDocente
+            ])->nuevo_id;
+
             $docenteUserIds[] = $uDocId;
-
-            // Extensión a la tabla semántica DOCENTE
-            DB::table('DOCENTE')->insert(['CODIGO_DOCENTE' => $uDocId]);
-
-            // Seed direct permissions for docente based on ROL_ID
-            $rolPermisosIds = DB::table('PERMISO_ROL')
-                ->where('ROL_ID', $rolDocente)
-                ->where('ESTADO', 'ACTIVO')
-                ->pluck('PERMISOS_ID');
-            foreach ($rolPermisosIds as $permId) {
-                DB::table('PERMISOS_USUARIO')->insert([
-                    'USUARIO_ID' => $uDocId,
-                    'PERMISOS_ID' => $permId,
-                    'ESTADO' => 'ACTIVO',
-                    'FECHA_MOD' => Carbon::now()
-                ]);
-            }
         }
 
         // ==========================================
@@ -461,20 +440,38 @@ class DatabaseSeeder extends Seeder
             $carnet = 6000000 + $i;
             $correo = strtolower("estudiante{$i}@mail.com");
             $titulo = "TIT-BACH-2023-{$carnet}";
+            $telefono = (int)("700" . str_pad($i, 5, '0', STR_PAD_LEFT));
 
+            // 1. Crear el usuario del estudiante
+            $uEstId = DB::selectOne('
+                SELECT public.f_insertar_usuario(?, ?, ?, ?, ?, ?, ?, ?, ?) as nuevo_id
+            ', [
+                (string)$carnet,
+                Hash::make('Estudiante1!'),
+                $carnet,
+                $name,
+                "{$lastname1} {$lastname2}",
+                $correo,
+                $telefono,
+                'ACTIVO',
+                $rolEstudiante
+            ])->nuevo_id;
+
+            // 2. Crear el registro del estudiante
             $estId = DB::table('ESTUDIANTE')->insertGetId([
                 'CARNET' => $carnet,
                 'NOMBRE' => $name,
                 'APELLIDO' => "{$lastname1} {$lastname2}",
                 'FECHA_NAC' => '2005-' . str_pad(($i % 12) + 1, 2, '0', STR_PAD_LEFT) . '-' . str_pad(($i % 28) + 1, 2, '0', STR_PAD_LEFT),
                 'DIRECCION' => "AV. BUSCH, CALLE " . ($i % 20 + 1),
-                'TELEFONO' => "700" . str_pad($i, 5, '0', STR_PAD_LEFT),
+                'TELEFONO' => $telefono,
                 'CORREO' => $correo,
                 'TITULO_BACHILLER' => $titulo,
                 'SEXO' => $gender,
                 'ESTADO' => $i <= 15 ? 'INACTIVO' : 'APROBADO',
                 'COLEGIO_ID' => $colegioId,
-                'CIUDAD_ID' => $ciudadId
+                'CIUDAD_ID' => $ciudadId,
+                'USUARIO_ID' => $uEstId
             ], 'ID_ESTUDIANTE');
             $studentIds[$i] = $estId;
         }

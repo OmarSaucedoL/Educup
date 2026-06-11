@@ -55,13 +55,13 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Módulo Notas', href: '#' },
+        { title: 'Módulo Calificaciones', href: '#' },
         { title: 'Clases', href: '/notas/clases' },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Notas — Clases" />
+            <Head title="Calificaciones — Clases" />
 
             <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col gap-6 rounded-xl p-4">
 
@@ -250,7 +250,7 @@ export default function NotasClases({ cup, cups, clases }: NotasClasesProps) {
                                                                             <td className="py-3.5 pl-4 text-right align-middle">
                                                                                 <Button variant="default" size="sm" asChild className="h-8 gap-1.5 text-xs font-semibold bg-neutral-900 text-neutral-50 hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200">
                                                                                     <Link href={`/notas/clases/${c.ID_CLASE}?cup_id=${cup.ID_CUP}`}>
-                                                                                        Gestionar Notas
+                                                                                        Gestionar Calificaciones
                                                                                     </Link>
                                                                                 </Button>
                                                                             </td>

@@ -210,7 +210,7 @@ export function CupForm({
                                 {/* NOTA MÍNIMA & TOTAL CUPOS */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="NOTA_MINIMA" className="text-sm font-semibold">Nota Mínima de Aprobación *</Label>
+                                        <Label htmlFor="NOTA_MINIMA" className="text-sm font-semibold">Calificación Mínima de Aprobación *</Label>
                                         <Input
                                             id="NOTA_MINIMA"
                                             type="number"

@@ -178,7 +178,7 @@ export default function Dashboard({ cup, stats }: DashboardProps) {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-xs font-semibold tracking-wider text-neutral-500 uppercase flex items-center gap-1.5">
-                                    <GraduationCap className="h-3.5 w-3.5" /> Nota Mínima
+                                    <GraduationCap className="h-3.5 w-3.5" /> Calificación Mínima
                                 </span>
                                 <p className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
                                     {Number(cup.NOTA_MINIMA).toFixed(1)} puntos

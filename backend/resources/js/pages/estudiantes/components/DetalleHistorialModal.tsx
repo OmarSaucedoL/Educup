@@ -177,7 +177,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                             {/* Admissions Summary Banner Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="bg-neutral-50/50 dark:bg-neutral-900/20 border border-neutral-100 dark:border-neutral-800/80 rounded-xl p-4 flex flex-col justify-between shadow-2xs">
-                                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Nota Final Admisión</span>
+                                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Calificación Final Admisión</span>
                                     <div className="flex items-baseline gap-1 mt-1">
                                         <span className={`text-3xl font-extrabold tracking-tight ${
                                             activeHistoryDetail.ESTADO === 'APROBADO'
@@ -374,7 +374,7 @@ export default function DetalleHistorialModal({ open, onOpenChange, activeHistor
                                                                 {/* Nota Total Class Grade */}
                                                                 {clase.NOTA_TOTAL !== undefined && clase.NOTA_TOTAL !== null && (
                                                                     <div className="mt-2 pt-2 border-t border-dashed border-neutral-200 dark:border-neutral-800/80 flex justify-between items-center text-xs font-bold bg-neutral-50/20 dark:bg-neutral-900/10 px-2 py-1.5 rounded-lg border border-neutral-100/30 dark:border-neutral-800/20 shadow-3xs">
-                                                                        <span className="text-neutral-500 dark:text-neutral-400">Nota Total Materia</span>
+                                                                        <span className="text-neutral-500 dark:text-neutral-400">Calificación Total Materia</span>
                                                                         <span className="text-primary font-extrabold text-sm">
                                                                             {parseFloat(clase.NOTA_TOTAL.toString()).toFixed(1)} pts
                                                                         </span>

@@ -225,23 +225,35 @@ class UsuarioController extends Controller
             unset($validated['CONTRASENIA']);
         }
 
-        // Ensure CARNET is cast to string if provided
-        if (isset($validated['CARNET'])) {
-            $validated['CARNET'] = (string) $validated['CARNET'];
-        }
+        try {
+            DB::statement('
+                SELECT public.f_actualizar_usuario(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ', [
+                $id,
+                $validated['USERNAME'],
+                $validated['CONTRASENIA'] ?? null,
+                $validated['CARNET'] ?? null,
+                $validated['NOMBRE'],
+                $validated['APELLIDO'],
+                $validated['CORREO'],
+                $validated['TELEFONO'] ?? null,
+                $validated['ESTADO'] ?? null,
+                $validated['ROL_ID'] ?? null
+            ]);
 
-        $usuario->update($validated);
-
-        if ($usuario->ROL_ID) {
-            $rol = \App\Models\Rol::find($usuario->ROL_ID);
-            if ($rol && str_contains(strtoupper($rol->NOMBRE), 'DOCENTE')) {
-                \App\Models\Docente::firstOrCreate([
-                    'CODIGO_DOCENTE' => $usuario->ID
+            return redirect('/usuarios')->with('success', 'Usuario actualizado correctamente.');
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+            if (str_contains($errorMsg, 'ya está en uso') || str_contains($errorMsg, 'ya está registrado')) {
+                preg_match('/ERROR:\s+(.*?)\n/', $errorMsg, $matches);
+                $cleanMsg = $matches[1] ?? 'Error de validación al actualizar el usuario. Datos duplicados.';
+                
+                throw ValidationException::withMessages([
+                    'USERNAME' => $cleanMsg,
                 ]);
             }
+            throw $e;
         }
-
-        return redirect('/usuarios')->with('success', 'Usuario actualizado correctamente.');
     }
 
     /**

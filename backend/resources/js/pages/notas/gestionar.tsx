@@ -227,7 +227,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
     const exportNotasExcel = () => {
         let csvContent = "\uFEFF"; // UTF-8 BOM
         const compHeaders = components.map(c => `${c.nombre} (${c.ponderacion}%)`);
-        const headers = ["Carnet (CI)", "Postulante", ...compHeaders, "Nota Final", "Estado"];
+        const headers = ["Carnet (CI)", "Postulante", ...compHeaders, "Calificación Final", "Estado"];
         csvContent += headers.join(";") + "\r\n";
         
         filteredStudents.forEach(ec => {
@@ -300,7 +300,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Gestionar Notas — ${clase.materia?.NOMBRE}`} />
+            <Head title={`Gestionar Calificaciones — ${clase.materia?.NOMBRE}`} />
 
             <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col gap-6 rounded-xl p-4">
 
@@ -311,7 +311,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                             <BookMarked className="h-7 w-7 text-neutral-900 dark:text-neutral-100" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Gestionar Notas</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Gestionar Calificaciones</h1>
                             <p className="text-muted-foreground mt-0.5 text-sm">
                                 {clase.materia?.NOMBRE} — Grupo: {clase.grupo?.NOMBRE} (
                                 {clase.bloqueHorario?.TURNO ?? clase.bloque_horario?.TURNO ?? 'No definido'})
@@ -467,7 +467,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                 <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/50">
                     {/* Filtros de Planilla y Exportación */}
                     <div className="flex flex-col gap-3 border-b border-neutral-100 p-4 md:flex-row md:items-center md:justify-between dark:border-neutral-800/80">
-                        <span className="text-sm font-bold text-neutral-800 dark:text-neutral-200">Planilla de Notas</span>
+                        <span className="text-sm font-bold text-neutral-800 dark:text-neutral-200">Planilla de Calificaciones</span>
                         
                         <div className="flex flex-wrap items-center gap-2">
                             {/* Buscar */}
@@ -495,7 +495,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                 Excel Lista
                             </Button>
 
-                            {/* Exportar Planilla de Notas (Excel) */}
+                            {/* Exportar Planilla de Calificaciones (Excel) */}
                             <Button
                                 type="button"
                                 variant="outline"
@@ -504,7 +504,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                 className="flex items-center gap-1.5 h-8 font-semibold text-xs border-neutral-200 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
                             >
                                 <FileSpreadsheet className="h-4 w-4 text-blue-600" />
-                                Excel Notas
+                                Excel Calificaciones
                             </Button>
 
 
@@ -529,7 +529,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                 </div>
                                             </th>
                                         ))}
-                                        <th className="w-28 p-4 text-center font-semibold">Nota Final</th>
+                                        <th className="w-28 p-4 text-center font-semibold">Calificación Final</th>
                                         <th className="w-28 p-4 text-center font-semibold">Estado</th>
                                     </tr>
                                 </thead>
@@ -553,16 +553,16 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                         </div>
                                                     </td>
  
-                                                    {/* Notas individuales de evaluación */}
+                                                    {/* Calificaciones individuales de evaluación */}
                                                     {components.map((comp) => {
                                                         const currentVal = grades[ec.ID]?.[comp.nombre] ?? '';
                                                         return (
                                                             <td key={comp.nombre} className="p-4 text-center align-middle">
-                                                                <span className="sr-only">{`Nota de ${student ? `${student.APELLIDO} ${student.NOMBRE}` : 'Estudiante'} para ${comp.nombre}`}</span>
+                                                                <span className="sr-only">{`Calificación de ${student ? `${student.APELLIDO} ${student.NOMBRE}` : 'Estudiante'} para ${comp.nombre}`}</span>
                                                                 <div className="inline-flex items-center justify-center">
                                                                     <input
                                                                         type="text"
-                                                                        aria-label={`Nota de ${student ? `${student.APELLIDO} ${student.NOMBRE}` : 'Estudiante'} para ${comp.nombre}`}
+                                                                        aria-label={`Calificación de ${student ? `${student.APELLIDO} ${student.NOMBRE}` : 'Estudiante'} para ${comp.nombre}`}
                                                                         value={currentVal}
                                                                         disabled={!isCupEnCurso}
                                                                         onChange={(e) => handleGradeChange(ec.ID, comp.nombre, e.target.value)}
@@ -574,7 +574,7 @@ export default function GestionarNotas({ clase, estudiantesClase }: GestionarNot
                                                         );
                                                     })}
  
-                                                    {/* Nota Final */}
+                                                    {/* Calificación Final */}
                                                     <td className="p-4 text-center align-middle text-base font-bold">
                                                         <span
                                                             className={

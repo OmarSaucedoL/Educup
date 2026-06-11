@@ -109,7 +109,7 @@ export default function MateriasStats({
         csvContent += `"REPORTE DE POSTULANTES CRÍTICOS (AND)"\r\n`;
         csvContent += `"Filtro Aplicado";"Alumnos reprobados en TODAS las materias seleccionadas simultáneamente"\r\n`;
         csvContent += `"Materias Evaluadas";"${selectedNames}"\r\n`;
-        csvContent += `"Nota Límite";"<= ${notaLimite}"\r\n`;
+        csvContent += `"Calificación Límite";"<= ${notaLimite}"\r\n`;
         csvContent += `"Total Críticos";"${postulantesCriticos.length}"\r\n`;
         csvContent += '\r\n'; // Fila en blanco
 
@@ -144,7 +144,7 @@ export default function MateriasStats({
                     <div>
                         <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Estadísticas de Materias Críticas</h2>
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                            Encuentra y exporta listados de estudiantes en riesgo académico según las materias y nota límite configurada.
+                            Encuentra y exporta listados de estudiantes en riesgo académico según las materias y calificación límite configurada.
                         </p>
                     </div>
                 </div>
@@ -163,7 +163,7 @@ export default function MateriasStats({
                     {/* Materias Checkboxes */}
                     <div className="flex flex-col gap-2 md:col-span-2">
                         <label className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">
-                            1. Seleccionar Materias Críticas (El alumno debe tener nota baja en TODAS las elegidas)
+                            1. Seleccionar Materias Críticas (El alumno debe tener calificación baja en TODAS las elegidas)
                         </label>
                         <div className="mt-1 flex flex-wrap gap-3">
                             {materiasCatalogo.map((m) => {
@@ -193,7 +193,7 @@ export default function MateriasStats({
                     {/* Nota Limite Input */}
                     <div className="flex flex-col gap-2">
                         <label htmlFor="nota-maxima" className="text-xs font-bold tracking-tight text-neutral-500 uppercase dark:text-neutral-400">
-                            2. Nota Máxima
+                            2. Calificación Máxima
                         </label>
                         <div className="flex gap-2">
                             <input
@@ -224,7 +224,7 @@ export default function MateriasStats({
                     <div>
                         <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-200">No se han seleccionado materias</h4>
                         <p className="mt-1 max-w-sm text-xs text-neutral-400">
-                            Elige una o más materias arriba y define una nota máxima límite para visualizar la lista de postulantes en riesgo.
+                            Elige una o más materias arriba y define una calificación máxima límite para visualizar la lista de postulantes en riesgo.
                         </p>
                     </div>
                 </div>
@@ -272,7 +272,7 @@ export default function MateriasStats({
                                 <strong>Filtro Lógico:</strong> Alumnos reprobados simultáneamente
                             </div>
                             <div>
-                                <strong>Nota Máxima Evaluada:</strong> &lt;= {notaLimite}
+                                <strong>Calificación Máxima Evaluada:</strong> &lt;= {notaLimite}
                             </div>
                             <div className="col-span-2">
                                 <strong>Materias Filtro:</strong>{' '}

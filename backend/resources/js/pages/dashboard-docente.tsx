@@ -107,7 +107,7 @@ export default function DashboardDocente({ cup, clases }: DashboardDocenteProps)
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-xs font-semibold tracking-wider text-neutral-500 uppercase flex items-center gap-1.5">
-                                    <GraduationCap className="h-3.5 w-3.5" /> Nota Mínima Aprobatoria
+                                    <GraduationCap className="h-3.5 w-3.5" /> Calificación Mínima Aprobatoria
                                 </span>
                                 <p className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
                                     {Number(cup.NOTA_MINIMA).toFixed(1)} puntos
@@ -191,7 +191,7 @@ export default function DashboardDocente({ cup, clases }: DashboardDocenteProps)
                                                             href={`/notas/clases/${clase.ID_CLASE}?cup_id=${cup.ID_CUP}`}
                                                             className="inline-flex h-8 items-center justify-center rounded-lg bg-neutral-900 px-3 text-xs font-bold text-neutral-50 shadow-xs hover:bg-neutral-850 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200 gap-1 group/btn"
                                                         >
-                                                            <span>Gestionar Notas</span>
+                                                            <span>Gestionar Calificaciones</span>
                                                             <ChevronRight className="h-3.5 w-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
                                                         </Link>
                                                     )}
