@@ -99,6 +99,31 @@ class CUPController extends Controller
      */
     public function store(Request $request)
     {
+        $messages = [
+            'required' => 'El campo :attribute es obligatorio.',
+            'date' => 'El campo :attribute debe ser una fecha válida.',
+            'after_or_equal' => 'El campo :attribute debe ser posterior o igual a la fecha de inicio.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'numeric' => 'El campo :attribute debe ser numérico.',
+            'in' => 'El valor seleccionado para :attribute no es válido.',
+            'exists' => 'El valor de :attribute no existe en nuestros registros.',
+            'array' => 'El campo :attribute debe ser un arreglo o lista.',
+            'min' => 'El campo :attribute debe tener al menos :min.',
+            'max' => 'El campo :attribute no puede ser mayor a :max.',
+        ];
+
+        $attributes = [
+            'ANIO' => 'año',
+            'SEMESTRE' => 'semestre',
+            'NOTA_MINIMA' => 'nota mínima',
+            'FECHA_INICIO' => 'fecha de inicio',
+            'FECHA_FIN' => 'fecha de fin',
+            'USUARIO_ID' => 'encargado',
+            'ESTADO' => 'estado',
+            'carreras' => 'carreras',
+            'materias' => 'materias',
+        ];
+
         $validated = $request->validate([
             'ANIO' => 'required|integer',
             'SEMESTRE' => 'required|integer|in:1,2',
@@ -112,7 +137,7 @@ class CUPController extends Controller
             'carreras.*.CUPOS' => 'required|integer|min:1',
             'materias' => 'required|array|min:1|max:4',
             'materias.*' => 'required|integer|exists:MATERIA,ID_MATERIA',
-        ]);
+        ], $messages, $attributes);
 
         // Solo puede existir un CUP no concluido a la vez
         if ($validated['ESTADO'] !== 'Concluido') {
@@ -790,6 +815,31 @@ class CUPController extends Controller
 
         $this->verificarCambiosCupConcluido($cup, $request);
 
+        $messages = [
+            'required' => 'El campo :attribute es obligatorio.',
+            'date' => 'El campo :attribute debe ser una fecha válida.',
+            'after_or_equal' => 'El campo :attribute debe ser posterior o igual a la fecha de inicio.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'numeric' => 'El campo :attribute debe ser numérico.',
+            'in' => 'El valor seleccionado para :attribute no es válido.',
+            'exists' => 'El valor de :attribute no existe en nuestros registros.',
+            'array' => 'El campo :attribute debe ser un arreglo o lista.',
+            'min' => 'El campo :attribute debe tener al menos :min.',
+            'max' => 'El campo :attribute no puede ser mayor a :max.',
+        ];
+
+        $attributes = [
+            'ANIO' => 'año',
+            'SEMESTRE' => 'semestre',
+            'NOTA_MINIMA' => 'nota mínima',
+            'FECHA_INICIO' => 'fecha de inicio',
+            'FECHA_FIN' => 'fecha de fin',
+            'USUARIO_ID' => 'encargado',
+            'ESTADO' => 'estado',
+            'carreras' => 'carreras',
+            'materias' => 'materias',
+        ];
+
         $validated = $request->validate([
             'ANIO' => 'required|integer',
             'SEMESTRE' => 'required|integer|in:1,2',
@@ -803,7 +853,7 @@ class CUPController extends Controller
             'carreras.*.CUPOS' => 'required|integer|min:1',
             'materias' => 'required|array|min:1|max:4',
             'materias.*' => 'required|integer|exists:MATERIA,ID_MATERIA',
-        ]);
+        ], $messages, $attributes);
 
         try {
             $carrerasIds = '{' . implode(',', collect($validated['carreras'])->pluck('ID_CARRERA')->toArray()) . '}';
