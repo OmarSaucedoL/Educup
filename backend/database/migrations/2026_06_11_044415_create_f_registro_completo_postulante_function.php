@@ -113,8 +113,7 @@ return new class extends Migration
 
             -- 8. Validar e integrar el estado del Pago
             UPDATE "ESTUDIANTE_CUP"
-            SET "ESTADO" = \'ACTIVO\',
-                "NOTA_FINAL" = 0.00
+            SET "NOTA_FINAL" = 0.00
             WHERE "ID" = v_inscripcion_id;
 
             INSERT INTO "PAGO" (
